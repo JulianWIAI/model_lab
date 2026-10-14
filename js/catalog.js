@@ -152,6 +152,25 @@ export const catalog = [
           },
         ],
       },
+      {
+        id: 'kinetics',
+        name: 'Kinetics',
+        benches: [
+          {
+            id: 'rate-laws',
+            navLabel: 'Rate laws',
+            level: 'university',
+            keywords: [
+              'rate law', 'reaction order', 'zeroth order', 'first order', 'second order',
+              'half-life', 'integrated rate law', 'kinetics', 'concentration',
+            ],
+            load: () =>
+              import('./benches/chemistry/kinetics/rate-laws/RateLawsBench.js').then(
+                (m) => m.RateLawsBench,
+              ),
+          },
+        ],
+      },
     ],
   },
   {
