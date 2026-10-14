@@ -198,6 +198,25 @@ export const catalog = [
         ],
       },
       {
+        id: 'thermodynamics',
+        name: 'Thermodynamics',
+        benches: [
+          {
+            id: 'gibbs',
+            navLabel: 'Gibbs free energy',
+            level: 'university',
+            keywords: [
+              'Gibbs free energy', 'ΔG', 'ΔH', 'ΔS', 'spontaneity', 'equilibrium constant',
+              'thermodynamics', 'crossover temperature', 'ice fusion',
+            ],
+            load: () =>
+              import('./benches/chemistry/thermodynamics/gibbs/GibbsBench.js').then(
+                (m) => m.GibbsBench,
+              ),
+          },
+        ],
+      },
+      {
         id: 'kinetics',
         name: 'Kinetics',
         benches: [
