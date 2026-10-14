@@ -55,6 +55,60 @@ export const catalog = [
     name: 'Chemistry',
     fields: [
       {
+        id: 'acids-bases',
+        name: 'Acids & bases',
+        benches: [
+          {
+            id: 'titration',
+            navLabel: 'Titration curves',
+            level: 'intro',
+            keywords: [
+              'titration', 'acid', 'base', 'pH', 'equivalence point', 'buffer',
+              'pKa', 'Henderson-Hasselbalch', 'strong acid', 'weak acid', 'indicator',
+              'charge balance', 'acetic acid', 'ammonium',
+            ],
+            load: () =>
+              import('./benches/chemistry/acids-bases/titration/TitrationBench.js').then(
+                (m) => m.TitrationBench,
+              ),
+          },
+        ],
+      },
+      {
+        id: 'atomic',
+        name: 'Atomic structure',
+        benches: [
+          {
+            id: 'orbitals',
+            navLabel: 'Hydrogen orbitals',
+            level: 'university',
+            keywords: [
+              'hydrogen', 'orbital', 'wavefunction', 'quantum numbers', 'n', 'l', 'm',
+              'radial distribution', 'spherical harmonics', 'Laguerre', 'probability density',
+              'atomic structure', 'nodes', 'Bohr radius',
+            ],
+            load: () =>
+              import('./benches/chemistry/atomic/orbitals/OrbitalBench.js').then(
+                (m) => m.OrbitalBench,
+              ),
+          },
+          {
+            id: 'periodic-table',
+            navLabel: 'Periodic table',
+            level: 'intro',
+            keywords: [
+              'periodic table', 'elements', 'electronegativity', 'atomic radius',
+              'ionization energy', 'electron configuration', 'Aufbau', 'periodic trends',
+              'metals', 'nonmetals', 'noble gases', 'lanthanides', 'actinides',
+            ],
+            load: () =>
+              import('./benches/chemistry/atomic/periodic-table/PeriodicTableBench.js').then(
+                (m) => m.PeriodicTableBench,
+              ),
+          },
+        ],
+      },
+      {
         id: 'equilibrium',
         name: 'Equilibrium',
         benches: [
@@ -77,6 +131,45 @@ export const catalog = [
     name: 'Biology',
     fields: [
       {
+        id: 'molecular',
+        name: 'Molecular biology',
+        benches: [
+          {
+            id: 'central-dogma',
+            navLabel: 'Central dogma',
+            level: 'intro',
+            keywords: [
+              'DNA', 'mRNA', 'protein', 'transcription', 'translation', 'codon',
+              'ribosome', 'mutation', 'substitution', 'frameshift', 'silent', 'missense',
+              'nonsense', 'genetic code', 'amino acid', 'central dogma',
+            ],
+            load: () =>
+              import('./benches/biology/molecular/central-dogma/CentralDogmaBench.js').then(
+                (m) => m.CentralDogmaBench,
+              ),
+          },
+        ],
+      },
+      {
+        id: 'biochemistry',
+        name: 'Biochemistry',
+        benches: [
+          {
+            id: 'enzyme-kinetics',
+            navLabel: 'Enzyme kinetics',
+            level: 'university',
+            keywords: [
+              'enzyme', 'Michaelis-Menten', 'Km', 'Vmax', 'kinetics', 'inhibition',
+              'competitive', 'uncompetitive', 'mixed', 'Lineweaver-Burk', 'biochemistry',
+            ],
+            load: () =>
+              import('./benches/biology/biochemistry/enzyme-kinetics/EnzymeKineticsBench.js').then(
+                (m) => m.EnzymeKineticsBench,
+              ),
+          },
+        ],
+      },
+      {
         id: 'genetics',
         name: 'Genetics',
         benches: [
@@ -87,6 +180,18 @@ export const catalog = [
             keywords: ['genetic drift', 'wright-fisher', 'selection', 'allele', 'fixation', 'kimura', 'population'],
             load: () =>
               import('./benches/biology/genetics/drift/DriftBench.js').then((m) => m.DriftBench),
+          },
+          {
+            id: 'mendel',
+            navLabel: 'Mendelian genetics',
+            level: 'intro',
+            keywords: [
+              'Mendel', 'genetics', 'Punnett square', 'dominant', 'recessive',
+              'monohybrid', 'dihybrid', 'chi-square', 'linkage', 'recombination',
+              'inheritance', 'allele', 'genotype', 'phenotype',
+            ],
+            load: () =>
+              import('./benches/biology/genetics/mendel/MendelBench.js').then((m) => m.MendelBench),
           },
         ],
       },
