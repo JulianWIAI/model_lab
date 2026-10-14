@@ -248,6 +248,20 @@ export const catalog = [
             load: () =>
               import('./benches/biology/genetics/mendel/MendelBench.js').then((m) => m.MendelBench),
           },
+          {
+            id: 'hardy-weinberg',
+            navLabel: 'Hardy–Weinberg',
+            level: 'intro',
+            keywords: [
+              'Hardy-Weinberg', 'allele frequency', 'genotype frequency', 'selection',
+              'mutation', 'migration', 'equilibrium', 'fitness', 'de Finetti',
+              'population genetics', 'mutation-selection balance',
+            ],
+            load: () =>
+              import('./benches/biology/genetics/hardy-weinberg/HardyWeinbergBench.js').then(
+                (m) => m.HardyWeinbergBench,
+              ),
+          },
         ],
       },
     ],
