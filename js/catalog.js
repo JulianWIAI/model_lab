@@ -72,6 +72,20 @@ export const catalog = [
                 (m) => m.TitrationBench,
               ),
           },
+          {
+            id: 'buffers',
+            navLabel: 'Buffer capacity',
+            level: 'university',
+            keywords: [
+              'buffer', 'buffer capacity', 'pKa', 'species fractions', 'speciation',
+              'polyprotic', 'acetic acid', 'phosphoric acid', 'carbonic acid', 'citric acid',
+              'ammonium', 'acid-base', 'pH', 'beta',
+            ],
+            load: () =>
+              import('./benches/chemistry/acids-bases/buffers/BufferBench.js').then(
+                (m) => m.BufferBench,
+              ),
+          },
         ],
       },
       {
