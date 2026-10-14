@@ -325,6 +325,19 @@ export const catalog = [
                 (m) => m.NeuronBench,
               ),
           },
+          {
+            id: 'goldman',
+            navLabel: 'Goldman equation',
+            level: 'university',
+            keywords: [
+              'Goldman', 'Hodgkin-Katz', 'membrane potential', 'resting potential',
+              'action potential', 'Nernst', 'permeability', 'electrophysiology', 'squid axon',
+            ],
+            load: () =>
+              import('./benches/neuroscience/electrophysiology/goldman/GoldmanBench.js').then(
+                (m) => m.GoldmanBench,
+              ),
+          },
         ],
       },
     ],
