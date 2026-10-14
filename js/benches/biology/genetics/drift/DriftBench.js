@@ -16,6 +16,9 @@ export class DriftBench extends Bench {
     title: 'Selection versus chance',
     navLabel: 'Genetic drift',
     canvasLabel: 'Allele frequency over generations in many populations',
+    level: 'university',
+    keywords: ['genetic drift', 'wright-fisher', 'selection', 'allele', 'fixation', 'kimura', 'population genetics', 'evolution'],
+    related: ['chemistry/equilibrium'],
   };
 
   static info = {

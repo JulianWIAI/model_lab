@@ -17,6 +17,9 @@ export class PendulumBench extends Bench {
     title: 'When the textbook formula fails',
     navLabel: 'Pendulum',
     canvasLabel: 'Two pendulums swinging side by side with a trace of their angles',
+    level: 'intro',
+    keywords: ['pendulum', 'oscillation', 'harmonic oscillator', 'runge-kutta', 'small-angle', 'period', 'AGM'],
+    related: ['math/fourier', 'neuroscience/neuron'],
   };
 
   static info = {

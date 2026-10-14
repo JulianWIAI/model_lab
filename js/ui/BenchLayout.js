@@ -45,6 +45,7 @@ export class BenchLayout {
       this.#card('Formula', this.formulaEl),
       info.predict && this.#card('Predict first', this.#list(info.predict, 'ul'), 'predict'),
       info.breaks && this.#card('Where it breaks', info.breaks.map((t) => el('p', { text: t }))),
+      meta.related?.length && this.#card('Related simulations', this.#related(meta.related)),
       info.derive && this.#collapsible('Derive it', this.#derive(info.derive)),
       info.research && this.#collapsible('Research it', this.#research(info.research)),
       this.#card('Your one-line explanation', notes.element),
@@ -100,6 +101,18 @@ export class BenchLayout {
 
   #list(items, tag) {
     return el(tag, {}, items.map((t) => el('li', { text: t })));
+  }
+
+  /** Links to related bench routes ('subject/id'). Each becomes a hash link. */
+  #related(routes) {
+    return el(
+      'div',
+      { class: 'related-links' },
+      routes.map((route) => {
+        const label = route.split('/').pop(); // show the bench id portion
+        return el('a', { href: `#${route}`, class: 'related-chip', text: label });
+      }),
+    );
   }
 
   /** Derivation steps: numbered, because the order matters. */

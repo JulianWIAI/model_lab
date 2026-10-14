@@ -25,6 +25,9 @@ export class QuarkBench extends Bench {
     title: 'Building hadrons from quarks',
     navLabel: 'Quarks',
     canvasLabel: 'Quarks joined by gluon flux tubes',
+    level: 'university',
+    keywords: ['quarks', 'hadrons', 'proton', 'neutron', 'pion', 'kaon', 'QCD', 'color charge', 'gluon', 'baryon', 'meson'],
+    related: ['physics/pendulum'],
   };
 
   static info = {

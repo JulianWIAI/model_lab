@@ -26,6 +26,9 @@ export class NeuronBench extends Bench {
     title: 'A neuron firing (Hodgkin–Huxley)',
     navLabel: 'Action potential',
     canvasLabel: 'Membrane voltage and ion channel gates over time',
+    level: 'university',
+    keywords: ['hodgkin-huxley', 'action potential', 'neuron', 'sodium', 'potassium', 'TTX', 'TEA', 'spike', 'membrane'],
+    related: ['physics/pendulum', 'chemistry/equilibrium'],
   };
 
   static info = {

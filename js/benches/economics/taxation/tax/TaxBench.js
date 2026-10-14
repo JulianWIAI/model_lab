@@ -15,6 +15,9 @@ export class TaxBench extends Bench {
     title: 'Who really pays a tax',
     navLabel: 'Tax incidence',
     canvasLabel: 'Supply and demand with a tax wedge',
+    level: 'intro',
+    keywords: ['tax', 'incidence', 'deadweight loss', 'supply', 'demand', 'elasticity', 'revenue', 'Laffer'],
+    related: ['chemistry/equilibrium'],
   };
 
   static info = {

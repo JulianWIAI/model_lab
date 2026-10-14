@@ -92,6 +92,14 @@ textarea {
   .level-graduate   { background: #3b1f6e; color: #c4b5fd; }
 }
 
+/* Related simulations chips */
+.related-links { display: flex; flex-wrap: wrap; gap: 6px; }
+.related-chip {
+  font-size: 13px; border: 1px solid var(--accent); border-radius: 999px;
+  padding: 3px 10px; text-decoration: none; color: var(--accent);
+}
+.related-chip:hover { background: var(--accent-soft); }
+
 /* Loading state */
 .loading { font-size: 14px; color: var(--muted); padding: 24px; text-align: center; }
 

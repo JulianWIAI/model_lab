@@ -15,6 +15,9 @@ export class FourierBench extends Bench {
     title: 'Building a wave from circles',
     navLabel: 'Fourier series',
     canvasLabel: 'Rotating circles drawing a wave',
+    level: 'university',
+    keywords: ['fourier', 'harmonics', 'square wave', 'sawtooth', 'triangle wave', 'Gibbs phenomenon', 'frequency', 'series'],
+    related: ['physics/pendulum', 'neuroscience/neuron'],
   };
 
   static info = {

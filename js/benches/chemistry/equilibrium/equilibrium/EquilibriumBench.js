@@ -19,6 +19,9 @@ export class EquilibriumBench extends Bench {
     title: 'Reaction rates and equilibrium',
     navLabel: 'Equilibrium',
     canvasLabel: 'Concentrations over time and the energy profile of the reaction',
+    level: 'intro',
+    keywords: ['equilibrium', 'le chatelier', 'arrhenius', 'rate constant', 'concentration', 'reaction', 'temperature', 'catalyst'],
+    related: ['biology/drift', 'neuroscience/neuron'],
   };
 
   static info = {
