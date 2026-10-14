@@ -22,6 +22,12 @@ Each bench also has two deeper layers: **Derive it** (where the equations come f
 | Neuroscience | Action potential | Fire a Hodgkin–Huxley neuron; block channels with TTX and TEA |
 | Math | Fourier series | Build square, sawtooth and triangle waves from rotating circles |
 | Economics | Tax incidence | See who really pays a tax and what it destroys |
+| Biology | Central dogma | Transcribe and translate DNA; apply mutations and classify their effects |
+| Biology | Mendelian genetics | Cross plants with Punnett squares; test ratios with chi-square |
+| Biology | Enzyme kinetics | Explore Michaelis–Menten kinetics and three inhibitor types; fit noisy data |
+| Chemistry | Hydrogen orbitals | Visualise 1s–4f probability densities and radial distributions |
+| Chemistry | Titration curves | Titrate strong and weak acids; see equivalence points and buffer regions |
+| Chemistry | Periodic table | Compare electronegativity, atomic radius and ionisation energy across all 118 elements |
 
 ## Running tests
 

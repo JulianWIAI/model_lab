@@ -13,7 +13,7 @@ Benches are grouped by subject → field. The id after the name is its route id 
 ## Biology
 
 ### Molecular biology
-- [ ] Central dogma: DNA → mRNA → protein, with mutations · `central-dogma` · sim · I–U
+- [x] Central dogma: DNA → mRNA → protein, with mutations · `central-dogma` · sim · I–U
 - [ ] DNA replication fork: leading and lagging strands, Okazaki fragments · `replication` · sim · U
 - [ ] Gene regulation: lac operon switch · `lac-operon` · sim · U
 - [ ] Genetic toggle switch and repressilator · `gene-circuits` · sim · G
@@ -23,7 +23,7 @@ Benches are grouped by subject → field. The id after the name is its route id 
 - [ ] Amino acid explorer: structure, charge, hydrophobicity · `amino-acids` · explorer · I–U
 
 ### Genetics
-- [ ] Mendelian crosses, Punnett squares, chi-square test · `mendel` · sim · I–U
+- [x] Mendelian crosses, Punnett squares, chi-square test · `mendel` · sim · I–U
 - [ ] Linkage and recombination mapping · `linkage` · sim · U
 - [ ] Hardy–Weinberg equilibrium · `hardy-weinberg` · sim · I
 - [x] Genetic drift versus selection · `drift` · sim · U
@@ -32,7 +32,7 @@ Benches are grouped by subject → field. The id after the name is its route id 
 - [ ] Coalescent: tracing ancestry backwards · `coalescent` · sim · G
 
 ### Biochemistry
-- [ ] Enzyme kinetics: Michaelis–Menten and inhibitors · `enzyme-kinetics` · sim · U
+- [x] Enzyme kinetics: Michaelis–Menten and inhibitors · `enzyme-kinetics` · sim · U
 - [ ] Cooperative binding: haemoglobin and the Hill equation · `hill-binding` · sim · U
 - [ ] Protein folding on a lattice (HP model) · `protein-folding` · sim · G
 - [ ] Glycolysis flux and regulation · `glycolysis` · sim · U
@@ -76,10 +76,10 @@ Benches are grouped by subject → field. The id after the name is its route id 
 ## Chemistry
 
 ### Atomic structure
-- [ ] Hydrogen orbitals: probability density and radial nodes · `orbitals` · sim · U
+- [x] Hydrogen orbitals: probability density and radial nodes · `orbitals` · sim · U
 - [ ] Electron configuration and the Aufbau principle · `electron-config` · sim · I
 - [ ] Atomic spectra and the Rydberg formula · `spectra` · sim · I–U
-- [ ] Periodic table and periodic trends · `periodic-table` · explorer · I–U
+- [x] Periodic table and periodic trends · `periodic-table` · explorer · I–U
 
 ### Bonding and structure
 - [ ] VSEPR molecular shapes (3D) · `vsepr` · sim · I
@@ -108,7 +108,7 @@ Benches are grouped by subject → field. The id after the name is its route id 
 - [ ] Solubility and Ksp · `solubility` · sim · U
 
 ### Acids and bases
-- [ ] Acid–base titration curves · `titration` · sim · I–U
+- [x] Acid–base titration curves · `titration` · sim · I–U
 - [ ] Buffers and Henderson–Hasselbalch · `buffers` · sim · U
 - [ ] Polyprotic acids and speciation diagrams · `speciation` · sim · U
 
@@ -155,7 +155,7 @@ To be mapped in a later phase with the same structure. Done so far:
 | Phase | Content | Status |
 |---|---|---|
 | 0 | Foundation for scale: lazy catalog with fields, search, levels, tests, CI, shared integrators, data folder | **done** |
-| 1 | Biology: central-dogma, mendel, enzyme-kinetics · Chemistry: orbitals, titration, periodic-table | planned |
+| 1 | Biology: central-dogma, mendel, enzyme-kinetics · Chemistry: orbitals, titration, periodic-table | **done** |
 | 2 | Rest of molecular biology, genetics, atomic structure, acids and bases | – |
 | 3 | Biochemistry, cell biology, states of matter, thermodynamics, kinetics | – |
 | 4 | Physiology, evolution, ecology, bonding, electrochemistry | – |
