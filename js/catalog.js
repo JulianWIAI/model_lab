@@ -262,6 +262,20 @@ export const catalog = [
                 (m) => m.HardyWeinbergBench,
               ),
           },
+          {
+            id: 'linkage',
+            navLabel: 'Linkage',
+            level: 'university',
+            keywords: [
+              'linkage', 'Haldane', 'Kosambi', 'recombination frequency', 'genetic distance',
+              'Morgans', 'centimorgans', 'LOD score', 'interference', 'mapping function',
+              'chromosome', 'meiosis', 'crossover',
+            ],
+            load: () =>
+              import('./benches/biology/genetics/linkage/LinkageBench.js').then(
+                (m) => m.LinkageBench,
+              ),
+          },
         ],
       },
     ],
