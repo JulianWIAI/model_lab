@@ -1,19 +1,19 @@
 # Roadmap
 
-## Phase 3 benches (planned / in progress)
+## Phase 3 benches (complete)
 
 | Bench | Path | Status |
 |---|---|---|
-| Hill binding | biology/biochemistry/hill-binding | pending |
-| Goldman equation | neuroscience/electrophysiology/goldman | pending |
-| Rate laws | chemistry/kinetics/rate-laws | pending |
-| A→B→C mechanisms | chemistry/kinetics/mechanisms | pending |
-| Ideal gas | physics/thermodynamics/ideal-gas | pending |
-| Maxwell–Boltzmann | physics/thermodynamics/maxwell-boltzmann | pending |
-| Van der Waals | physics/thermodynamics/van-der-waals | pending |
-| Gibbs free energy | chemistry/thermodynamics/gibbs | pending |
+| Hill binding | biology/biochemistry/hill-binding | ✓ done |
+| Goldman equation | neuroscience/electrophysiology/goldman | ✓ done |
+| Rate laws | chemistry/kinetics/rate-laws | ✓ done |
+| A→B→C mechanisms | chemistry/kinetics/mechanisms | ✓ done |
+| Ideal gas | physics/thermodynamics/ideal-gas | ✓ done |
+| Maxwell–Boltzmann | physics/thermodynamics/maxwell-boltzmann | ✓ done |
+| Van der Waals | physics/thermodynamics/van-der-waals | ✓ done |
+| Gibbs free energy | chemistry/thermodynamics/gibbs | ✓ done |
 
-New catalog fields created in Phase 3: Chemistry → Kinetics, Chemistry → Thermodynamics,
+New catalog fields added in Phase 3: Chemistry → Kinetics, Chemistry → Thermodynamics,
 Physics → Thermodynamics.
 
 ---

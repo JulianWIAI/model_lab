@@ -35,6 +35,14 @@ Each bench also has two deeper layers: **Derive it** (where the equations come f
 | Biology | Hardy–Weinberg equilibrium | Track allele frequencies under selection, mutation and migration; trace the path in a de Finetti triangle |
 | Biology | Genetic linkage | Compare Haldane and Kosambi mapping functions; compute LOD scores |
 | Biology | Lac operon switch | Qualitative bistable ODE model of the lac operon; explore hysteresis by sweeping lactose up and down |
+| Biology | Cooperative O₂ binding | Hill equation for haemoglobin vs myoglobin; compare sigmoid and hyperbolic saturation curves |
+| Neuroscience | Goldman equation | GHK voltage equation for resting and action-potential membrane potentials; compare Nernst limits |
+| Chemistry | Integrated rate laws | 0th, 1st and 2nd order decay; compare half-lives and curve shapes |
+| Chemistry | A→B→C mechanisms | Consecutive first-order reactions; explore the steady-state approximation for the intermediate |
+| Physics | Ideal gas simulation | 3D elastic particle simulation projected onto 2D; verify P = NkT/V and ⟨KE⟩ = 3/2 kT |
+| Physics | Maxwell–Boltzmann | Speed distribution for He, N₂, O₂, Ar, CO₂; compare v_p, v̄ and v_rms |
+| Physics | Van der Waals | Reduced isotherms P_r vs V_r; compare VdW Z_c = 0.375 with real CO₂ Z_c ≈ 0.275 |
+| Chemistry | Gibbs free energy | ΔG = ΔH − TΔS; find crossover T* and equilibrium constant K for ice fusion |
 
 ## Running tests
 
