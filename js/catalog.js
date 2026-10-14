@@ -65,6 +65,19 @@ export const catalog = [
                 (m) => m.IdealGasBench,
               ),
           },
+          {
+            id: 'maxwell-boltzmann',
+            navLabel: 'Maxwell–Boltzmann',
+            level: 'university',
+            keywords: [
+              'Maxwell-Boltzmann', 'speed distribution', 'kinetic theory', 'temperature',
+              'molar mass', 'most probable speed', 'mean speed', 'rms speed', 'ideal gas',
+            ],
+            load: () =>
+              import('./benches/physics/thermodynamics/maxwell-boltzmann/MaxwellBoltzmannBench.js').then(
+                (m) => m.MaxwellBoltzmannBench,
+              ),
+          },
         ],
       },
     ],
