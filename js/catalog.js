@@ -162,6 +162,19 @@ export const catalog = [
                 (m) => m.CentralDogmaBench,
               ),
           },
+          {
+            id: 'genetic-code',
+            navLabel: 'Genetic code',
+            level: 'intro',
+            keywords: [
+              'genetic code', 'codon', 'amino acid', 'synonymous', 'silent mutation',
+              'missense', 'nonsense', 'degeneracy', 'wobble', 'codon wheel', 'translation',
+            ],
+            load: () =>
+              import('./benches/biology/molecular/genetic-code/GeneticCodeBench.js').then(
+                (m) => m.GeneticCodeBench,
+              ),
+          },
         ],
       },
       {
