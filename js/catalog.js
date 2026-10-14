@@ -78,6 +78,19 @@ export const catalog = [
                 (m) => m.MaxwellBoltzmannBench,
               ),
           },
+          {
+            id: 'van-der-waals',
+            navLabel: 'Van der Waals',
+            level: 'university',
+            keywords: [
+              'van der Waals', 'equation of state', 'critical point', 'compressibility factor',
+              'reduced variables', 'isotherm', 'corresponding states', 'phase transition',
+            ],
+            load: () =>
+              import('./benches/physics/thermodynamics/van-der-waals/VanDerWaalsBench.js').then(
+                (m) => m.VanDerWaalsBench,
+              ),
+          },
         ],
       },
     ],
