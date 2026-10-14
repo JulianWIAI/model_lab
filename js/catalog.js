@@ -236,6 +236,19 @@ export const catalog = [
                 (m) => m.EnzymeKineticsBench,
               ),
           },
+          {
+            id: 'hill-binding',
+            navLabel: 'Hill binding',
+            level: 'university',
+            keywords: [
+              'Hill equation', 'haemoglobin', 'myoglobin', 'cooperative binding',
+              'P50', 'oxygen', 'saturation', 'sigmoid', 'allosteric', 'Hill coefficient',
+            ],
+            load: () =>
+              import('./benches/biology/biochemistry/hill-binding/HillBindingBench.js').then(
+                (m) => m.HillBindingBench,
+              ),
+          },
         ],
       },
       {
