@@ -1,0 +1,51 @@
+/*
+ * Design tokens: every colour and font the lab uses.
+ * Light values live on :root. Dark values replace them when
+ *   - the system is dark and the user has not picked "light", or
+ *   - the user picked "dark" with the theme button.
+ * Components only ever use these variables, never raw colours.
+ */
+:root {
+  color-scheme: light;
+
+  /* Surfaces and text */
+  --bg: #EEF1F4;
+  --panel: #FFFFFF;
+  --ink: #141B24;
+  --muted: #5A6676;
+  --line: #D3DAE3;
+  --grid: #E3E8EE;
+
+  /* Data series */
+  --accent: #2347C4;
+  --accent-soft: #E2E8FB;
+  --signal: #C9600C;
+  --third: #7A3FB0;
+  --good: #1E7A4C;
+
+  /* Quark colour charges */
+  --qr: #D0333F;
+  --qg: #1F8A4C;
+  --qb: #2D5BD8;
+
+  /* Type */
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0E1319; --panel: #161D26; --ink: #E6ECF3; --muted: #93A0B1; --line: #2A3441; --grid: #1E2733;
+    --accent: #8DA6FF; --accent-soft: #1F2A47; --signal: #F2994A; --third: #C49BF0; --good: #5CCB8E;
+    --qr: #FF6B74; --qg: #5CD18E; --qb: #7EA0FF;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0E1319; --panel: #161D26; --ink: #E6ECF3; --muted: #93A0B1; --line: #2A3441; --grid: #1E2733;
+  --accent: #8DA6FF; --accent-soft: #1F2A47; --signal: #F2994A; --third: #C49BF0; --good: #5CCB8E;
+  --qr: #FF6B74; --qg: #5CD18E; --qb: #7EA0FF;
+}

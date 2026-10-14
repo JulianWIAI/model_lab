@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Model Lab</title>
+  <meta name="description" content="Interactive science simulations you can push until they break: physics, chemistry, biology, neuroscience, math and economics.">
+
+  <!-- Fonts: a display face for headings, a sans for text, a mono for numbers -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+  <!-- Styles: tokens first, then page layout, then reusable components -->
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="site-header">
+      <div>
+        <h1>Model Lab</h1>
+        <p class="lede">Live models you can push until they break. Every simulation follows the same loop: commit to a prediction, run it, find where the model fails, then explain what you saw in one sentence.</p>
+      </div>
+      <div class="header-side">
+        <div class="loop" aria-label="Study loop">
+          <span><b>1</b>Predict</span><span><b>2</b>Run</span><span><b>3</b>Break it</span><span><b>4</b>Explain</span>
+        </div>
+        <button id="theme-toggle" class="btn" type="button">Theme: system</button>
+      </div>
+    </header>
+
+    <!-- Filled by js/core/App.js from js/catalog.js -->
+    <nav id="subject-nav" class="subject-nav" role="tablist" aria-label="Subjects"></nav>
+    <nav id="bench-nav" class="bench-nav" aria-label="Simulations"></nav>
+    <main id="bench-root"></main>
+
+    <p id="boot-error" class="boot-error" hidden>
+      The lab did not start. If you opened index.html by double-clicking it, the browser blocks JavaScript modules.
+      Start a small local server instead, for example <code>python -m http.server 8000</code> in this folder,
+      then open <code>http://localhost:8000</code>. See README.md.
+    </p>
+
+    <footer class="site-footer">
+      Open source. Every simulation lives in its own folder under <code>js/benches</code>, split into a model (the science), a view (the drawing) and a bench (the controls).
+    </footer>
+  </div>
+
+  <script>
+    // Safety net: if the module below never runs (e.g. file:// URL), show the help text above.
+    setTimeout(function () {
+      if (!window.__modelLabBooted) document.getElementById('boot-error').hidden = false;
+    }, 2000);
+  </script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
