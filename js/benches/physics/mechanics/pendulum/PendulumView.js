@@ -1,19 +1,19 @@
-import { Axes } from '../../../core/Axes.js';
-import { theme } from '../../../core/Theme.js';
+import { Axes } from '../../../../core/Axes.js';
+import { theme } from '../../../../core/Theme.js';
 
 /**
  * Draws the two pendulums in the top part of the canvas and
  * a scrolling trace of both angles underneath.
  */
 export class PendulumView {
-  /** @param {import('../../../core/CanvasView.js').CanvasView} canvasView */
+  /** @param {import('../../../../core/CanvasView.js').CanvasView} canvasView */
   constructor(canvasView) {
     this.canvasView = canvasView;
   }
 
   /**
    * @param {import('./PendulumModel.js').PendulumModel} model
-   * @param {import('../../../core/TimeSeries.js').TimeSeries} trace  angles in degrees
+   * @param {import('../../../../core/TimeSeries.js').TimeSeries} trace  angles in degrees
    */
   draw(model, trace) {
     const c = this.canvasView.begin();

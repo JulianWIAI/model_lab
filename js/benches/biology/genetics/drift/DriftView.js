@@ -1,5 +1,5 @@
-import { Axes } from '../../../core/Axes.js';
-import { theme } from '../../../core/Theme.js';
+import { Axes } from '../../../../core/Axes.js';
+import { theme } from '../../../../core/Theme.js';
 
 /**
  * Plots the frequency of allele A over generations, one line per population.
@@ -7,7 +7,7 @@ import { theme } from '../../../core/Theme.js';
  * The dashed line shows what selection alone would do without chance.
  */
 export class DriftView {
-  /** @param {import('../../../core/CanvasView.js').CanvasView} canvasView */
+  /** @param {import('../../../../core/CanvasView.js').CanvasView} canvasView */
   constructor(canvasView) {
     this.canvasView = canvasView;
   }

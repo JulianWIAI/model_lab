@@ -1,4 +1,4 @@
-import { Random } from '../../../core/Random.js';
+import { Random } from '../../../../core/Random.js';
 
 /**
  * Many independent populations evolving under the Wright–Fisher model.

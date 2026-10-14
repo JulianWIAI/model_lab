@@ -2,15 +2,22 @@ import { Router } from './Router.js';
 import { storage } from './Storage.js';
 import { el } from '../ui/el.js';
 
+/** Human-readable badge text for each level value. */
+const LEVEL_LABEL = { intro: 'Intro', university: 'University', graduate: 'Graduate' };
+
 /**
  * Runs the whole lab: builds the subject tabs and simulation chips,
- * creates each bench the first time it is opened, and drives the
+ * lazy-loads each bench the first time it is opened, and drives the
  * animation loop for whichever bench is visible.
+ *
+ * The catalog is a three-level structure: subjects → fields → bench entries.
+ * Each entry carries only navigation metadata and a load() function that
+ * returns the bench class on demand.
  */
 export class App {
   /**
    * @param {object} options
-   * @param {Array} options.catalog       subjects and their bench classes (see catalog.js)
+   * @param {import('../catalog.js').Subject[]} options.catalog  subjects → fields → bench entries
    * @param {HTMLElement} options.subjectNav  container for subject tabs
    * @param {HTMLElement} options.benchNav    container for simulation chips
    * @param {HTMLElement} options.root        where benches are mounted
@@ -21,10 +28,16 @@ export class App {
     this.benchNav = benchNav;
     this.root = root;
     this.router = new Router();
-    this.instances = new Map(); // bench id -> mounted bench object
+    /** Mounted bench instances: benchId → bench object */
+    this.instances = new Map();
+    /** Loaded bench classes: benchId → BenchClass (cached after first load) */
+    this.loadedClasses = new Map();
     this.active = null;
     this.lastTime = null;
     this.subjectButtons = new Map();
+    /** Loading sentinel element shown while a bench module is fetching */
+    this.loadingEl = el('p', { class: 'loading', text: 'Loading…', hidden: true });
+    this.root.prepend(this.loadingEl);
   }
 
   /** Builds navigation, opens the first bench and starts animating. */
@@ -41,33 +54,53 @@ export class App {
   }
 
   /**
-   * Shows a bench. Unknown ids fall back to the first subject or bench.
+   * Shows a bench. Unknown ids fall back to the first subject / bench.
+   * Returns a Promise so callers can await it, but the animation loop
+   * does not need to wait.
    * @param {{subject?: string|null, bench?: string|null}} route
    */
-  open(route) {
+  async open(route) {
     const subject = this.catalog.find((s) => s.id === route.subject) ?? this.catalog[0];
-    const BenchClass = subject.benches.find((b) => b.meta.id === route.bench) ?? subject.benches[0];
-    const benchId = BenchClass.meta.id;
 
-    this.router.replace(subject.id, benchId);
-    storage.set('route', `${subject.id}/${benchId}`);
+    // Flatten fields → entries to find the requested bench.
+    const allEntries = subject.fields.flatMap((f) => f.benches);
+    const entry = allEntries.find((e) => e.id === route.bench) ?? allEntries[0];
+
+    this.router.replace(subject.id, entry.id);
+    storage.set('route', `${subject.id}/${entry.id}`);
 
     for (const [id, button] of this.subjectButtons) {
       button.setAttribute('aria-selected', String(id === subject.id));
     }
-    this.#buildBenchNav(subject, benchId);
+    this.#buildBenchNav(subject, entry.id);
 
-    // Benches are created lazily, then kept alive so their state survives tab switches.
-    let bench = this.instances.get(benchId);
+    // Show loading sentinel while the module is being fetched.
+    if (!this.loadedClasses.has(entry.id)) {
+      this.loadingEl.hidden = false;
+      // Hide all existing bench instances while loading.
+      for (const bench of this.instances.values()) bench.setVisible(false);
+      this.active = null;
+    }
+
+    // Load the class (cached after the first call).
+    let BenchClass = this.loadedClasses.get(entry.id);
+    if (!BenchClass) {
+      BenchClass = await entry.load();
+      this.loadedClasses.set(entry.id, BenchClass);
+    }
+    this.loadingEl.hidden = true;
+
+    document.title = `${entry.navLabel} · Model Lab`;
+
+    // Mount once, keep alive so state survives tab switches.
+    let bench = this.instances.get(entry.id);
     if (!bench) {
       bench = new BenchClass();
       bench.mount(this.root);
-      this.instances.set(benchId, bench);
+      this.instances.set(entry.id, bench);
     }
     for (const other of this.instances.values()) other.setVisible(other === bench);
-
     this.active = bench;
-    document.title = `${BenchClass.meta.navLabel} · Model Lab`;
   }
 
   /** One tab per subject. */
@@ -84,17 +117,26 @@ export class App {
     }
   }
 
-  /** One chip per simulation in the current subject. */
+  /**
+   * Chips grouped under field headings for the current subject.
+   * Each chip carries a small level badge.
+   */
   #buildBenchNav(subject, activeId) {
-    const chips = subject.benches.map((B) =>
-      el('button', {
-        type: 'button',
-        text: B.meta.navLabel,
-        'aria-current': String(B.meta.id === activeId),
-        onClick: () => this.open({ subject: subject.id, bench: B.meta.id }),
-      }),
-    );
-    this.benchNav.replaceChildren(...chips);
+    const children = [];
+    for (const field of subject.fields) {
+      children.push(el('p', { class: 'field-heading', text: field.name }));
+      for (const entry of field.benches) {
+        const badge = el('span', { class: `level-badge level-${entry.level}`, text: LEVEL_LABEL[entry.level] ?? entry.level });
+        const chip = el('button', {
+          type: 'button',
+          'aria-current': String(entry.id === activeId),
+          onClick: () => this.open({ subject: subject.id, bench: entry.id }),
+        });
+        chip.append(document.createTextNode(entry.navLabel + ' '), badge);
+        children.push(chip);
+      }
+    }
+    this.benchNav.replaceChildren(...children);
   }
 
   /** Animation loop. dt is capped so a background tab does not cause a huge jump. */

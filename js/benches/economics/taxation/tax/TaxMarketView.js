@@ -1,12 +1,12 @@
-import { Axes } from '../../../core/Axes.js';
-import { theme } from '../../../core/Theme.js';
+import { Axes } from '../../../../core/Axes.js';
+import { theme } from '../../../../core/Theme.js';
 
 /**
  * Supply and demand diagram with the tax wedge:
  * shaded revenue rectangle and the deadweight-loss triangle.
  */
 export class TaxMarketView {
-  /** @param {import('../../../core/CanvasView.js').CanvasView} canvasView */
+  /** @param {import('../../../../core/CanvasView.js').CanvasView} canvasView */
   constructor(canvasView) {
     this.canvasView = canvasView;
   }

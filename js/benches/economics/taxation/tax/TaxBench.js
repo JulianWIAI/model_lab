@@ -1,7 +1,7 @@
-import { Bench } from '../../../core/Bench.js';
-import { Slider } from '../../../ui/Slider.js';
-import { ReadoutPanel } from '../../../ui/ReadoutPanel.js';
-import { Legend } from '../../../ui/Legend.js';
+import { Bench } from '../../../../core/Bench.js';
+import { Slider } from '../../../../ui/Slider.js';
+import { ReadoutPanel } from '../../../../ui/ReadoutPanel.js';
+import { Legend } from '../../../../ui/Legend.js';
 import { TaxMarketModel } from './TaxMarketModel.js';
 import { TaxMarketView } from './TaxMarketView.js';
 

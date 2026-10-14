@@ -1,8 +1,8 @@
-import { Bench } from '../../../core/Bench.js';
-import { Slider } from '../../../ui/Slider.js';
-import { ActionButton } from '../../../ui/ActionButton.js';
-import { ReadoutPanel } from '../../../ui/ReadoutPanel.js';
-import { Legend } from '../../../ui/Legend.js';
+import { Bench } from '../../../../core/Bench.js';
+import { Slider } from '../../../../ui/Slider.js';
+import { ActionButton } from '../../../../ui/ActionButton.js';
+import { ReadoutPanel } from '../../../../ui/ReadoutPanel.js';
+import { Legend } from '../../../../ui/Legend.js';
 import { WrightFisherModel } from './WrightFisherModel.js';
 import { DriftView } from './DriftView.js';
 

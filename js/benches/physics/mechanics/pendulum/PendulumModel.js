@@ -1,4 +1,4 @@
-import { Integrators } from '../../../core/Integrators.js';
+import { Integrators } from '../../../../core/Integrators.js';
 
 /**
  * Two pendulums released from the same angle, side by side:

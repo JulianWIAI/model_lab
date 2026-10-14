@@ -1,11 +1,11 @@
-import { Bench } from '../../../core/Bench.js';
-import { TimeSeries } from '../../../core/TimeSeries.js';
-import { Slider } from '../../../ui/Slider.js';
-import { ActionButton } from '../../../ui/ActionButton.js';
-import { ToggleButton } from '../../../ui/ToggleButton.js';
-import { ReadoutPanel } from '../../../ui/ReadoutPanel.js';
-import { Legend } from '../../../ui/Legend.js';
-import { el } from '../../../ui/el.js';
+import { Bench } from '../../../../core/Bench.js';
+import { TimeSeries } from '../../../../core/TimeSeries.js';
+import { Slider } from '../../../../ui/Slider.js';
+import { ActionButton } from '../../../../ui/ActionButton.js';
+import { ToggleButton } from '../../../../ui/ToggleButton.js';
+import { ReadoutPanel } from '../../../../ui/ReadoutPanel.js';
+import { Legend } from '../../../../ui/Legend.js';
+import { el } from '../../../../ui/el.js';
 import { ReactionModel } from './ReactionModel.js';
 import { ReactionView } from './ReactionView.js';
 

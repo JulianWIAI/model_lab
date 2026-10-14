@@ -73,6 +73,28 @@ textarea {
 
 .boot-error { background: var(--panel); border: 1px solid var(--signal); border-radius: 10px; padding: 14px 16px; margin: 0; }
 
+/* Bench navigation: field group headings and level badges */
+.field-heading {
+  font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); margin: 8px 0 3px; padding: 0 4px;
+}
+.field-heading:first-child { margin-top: 0; }
+.level-badge {
+  font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase;
+  border-radius: 3px; padding: 1px 5px; vertical-align: middle;
+}
+.level-intro    { background: #d1fae5; color: #065f46; }
+.level-university { background: #dbeafe; color: #1e40af; }
+.level-graduate { background: #ede9fe; color: #5b21b6; }
+@media (prefers-color-scheme: dark) {
+  .level-intro      { background: #064e3b; color: #6ee7b7; }
+  .level-university { background: #1e3a5f; color: #93c5fd; }
+  .level-graduate   { background: #3b1f6e; color: #c4b5fd; }
+}
+
+/* Loading state */
+.loading { font-size: 14px; color: var(--muted); padding: 24px; text-align: center; }
+
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto !important; transition: none !important; }
 }

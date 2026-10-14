@@ -1,4 +1,4 @@
-import { theme } from '../../../core/Theme.js';
+import { theme } from '../../../../core/Theme.js';
 
 /** Horizontal pixels per radian of phase in the trailing wave. */
 const PIXELS_PER_RADIAN = 60;
@@ -8,7 +8,7 @@ const PIXELS_PER_RADIAN = 60;
  * they trace on the right, with the target wave dashed behind it.
  */
 export class FourierView {
-  /** @param {import('../../../core/CanvasView.js').CanvasView} canvasView */
+  /** @param {import('../../../../core/CanvasView.js').CanvasView} canvasView */
   constructor(canvasView) {
     this.canvasView = canvasView;
     /** @type {{phase: number, y: number}[]} recent tip heights */

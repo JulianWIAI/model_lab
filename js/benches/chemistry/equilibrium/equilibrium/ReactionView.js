@@ -1,19 +1,19 @@
-import { Axes } from '../../../core/Axes.js';
-import { theme } from '../../../core/Theme.js';
+import { Axes } from '../../../../core/Axes.js';
+import { theme } from '../../../../core/Theme.js';
 
 /**
  * Left (or top on phones): concentrations of A, B and C over time.
  * Right (or bottom): the energy profile with the barrier and ΔH.
  */
 export class ReactionView {
-  /** @param {import('../../../core/CanvasView.js').CanvasView} canvasView */
+  /** @param {import('../../../../core/CanvasView.js').CanvasView} canvasView */
   constructor(canvasView) {
     this.canvasView = canvasView;
   }
 
   /**
    * @param {import('./ReactionModel.js').ReactionModel} model
-   * @param {import('../../../core/TimeSeries.js').TimeSeries} trace  channels: A, B, C
+   * @param {import('../../../../core/TimeSeries.js').TimeSeries} trace  channels: A, B, C
    */
   draw(model, trace) {
     const c = this.canvasView.begin();

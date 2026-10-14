@@ -1,4 +1,4 @@
-import { theme } from '../../../core/Theme.js';
+import { theme } from '../../../../core/Theme.js';
 import { QUARKS } from './QuarkData.js';
 
 /**
@@ -6,7 +6,7 @@ import { QUARKS } from './QuarkData.js';
  * Baryons sit in a triangle, mesons in a pair.
  */
 export class QuarkView {
-  /** @param {import('../../../core/CanvasView.js').CanvasView} canvasView */
+  /** @param {import('../../../../core/CanvasView.js').CanvasView} canvasView */
   constructor(canvasView) {
     this.canvasView = canvasView;
   }

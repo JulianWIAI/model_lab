@@ -1,8 +1,8 @@
-import { Bench } from '../../../core/Bench.js';
-import { Slider } from '../../../ui/Slider.js';
-import { ButtonGroup } from '../../../ui/ButtonGroup.js';
-import { ReadoutPanel } from '../../../ui/ReadoutPanel.js';
-import { Legend } from '../../../ui/Legend.js';
+import { Bench } from '../../../../core/Bench.js';
+import { Slider } from '../../../../ui/Slider.js';
+import { ButtonGroup } from '../../../../ui/ButtonGroup.js';
+import { ReadoutPanel } from '../../../../ui/ReadoutPanel.js';
+import { Legend } from '../../../../ui/Legend.js';
 import { FourierSeries } from './FourierSeries.js';
 import { FourierView } from './FourierView.js';
 

@@ -1,8 +1,8 @@
-import { Bench } from '../../../core/Bench.js';
-import { ActionButton } from '../../../ui/ActionButton.js';
-import { ButtonGroup } from '../../../ui/ButtonGroup.js';
-import { ReadoutPanel } from '../../../ui/ReadoutPanel.js';
-import { el } from '../../../ui/el.js';
+import { Bench } from '../../../../core/Bench.js';
+import { ActionButton } from '../../../../ui/ActionButton.js';
+import { ButtonGroup } from '../../../../ui/ButtonGroup.js';
+import { ReadoutPanel } from '../../../../ui/ReadoutPanel.js';
+import { el } from '../../../../ui/el.js';
 import { QUARKS } from './QuarkData.js';
 import { HadronBuilder } from './HadronBuilder.js';
 import { QuarkView } from './QuarkView.js';

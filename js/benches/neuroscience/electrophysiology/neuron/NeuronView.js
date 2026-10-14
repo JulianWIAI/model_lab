@@ -1,18 +1,18 @@
-import { Axes } from '../../../core/Axes.js';
-import { theme } from '../../../core/Theme.js';
+import { Axes } from '../../../../core/Axes.js';
+import { theme } from '../../../../core/Theme.js';
 
 /**
  * Top: membrane voltage over the last 100 ms.
  * Bottom: the three gating variables m, h, n on the same time axis.
  */
 export class NeuronView {
-  /** @param {import('../../../core/CanvasView.js').CanvasView} canvasView */
+  /** @param {import('../../../../core/CanvasView.js').CanvasView} canvasView */
   constructor(canvasView) {
     this.canvasView = canvasView;
   }
 
   /**
-   * @param {import('../../../core/TimeSeries.js').TimeSeries} trace  channels: V, m, h, n
+   * @param {import('../../../../core/TimeSeries.js').TimeSeries} trace  channels: V, m, h, n
    * @param {import('./HodgkinHuxleyModel.js').HodgkinHuxleyModel} model
    */
   draw(trace, model) {
