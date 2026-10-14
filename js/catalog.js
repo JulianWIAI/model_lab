@@ -169,6 +169,19 @@ export const catalog = [
                 (m) => m.RateLawsBench,
               ),
           },
+          {
+            id: 'mechanisms',
+            navLabel: 'A→B→C',
+            level: 'university',
+            keywords: [
+              'consecutive reactions', 'series reactions', 'Bateman', 'intermediate',
+              'steady-state approximation', 'SSA', 'rate constant', 'kinetics', 'mechanism',
+            ],
+            load: () =>
+              import('./benches/chemistry/kinetics/mechanisms/MechanismsBench.js').then(
+                (m) => m.MechanismsBench,
+              ),
+          },
         ],
       },
     ],
