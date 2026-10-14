@@ -48,6 +48,25 @@ export const catalog = [
           },
         ],
       },
+      {
+        id: 'thermodynamics',
+        name: 'Thermodynamics',
+        benches: [
+          {
+            id: 'ideal-gas',
+            navLabel: 'Ideal gas',
+            level: 'university',
+            keywords: [
+              'ideal gas', 'kinetic theory', 'equipartition', 'Maxwell-Boltzmann',
+              'pressure', 'temperature', 'particle simulation', 'Boltzmann', 'PV=NkT',
+            ],
+            load: () =>
+              import('./benches/physics/thermodynamics/ideal-gas/IdealGasBench.js').then(
+                (m) => m.IdealGasBench,
+              ),
+          },
+        ],
+      },
     ],
   },
   {
