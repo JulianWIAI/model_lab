@@ -203,6 +203,20 @@ export const catalog = [
                 (m) => m.PCRBench,
               ),
           },
+          {
+            id: 'lac-operon',
+            navLabel: 'Lac operon',
+            level: 'university',
+            keywords: [
+              'lac operon', 'gene regulation', 'bistability', 'toggle switch',
+              'E. coli', 'mRNA', 'beta-galactosidase', 'allolactose', 'inducer',
+              'catabolite repression', 'glucose', 'lactose', 'Hill function',
+            ],
+            load: () =>
+              import('./benches/biology/molecular/lac-operon/LacOperonBench.js').then(
+                (m) => m.LacOperonBench,
+              ),
+          },
         ],
       },
       {
