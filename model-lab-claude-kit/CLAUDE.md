@@ -42,6 +42,7 @@ Rules that keep this scalable:
 - Prefer exact methods over textbook shortcuts (e.g. solve the charge balance for pH rather than using Henderson–Hasselbalch everywhere), and say in "Where it breaks" which simplifications remain.
 - The `info.research.papers` list contains only real publications. If you are not certain of a DOI, omit `url`; BenchLayout then links to a Google Scholar search.
 - Never invent experimental values. If a value cannot be verified, leave it out and say so in the commit message.
+- If a remote data source (script fetch, API call) cannot be reached, stop and tell the user. Never fill the gap from memory.
 
 ## Every bench must have
 

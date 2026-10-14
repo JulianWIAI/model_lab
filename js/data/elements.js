@@ -7,6 +7,10 @@
  *   electronConfig (superscript, sorted by n then l).
  *
  * Regenerate: node tools/fetch-elements.js > js/data/elements.js
+ *
+ * Note on Lr (Z=103): PubChem lists [Rn] 5f¹⁴ 6d¹ 7s². A 2015 experiment
+ * (Sato et al., Science 351, 167) found the ground state is [Rn] 5f¹⁴ 7s² 7p¹.
+ * This file follows PubChem; the experimental value is cited here for awareness.
  */
 
 export const SOURCE = Object.freeze({
