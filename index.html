@@ -31,6 +31,12 @@
       </div>
     </header>
 
+    <!-- Search: filtered list of all simulations -->
+    <div class="search-wrap" role="search">
+      <input id="search" type="search" class="search-input" placeholder="Search simulations…" aria-label="Search simulations" aria-controls="search-results" aria-autocomplete="list" autocomplete="off">
+      <ul id="search-results" class="search-results" role="listbox" aria-label="Search results" hidden></ul>
+    </div>
+
     <!-- Filled by js/core/App.js from js/catalog.js -->
     <nav id="subject-nav" class="subject-nav" role="tablist" aria-label="Subjects"></nav>
     <nav id="bench-nav" class="bench-nav" aria-label="Simulations"></nav>

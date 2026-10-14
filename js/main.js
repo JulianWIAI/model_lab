@@ -13,6 +13,8 @@ const app = new App({
   subjectNav: document.getElementById('subject-nav'),
   benchNav: document.getElementById('bench-nav'),
   root: document.getElementById('bench-root'),
+  searchInput: document.getElementById('search'),
+  searchResults: document.getElementById('search-results'),
 });
 app.start();
 

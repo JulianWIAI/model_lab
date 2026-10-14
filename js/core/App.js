@@ -21,8 +21,10 @@ export class App {
    * @param {HTMLElement} options.subjectNav  container for subject tabs
    * @param {HTMLElement} options.benchNav    container for simulation chips
    * @param {HTMLElement} options.root        where benches are mounted
+   * @param {HTMLInputElement} [options.searchInput]   search input element
+   * @param {HTMLElement}      [options.searchResults] search results listbox element
    */
-  constructor({ catalog, subjectNav, benchNav, root }) {
+  constructor({ catalog, subjectNav, benchNav, root, searchInput, searchResults }) {
     this.catalog = catalog;
     this.subjectNav = subjectNav;
     this.benchNav = benchNav;
@@ -38,11 +40,16 @@ export class App {
     /** Loading sentinel element shown while a bench module is fetching */
     this.loadingEl = el('p', { class: 'loading', text: 'Loading…', hidden: true });
     this.root.prepend(this.loadingEl);
+    this.searchInput = searchInput ?? null;
+    this.searchResultsEl = searchResults ?? null;
+    /** Index: flat list of {subject, field, entry} for search */
+    this._searchIndex = this.#buildSearchIndex();
   }
 
   /** Builds navigation, opens the first bench and starts animating. */
   start() {
     this.#buildSubjectNav();
+    if (this.searchInput) this.#initSearch();
     this.router.onChange((route) => this.open(route));
 
     // Priority: link in the address bar, then the last bench visited, then the first one.
@@ -137,6 +144,102 @@ export class App {
       }
     }
     this.benchNav.replaceChildren(...children);
+  }
+
+  /** Builds a flat list of all bench entries with their subject/field context for search. */
+  #buildSearchIndex() {
+    const index = [];
+    for (const subject of this.catalog) {
+      for (const field of subject.fields) {
+        for (const entry of field.benches) {
+          index.push({ subject, field, entry });
+        }
+      }
+    }
+    return index;
+  }
+
+  /** Wires up the search input: filter, dropdown, keyboard navigation. */
+  #initSearch() {
+    const input = this.searchInput;
+    const listbox = this.searchResultsEl;
+    let activeIdx = -1;
+
+    const close = () => {
+      listbox.hidden = true;
+      listbox.replaceChildren();
+      activeIdx = -1;
+      input.removeAttribute('aria-activedescendant');
+    };
+
+    const navigate = (item) => {
+      this.open({ subject: item.subject.id, bench: item.entry.id });
+      input.value = '';
+      close();
+      input.blur();
+    };
+
+    const setActive = (idx) => {
+      const items = listbox.querySelectorAll('[role="option"]');
+      items.forEach((el, i) => el.setAttribute('aria-selected', String(i === idx)));
+      activeIdx = idx;
+      if (idx >= 0 && idx < items.length) {
+        input.setAttribute('aria-activedescendant', items[idx].id);
+        items[idx].scrollIntoView({ block: 'nearest' });
+      } else {
+        input.removeAttribute('aria-activedescendant');
+      }
+    };
+
+    input.addEventListener('input', () => {
+      const q = input.value.trim().toLowerCase();
+      if (!q) { close(); return; }
+      const matches = this._searchIndex.filter(({ field, entry }) => {
+        return (
+          entry.navLabel.toLowerCase().includes(q) ||
+          field.name.toLowerCase().includes(q) ||
+          entry.keywords.some((k) => k.toLowerCase().includes(q))
+        );
+      });
+      if (!matches.length) { close(); return; }
+      listbox.replaceChildren(
+        ...matches.slice(0, 8).map((item, i) => {
+          const li = el('li', {
+            id: `sr-${item.entry.id}`,
+            role: 'option',
+            'aria-selected': 'false',
+          });
+          li.innerHTML = `<strong>${item.entry.navLabel}</strong> <span class="sr-field">${item.field.name} · ${item.subject.name}</span>`;
+          li.addEventListener('mousedown', (e) => { e.preventDefault(); navigate(item); });
+          return li;
+        }),
+      );
+      listbox.hidden = false;
+      setActive(-1);
+    });
+
+    input.addEventListener('keydown', (e) => {
+      const items = [...listbox.querySelectorAll('[role="option"]')];
+      if (!items.length) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setActive(Math.min(activeIdx + 1, items.length - 1));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setActive(Math.max(activeIdx - 1, 0));
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const idx = activeIdx >= 0 ? activeIdx : 0;
+        if (idx < items.length) {
+          const item = this._searchIndex.find((it) => `sr-${it.entry.id}` === items[idx].id);
+          if (item) navigate(item);
+        }
+      } else if (e.key === 'Escape') {
+        close();
+      }
+    });
+
+    input.addEventListener('blur', () => setTimeout(close, 150));
   }
 
   /** Animation loop. dt is capped so a background tab does not cause a huge jump. */

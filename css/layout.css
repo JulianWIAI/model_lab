@@ -38,7 +38,8 @@ body {
 .subject-nav button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
 
 /* Simulation chips inside a subject */
-.bench-nav { display: flex; flex-wrap: wrap; gap: 6px; }
+.bench-nav { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.bench-nav .field-heading { flex: 0 0 100%; margin: 4px 0 0; } /* full-width row before each field's chips */
 .bench-nav button {
   font: inherit; font-size: 14px; cursor: pointer;
   border: 1px solid var(--line); background: var(--panel); color: var(--ink);
