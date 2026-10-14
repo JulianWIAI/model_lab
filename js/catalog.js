@@ -189,6 +189,20 @@ export const catalog = [
                 (m) => m.GeneticCodeBench,
               ),
           },
+          {
+            id: 'pcr',
+            navLabel: 'PCR',
+            level: 'intro',
+            keywords: [
+              'PCR', 'polymerase chain reaction', 'Ct', 'threshold cycle',
+              'amplification efficiency', 'exponential growth', 'plateau', 'qPCR',
+              'copy number', 'template', 'logistic',
+            ],
+            load: () =>
+              import('./benches/biology/molecular/pcr/PCRBench.js').then(
+                (m) => m.PCRBench,
+              ),
+          },
         ],
       },
       {
