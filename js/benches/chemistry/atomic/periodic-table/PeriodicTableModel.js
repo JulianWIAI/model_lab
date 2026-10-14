@@ -1,21 +1,22 @@
 /**
  * PeriodicTableModel — periodic table explorer.
  *
- * Holds 118-element dataset from js/data/elements.js.
+ * Holds 118-element dataset from js/data/elements.js (fetched from PubChem).
  * Aufbau order: 1s 2s 2p 3s 3p 4s 3d 4p 5s 4d 5p 6s 4f 5d 6p 7s 5f 6d 7p
  *
- * Exceptions to Aufbau (verified from WebElements / NIST):
- *   Cr (Z=24): [Ar] 3d⁵ 4s¹ (not 3d⁴ 4s²)
- *   Cu (Z=29): [Ar] 3d¹⁰ 4s¹ (not 3d⁹ 4s²)
- *   Nb (Z=41): [Kr] 4d⁴ 5s¹
- *   Mo (Z=42): [Kr] 4d⁵ 5s¹
- *   Ru (Z=44): [Kr] 4d⁷ 5s¹
- *   Rh (Z=45): [Kr] 4d⁸ 5s¹
- *   Pd (Z=46): [Kr] 4d¹⁰ (not 4d⁸ 5s²)
- *   Ag (Z=47): [Kr] 4d¹⁰ 5s¹
- *   Pt (Z=78): [Xe] 4f¹⁴ 5d⁹ 6s¹
- *   Au (Z=79): [Xe] 4f¹⁴ 5d¹⁰ 6s¹
- *   (Lanthanides and actinides: stored as-is in data file)
+ * Exceptions to simple Aufbau (source: PubChem electronConfiguration field):
+ *   — d-block anomalies (half-filled or filled d sub-shell preferred) —
+ *   Cr (Z=24): [Ar] 3d⁵ 4s¹     Cu (Z=29): [Ar] 3d¹⁰ 4s¹
+ *   Nb (Z=41): [Kr] 4d⁴ 5s¹     Mo (Z=42): [Kr] 4d⁵ 5s¹
+ *   Ru (Z=44): [Kr] 4d⁷ 5s¹     Rh (Z=45): [Kr] 4d⁸ 5s¹
+ *   Pd (Z=46): [Kr] 4d¹⁰        Ag (Z=47): [Kr] 4d¹⁰ 5s¹
+ *   Pt (Z=78): [Xe] 4f¹⁴ 5d⁹ 6s¹  Au (Z=79): [Xe] 4f¹⁴ 5d¹⁰ 6s¹
+ *   — lanthanide/actinide anomalies (5d or 6d promoted instead of 4f/5f) —
+ *   La (Z=57): [Xe] 5d¹ 6s²     Ce (Z=58): [Xe] 4f¹ 5d¹ 6s²
+ *   Gd (Z=64): [Xe] 4f⁷ 5d¹ 6s²
+ *   Ac (Z=89): [Rn] 6d¹ 7s²     Th (Z=90): [Rn] 6d² 7s²
+ *   Pa (Z=91): [Rn] 5f² 6d¹ 7s²  U (Z=92): [Rn] 5f³ 6d¹ 7s²
+ *   Np (Z=93): [Rn] 5f⁴ 6d¹ 7s²  Cm (Z=96): [Rn] 5f⁷ 6d¹ 7s²
  */
 import { ELEMENTS, SOURCE } from '../../../../data/elements.js';
 
@@ -27,8 +28,10 @@ const AUFBAU_ORDER = [
   [7,0,'7s',2],[5,3,'5f',14],[6,2,'6d',10],[7,1,'7p',6],
 ];
 
-// Exceptions: Z → electron configuration string
+// Exceptions: Z → electron configuration string (from PubChem electronConfiguration)
+// 19 exceptions total; aufbauConfig() returns the string from this table for these Z.
 const EXCEPTIONS = Object.freeze({
+  // d-block anomalies
   24: '[Ar] 3d⁵ 4s¹',
   29: '[Ar] 3d¹⁰ 4s¹',
   41: '[Kr] 4d⁴ 5s¹',
@@ -39,6 +42,17 @@ const EXCEPTIONS = Object.freeze({
   47: '[Kr] 4d¹⁰ 5s¹',
   78: '[Xe] 4f¹⁴ 5d⁹ 6s¹',
   79: '[Xe] 4f¹⁴ 5d¹⁰ 6s¹',
+  // lanthanide anomalies
+  57: '[Xe] 5d¹ 6s²',
+  58: '[Xe] 4f¹ 5d¹ 6s²',
+  64: '[Xe] 4f⁷ 5d¹ 6s²',
+  // actinide anomalies
+  89: '[Rn] 6d¹ 7s²',
+  90: '[Rn] 6d² 7s²',
+  91: '[Rn] 5f² 6d¹ 7s²',
+  92: '[Rn] 5f³ 6d¹ 7s²',
+  93: '[Rn] 5f⁴ 6d¹ 7s²',
+  96: '[Rn] 5f⁷ 6d¹ 7s²',
 });
 
 export class PeriodicTableModel {

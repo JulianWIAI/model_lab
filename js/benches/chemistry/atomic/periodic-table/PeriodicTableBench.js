@@ -62,7 +62,7 @@ export class PeriodicTableBench extends Bench {
       label: 'Property',
       options: [
         { label: 'Electronegativity', value: 'electronegativity' },
-        { label: 'Atomic radius', value: 'atomicRadius' },
+        { label: 'vdW radius', value: 'vdwRadius' },
         { label: 'Ionization E', value: 'ionizationEnergy' },
       ],
       value: 'electronegativity',
