@@ -28,6 +28,13 @@ Each bench also has two deeper layers: **Derive it** (where the equations come f
 | Chemistry | Hydrogen orbitals | Visualise 1s–4f probability densities and radial distributions |
 | Chemistry | Titration curves | Titrate strong and weak acids; see equivalence points and buffer regions |
 | Chemistry | Periodic table | Compare electronegativity, atomic radius and ionisation energy across all 118 elements |
+| Chemistry | Atomic spectra | See Lyman, Balmer, Paschen and Brackett lines for hydrogen and deuterium (Rydberg formula with reduced-mass correction) |
+| Chemistry | Buffer capacity | Explore exact species fractions and buffer capacity β for five polyprotic acids |
+| Biology | Genetic code | Codon wheel for all 64 codons; classify every single-base mutation as silent, missense or nonsense |
+| Biology | PCR | Amplify templates with adjustable efficiency and plateau model; read off the threshold cycle Ct |
+| Biology | Hardy–Weinberg equilibrium | Track allele frequencies under selection, mutation and migration; trace the path in a de Finetti triangle |
+| Biology | Genetic linkage | Compare Haldane and Kosambi mapping functions; compute LOD scores |
+| Biology | Lac operon switch | Qualitative bistable ODE model of the lac operon; explore hysteresis by sweeping lactose up and down |
 
 ## Running tests
 
