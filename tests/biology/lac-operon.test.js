@@ -74,46 +74,36 @@ test('mRNA eventually exceeds initial value when lactose=1, glucose=0 (100 steps
   assert.ok(m.mRNA > m0, `mRNA should exceed initial value after 100 steps: ${m.mRNA} vs ${m0}`);
 });
 
-test('Hysteresis: switch-on lactose threshold ≠ switch-off threshold', () => {
-  // Sweep lactose from 0 to 1 (step 0.01) until lacZ > 0.3 → record L_on
-  // Sweep back from 1 to 0 until lacZ < 0.3 → record L_off
-  // For bistability: L_off < L_on
+test('Bistability: at intermediate lactose (L=0.01), low and high initial states converge to different steady states', () => {
+  // The lac operon is bistable at intermediate lactose concentrations:
+  // starting from near-zero gives the OFF state; starting from a fully-induced
+  // state keeps the ON state. This is the hallmark of hysteresis.
+  //
+  // At L=0.02 the system is beyond LOn (both states converge to ON).
+  // At L=0.01 the uninduced state stays OFF while the pre-induced state stays ON.
+  const BISTABLE_L = 0.01;
+  const STEPS = 2000;
 
-  let LOn = null, LOff = null;
-  const runToSteady = (glucose, lactose, n = 400, dt = 0.05) => {
-    const m = new LacOperonModel({ glucose, lactose });
-    for (let i = 0; i < n; i++) m.step(dt);
-    return m.lacZ;
-  };
+  // Low initial condition → OFF state
+  const mLow = new LacOperonModel({ glucose: 0, lactose: BISTABLE_L });
+  for (let i = 0; i < STEPS; i++) mLow.step(0.05);
 
-  // Sweep up: find threshold above which lacZ > 0.3
-  for (let li = 0; li <= 100; li++) {
-    const L = li / 100;
-    const lacZ = runToSteady(0, L);
-    if (lacZ > 0.3 && LOn === null) { LOn = L; break; }
-  }
+  // High initial condition (pre-induced) → ON state
+  const mHigh = new LacOperonModel({ glucose: 0, lactose: BISTABLE_L });
+  mHigh._y = [5, 30, 30]; // start in induced-like state
+  for (let i = 0; i < STEPS; i++) mHigh.step(0.05);
 
-  // Sweep down from fully induced state: find threshold below which lacZ < 0.3
-  // Start each step from the high state (run 200 steps at high L first)
-  // To detect hysteresis properly: run a continuous sweep using the last state
-  // We use a simplified approach: for each L going down, does lacZ stay high?
-  let mDown = new LacOperonModel({ glucose: 0, lactose: 1 });
-  for (let i = 0; i < 400; i++) mDown.step(0.05); // fully induce
-  for (let li = 100; li >= 0; li--) {
-    mDown.lactose = li / 100;
-    for (let i = 0; i < 200; i++) mDown.step(0.05);
-    if (mDown.lacZ < 0.3 && LOff === null) { LOff = li / 100; break; }
-  }
-
-  // If either threshold is null, the system may not show bistability with these params.
-  // The test only checks hysteresis IF both thresholds were found.
-  if (LOn !== null && LOff !== null) {
-    assert.ok(
-      LOff < LOn,
-      `Hysteresis: switch-off L=${LOff} should be < switch-on L=${LOn}`,
-    );
-  } else {
-    // Accept if system is not bistable with default params
-    assert.ok(LOn !== null || LOff !== null, 'At least one transition threshold should exist');
-  }
+  // The two starting conditions must converge to clearly different steady states
+  assert.ok(
+    mLow.lacZ < 1,
+    `Low-start lacZ at L=${BISTABLE_L}: expected near 0, got ${mLow.lacZ.toFixed(3)}`,
+  );
+  assert.ok(
+    mHigh.lacZ > 10,
+    `High-start lacZ at L=${BISTABLE_L}: expected > 10 (ON state), got ${mHigh.lacZ.toFixed(3)}`,
+  );
+  assert.ok(
+    mHigh.lacZ - mLow.lacZ > 10,
+    `Expected bistability gap > 10, got ${(mHigh.lacZ - mLow.lacZ).toFixed(3)}`,
+  );
 });

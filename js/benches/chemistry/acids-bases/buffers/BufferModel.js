@@ -10,13 +10,25 @@
  *   β(pH) = 2.303 · (h + Kw/h + C · Var)
  *   Var   = Σ_k α_k·k² − (Σ_k α_k·k)²
  *
- * pKa sources (all 25 °C, 1 atm):
- *   Acetic acid:     NIST WebBook (https://webbook.nist.gov), SID 176; pKa 4.756
- *   Ammonium:        NIST WebBook, SID 16741146; pKa 9.246
- *   Phosphoric acid: Martell & Smith, "Critical Stability Constants" Vol. 4 (1976) p. 40
- *   Carbonic acid:   Harned & Davis (1943) J. Am. Chem. Soc. 65, 2030 (pKa1 6.352);
- *                    Harned & Scholes (1941) J. Am. Chem. Soc. 63, 1706 (pKa2 10.329)
- *   Citric acid:     Martell & Smith, "Critical Stability Constants" Vol. 3 (1977) p. 161
+ * pKa sources (all aqueous, 25 °C, I→0 unless noted):
+ *   Acetic acid pKa=4.756:
+ *     Harned & Ehlers (1933) J. Am. Chem. Soc. 55, 2179–2193 (original EMF measurement).
+ *     Tabulated in CRC Handbook of Chemistry and Physics (97th ed.) and Skoog et al. 2014 §16.
+ *   Ammonium pKa=9.246:
+ *     Bates & Pinching (1949) J. Am. Chem. Soc. 71, 1274–1283 (original EMF measurement).
+ *     Tabulated in Skoog et al. 2014 §16.
+ *   Phosphoric acid pKas=2.148, 7.198, 12.375:
+ *     Martell & Smith, "Critical Stability Constants" Vol. 4 (1976) — authoritative
+ *     compilation; exact table number unverified in this codebase.
+ *     pKa1 and pKa2 are well-established; pKa3 is less precisely determined
+ *     (values in the range 12.35–12.40 appear in different sources).
+ *   Carbonic acid pKas=6.352, 10.329:
+ *     pKa1 (apparent, includes dissolved CO₂): Harned & Davis (1943) J. Am. Chem. Soc. 65, 2030.
+ *     pKa2: Harned & Scholes (1941) J. Am. Chem. Soc. 63, 1706.
+ *   Citric acid pKas=3.128, 4.761, 6.396:
+ *     Martell & Smith, "Critical Stability Constants" Vol. 3 (1977) — authoritative
+ *     compilation; exact table number unverified in this codebase.
+ *     Values consistent with NIST WebBook (CAS 77-92-9) and Skoog et al. 2014.
  *
  * Kw = 1.012e-14 at 25 °C (NIST Chemistry WebBook).
  */
@@ -30,31 +42,34 @@ export const PRESETS = Object.freeze([
     name: 'Acetic acid',
     formula: 'CH₃COOH',
     pKas: [4.756],
-    // NIST WebBook SID 176
+    // Harned & Ehlers (1933) J. Am. Chem. Soc. 55, 2179; CRC Handbook 97th ed.
   },
   {
     name: 'Phosphoric acid',
     formula: 'H₃PO₄',
     pKas: [2.148, 7.198, 12.375],
-    // Martell & Smith Vol. 4 (1976) p. 40
+    // Martell & Smith, Critical Stability Constants Vol. 4 (1976); table unverified in this codebase
+    // pKa3 uncertainty: 12.35–12.40 across sources
   },
   {
     name: 'Carbonic acid',
     formula: 'H₂CO₃',
     pKas: [6.352, 10.329],
-    // Harned & Davis 1943 (pKa1); Harned & Scholes 1941 (pKa2)
+    // pKa1 apparent (CO₂(aq)+H₂O): Harned & Davis (1943) J. Am. Chem. Soc. 65, 2030
+    // pKa2: Harned & Scholes (1941) J. Am. Chem. Soc. 63, 1706
   },
   {
     name: 'Citric acid',
     formula: 'C₆H₈O₇',
     pKas: [3.128, 4.761, 6.396],
-    // Martell & Smith Vol. 3 (1977) p. 161
+    // Martell & Smith, Critical Stability Constants Vol. 3 (1977); table unverified in this codebase
+    // Values consistent with NIST WebBook CAS 77-92-9 and Skoog et al. 2014
   },
   {
     name: 'Ammonium',
     formula: 'NH₄⁺',
     pKas: [9.246],
-    // NIST WebBook SID 16741146
+    // Bates & Pinching (1949) J. Am. Chem. Soc. 71, 1274; Skoog et al. 2014 §16
   },
 ]);
 
