@@ -154,7 +154,7 @@ To be mapped in a later phase with the same structure. Done so far:
 
 | Phase | Content | Status |
 |---|---|---|
-| 0 | Foundation for scale: lazy catalog with fields, search, levels, tests, CI, shared integrators, data folder | planned |
+| 0 | Foundation for scale: lazy catalog with fields, search, levels, tests, CI, shared integrators, data folder | **done** |
 | 1 | Biology: central-dogma, mendel, enzyme-kinetics · Chemistry: orbitals, titration, periodic-table | planned |
 | 2 | Rest of molecular biology, genetics, atomic structure, acids and bases | – |
 | 3 | Biochemistry, cell biology, states of matter, thermodynamics, kinetics | – |

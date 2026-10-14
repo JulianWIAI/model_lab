@@ -23,6 +23,14 @@ Each bench also has two deeper layers: **Derive it** (where the equations come f
 | Math | Fourier series | Build square, sawtooth and triangle waves from rotating circles |
 | Economics | Tax incidence | See who really pays a tax and what it destroys |
 
+## Running tests
+
+```
+npm test
+```
+
+No packages to install. Uses the built-in `node:test` runner (Node 18+).
+
 ## Running it on your computer
 
 The lab is plain HTML, CSS and JavaScript. There is nothing to install or build.
@@ -58,9 +66,9 @@ css/
   components.css        buttons, sliders, cards, readouts
 js/
   main.js               starts the app
-  catalog.js            list of subjects and benches  ← register new benches here
+  catalog.js            subjects → fields → bench entries (lazy-loaded)
   core/                 shared engine
-    App.js              navigation and animation loop
+    App.js              navigation, lazy loading, search, animation loop
     Bench.js            base class every bench extends
     Router.js           #subject/bench links
     Axes.js             plot area: data → pixels, grids, lines
@@ -69,16 +77,22 @@ js/
     Theme.js            CSS colours for canvas drawings
     Random.js           random numbers for stochastic models
     Storage.js          safe localStorage wrapper
+    Integrators.js      rk4 and backwardEuler for vector ODEs
+    RootFinding.js      bisect and brent root-finding
   ui/                   reusable controls
     BenchLayout.js      the standard bench page (stage + cards)
     Slider.js, ToggleButton.js, ActionButton.js, ButtonGroup.js,
     ReadoutPanel.js, Legend.js, NotesBox.js, ThemeToggle.js, el.js
-  benches/<subject>/<topic>/
+  benches/<subject>/<field>/<topic>/
     XxxModel.js         the science: equations only, no drawing
     XxxView.js          the drawing: canvas only, no science
     XxxBench.js         controls, readouts and the texts for the cards
+  data/                 frozen reference datasets, each with a SOURCE object
+tests/                  node:test unit tests for every Model
+tools/                  scripts that regenerate data files from upstream sources
 docs/
-  ADDING_A_BENCH.md     step-by-step guide for new simulations
+  ADDING_A_BENCH.md     step-by-step guide for new simulations (incl. explorer benches)
+  ROADMAP.md            curriculum map for all planned benches
 ```
 
 To read the science of a simulation, open its `Model` file. It has no page code, only the equations with comments.

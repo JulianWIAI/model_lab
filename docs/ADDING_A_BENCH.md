@@ -142,6 +142,52 @@ import { DecayBench } from './benches/physics/decay/DecayBench.js';
 
 Reload the page. The new chip appears under the subject.
 
+## Explorer benches
+
+An **explorer bench** shows reference data interactively rather than running a
+time-stepping simulation.  Examples: a periodic table, a genetic code table, an
+amino acid explorer.
+
+The pattern is identical to a regular bench, with three differences:
+
+1. **Model** — holds frozen data from `js/data/` rather than computing state.
+   It does **not** need a `step(dt)` method.  A getter or method can filter,
+   sort or subset the data on demand.
+
+   ```js
+   // ExampleModel.js
+   import { ELEMENTS, SOURCE } from '../../../data/elements.js';
+   export class ExampleModel {
+     constructor() { this.data = ELEMENTS; this.source = SOURCE; }
+     byPeriod(p) { return this.data.filter(el => el.period === p); }
+   }
+   ```
+
+2. **Bench `meta`** — set `isExplorer: true`.  The animation loop calls
+   `update(dt)` every frame only when `!paused` but since explorers have no
+   `update` method, no time advances.  Add `draw()` to redraw whenever
+   controls change (e.g. on a slider `onInput`).
+
+3. **Catalog entry** — register exactly like a regular bench.
+
+### When to put data in `js/data/`
+
+Any reference facts that are not computed — element properties, codon table,
+amino acid structures, physical constants — belong in `js/data/`.  Each data
+file must export:
+
+```js
+export const SOURCE = Object.freeze({
+  name: 'Source name',
+  url: 'https://...',
+  retrieved: 'YYYY-MM-DD',   // when the file was last regenerated
+});
+```
+
+If the dataset is large or frequently updated, add a script in `tools/` that
+regenerates the data file from the source URL, so any contributor can re-verify
+the values.  See `tools/README.md`.
+
 ## Checklist
 
 - [ ] Model has no DOM or canvas code
@@ -149,8 +195,10 @@ Reload the page. The new chip appears under the subject.
 - [ ] Every class in its own file, every file starts with a short doc comment
 - [ ] Every colour comes from `theme.color(...)`
 - [ ] Bench `meta.id` is unique
+- [ ] `meta.level`, `meta.keywords` and `meta.related` are set
 - [ ] The "Where it breaks" card is honest about the model's limits
 - [ ] Works at phone width and in dark mode
+- [ ] A test file under `tests/` covers the Model's key results
 
 ## Asking Claude Code to build one
 
