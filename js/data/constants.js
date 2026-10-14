@@ -39,6 +39,9 @@ export const CONSTANTS = Object.freeze({
   /** Molar gas constant.  R = N_A · k_B = 8.314 462 618 J/(mol·K) (exact). */
   R: { value: 8.314_462_618, unit: 'J/(mol·K)', uncertainty: 0 },
 
+  /** Faraday constant.  F = N_A · e = 96 485.332 12 C/mol (exact, 2019 SI). */
+  F: { value: 96_485.332_12, unit: 'C/mol', uncertainty: 0 },
+
   /** Gravitational constant.  G = 6.674 30 × 10⁻¹¹ N·m²/kg². */
   G: { value: 6.674_30e-11, unit: 'N·m²/kg²', uncertainty: 0.000_15e-11 },
 

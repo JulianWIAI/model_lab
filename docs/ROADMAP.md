@@ -1,5 +1,23 @@
 # Roadmap
 
+## Phase 3 benches (planned / in progress)
+
+| Bench | Path | Status |
+|---|---|---|
+| Hill binding | biology/biochemistry/hill-binding | pending |
+| Goldman equation | neuroscience/electrophysiology/goldman | pending |
+| Rate laws | chemistry/kinetics/rate-laws | pending |
+| A→B→C mechanisms | chemistry/kinetics/mechanisms | pending |
+| Ideal gas | physics/thermodynamics/ideal-gas | pending |
+| Maxwell–Boltzmann | physics/thermodynamics/maxwell-boltzmann | pending |
+| Van der Waals | physics/thermodynamics/van-der-waals | pending |
+| Gibbs free energy | chemistry/thermodynamics/gibbs | pending |
+
+New catalog fields created in Phase 3: Chemistry → Kinetics, Chemistry → Thermodynamics,
+Physics → Thermodynamics.
+
+---
+
 ## Open science-accuracy items
 
 ### Verify pKa sources for phosphoric and citric acid
