@@ -70,7 +70,10 @@ export class BufferBench extends Bench {
       label: 'Acid',
       options: PRESETS.map((p, i) => ({ label: p.name, value: i })),
       value: 0,
-      onChange: (v) => { this.model.presetIndex = v; },
+      onChange: (v) => {
+        this.model.presetIndex = v;
+        this.layout.setStageNote(PRESETS[v].note ? `⚠ ${PRESETS[v].note}` : '');
+      },
     }));
 
     this.layout.addControl(new Slider({
@@ -119,7 +122,8 @@ export class BufferBench extends Bench {
     this.readouts.set('pH',    pH.toFixed(2));
     this.readouts.set('beta',  this.model.bufferCapacity(pH).toFixed(5));
     this.readouts.set('dom',   domLabel);
-    this.readouts.set('pKas',  this.model.preset.pKas.join(', '));
+    const pKaStr = this.model.preset.pKas.join(', ') + (this.model.preset.note ? '  ⚠ unverified' : '');
+    this.readouts.set('pKas',  pKaStr);
   }
 }
 

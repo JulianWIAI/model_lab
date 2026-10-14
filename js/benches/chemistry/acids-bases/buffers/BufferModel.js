@@ -20,6 +20,8 @@
  *   Phosphoric acid pKas=2.148, 7.198, 12.375:
  *     Martell & Smith, "Critical Stability Constants" Vol. 4 (1976) — authoritative
  *     compilation; exact table number unverified in this codebase.
+ *     Values consistent with Skoog et al. 2014 §16 and Wikipedia (I→0).
+ *     NIST SRD 46 (the standard secondary check) was discontinued as of 2026.
  *     pKa1 and pKa2 are well-established; pKa3 is less precisely determined
  *     (values in the range 12.35–12.40 appear in different sources).
  *   Carbonic acid pKas=6.352, 10.329:
@@ -28,7 +30,8 @@
  *   Citric acid pKas=3.128, 4.761, 6.396:
  *     Martell & Smith, "Critical Stability Constants" Vol. 3 (1977) — authoritative
  *     compilation; exact table number unverified in this codebase.
- *     Values consistent with NIST WebBook (CAS 77-92-9) and Skoog et al. 2014.
+ *     Values match the "extrapolated to I=0" figures cited in Wikipedia (ref 22)
+ *     and are consistent with Skoog et al. 2014.
  *
  * Kw = 1.012e-14 at 25 °C (NIST Chemistry WebBook).
  */
@@ -48,6 +51,7 @@ export const PRESETS = Object.freeze([
     name: 'Phosphoric acid',
     formula: 'H₃PO₄',
     pKas: [2.148, 7.198, 12.375],
+    note: 'pKa source unverified — Martell & Smith table number not checked from physical copy',
     // Martell & Smith, Critical Stability Constants Vol. 4 (1976); table unverified in this codebase
     // pKa3 uncertainty: 12.35–12.40 across sources
   },
@@ -62,6 +66,7 @@ export const PRESETS = Object.freeze([
     name: 'Citric acid',
     formula: 'C₆H₈O₇',
     pKas: [3.128, 4.761, 6.396],
+    note: 'pKa source unverified — Martell & Smith table number not checked from physical copy',
     // Martell & Smith, Critical Stability Constants Vol. 3 (1977); table unverified in this codebase
     // Values consistent with NIST WebBook CAS 77-92-9 and Skoog et al. 2014
   },

@@ -65,6 +65,8 @@ export class LacOperonBench extends Bench {
     this.lacView = new LacOperonView(this.view);
     this._stepsPerFrame = 5;
 
+    this.layout.setStageNote('⚠ Qualitative model — parameters are dimensionless and not fitted to experimental data');
+
     this.layout.addAction(this.createPauseButton());
     this.paused = false;
 
