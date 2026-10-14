@@ -1,10 +1,12 @@
+import { Integrators } from '../../../core/Integrators.js';
+
 /**
  * Two pendulums released from the same angle, side by side:
  *
  *   exact:     θ″ = −(g/L)·sin θ − γ·θ′
  *   shortcut:  θ″ = −(g/L)·θ     − γ·θ′   (small-angle approximation sin θ ≈ θ)
  *
- * Both are stepped forward with 4th-order Runge–Kutta (RK4).
+ * Both are stepped forward with 4th-order Runge–Kutta (RK4) via Integrators.rk4.
  * Angles are in radians inside the model, degrees only at the edges.
  */
 export class PendulumModel {
@@ -40,19 +42,13 @@ export class PendulumModel {
   }
 
   /**
-   * One RK4 step: samples the slope at the start, twice in the middle and at the end,
-   * then takes a weighted average. Far more accurate than a single Euler step.
+   * One RK4 step via the shared Integrators utility.
+   * State vector is [theta, omega]; f returns [dtheta/dt, domega/dt].
    */
   rk4(state, dt, useShortcut) {
-    const f = (theta, omega) => [omega, this.acceleration(theta, omega, useShortcut)];
-    const [k1t, k1o] = f(state.theta, state.omega);
-    const [k2t, k2o] = f(state.theta + (k1t * dt) / 2, state.omega + (k1o * dt) / 2);
-    const [k3t, k3o] = f(state.theta + (k2t * dt) / 2, state.omega + (k2o * dt) / 2);
-    const [k4t, k4o] = f(state.theta + k3t * dt, state.omega + k3o * dt);
-    return {
-      theta: state.theta + (dt / 6) * (k1t + 2 * k2t + 2 * k3t + k4t),
-      omega: state.omega + (dt / 6) * (k1o + 2 * k2o + 2 * k3o + k4o),
-    };
+    const f = ([theta, omega]) => [omega, this.acceleration(theta, omega, useShortcut)];
+    const [theta, omega] = Integrators.rk4(f, [state.theta, state.omega], this.time, dt);
+    return { theta, omega };
   }
 
   /** Advances both pendulums by dt seconds in small internal steps. */
