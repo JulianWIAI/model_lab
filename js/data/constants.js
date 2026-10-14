@@ -53,4 +53,10 @@ export const CONSTANTS = Object.freeze({
 
   /** Proton mass.  m_p = 1.672 621 923 69 × 10⁻²⁷ kg. */
   mp: { value: 1.672_621_923_69e-27, unit: 'kg', uncertainty: 0.000_000_000_51e-27 },
+
+  /** Deuteron mass.  m_d = 3.343 583 7724 × 10⁻²⁷ kg. */
+  md: { value: 3.343_583_7724e-27, unit: 'kg', uncertainty: 0.000_000_0010e-27 },
+
+  /** Rydberg constant.  R_∞ = 1.097 373 156 816 0 × 10⁷ m⁻¹ (NIST CODATA 2018). */
+  Rinf: { value: 1.097_373_156_816_0e7, unit: 'm⁻¹', uncertainty: 0.000_000_000_002_1e7 },
 });

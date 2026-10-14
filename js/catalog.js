@@ -106,6 +106,20 @@ export const catalog = [
                 (m) => m.PeriodicTableBench,
               ),
           },
+          {
+            id: 'spectra',
+            navLabel: 'Atomic spectra',
+            level: 'university',
+            keywords: [
+              'Rydberg', 'spectral lines', 'Balmer', 'Lyman', 'Paschen', 'Brackett',
+              'hydrogen', 'deuterium', 'reduced mass', 'isotope shift',
+              'wavelength', 'photon energy', 'emission spectrum', 'absorption',
+            ],
+            load: () =>
+              import('./benches/chemistry/atomic/spectra/SpectraBench.js').then(
+                (m) => m.SpectraBench,
+              ),
+          },
         ],
       },
       {
