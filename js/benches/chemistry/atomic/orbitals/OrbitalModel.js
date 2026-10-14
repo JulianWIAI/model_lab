@@ -47,7 +47,7 @@ export class OrbitalModel {
    * Uses associated Laguerre polynomials via 3-term recursion.
    * ρ = 2r/(n·a₀)
    * R_nl(r) = -N · e^(-ρ/2) · ρ^l · L_{n-l-1}^{2l+1}(ρ)
-   * N = sqrt[(2/n)³ · (n-l-1)! / (2n · ((n+l)!)³)] — from Griffiths eq. 4.73
+   * N = sqrt[(2/n)³ · (n-l-1)! / (2n · (n+l)!)] — from Griffiths eq. 4.73
    *
    * Actually the standard normalisation is:
    * N = -sqrt[(2/(na₀))³ · (n-l-1)! / (2n·(n+l)!)]
