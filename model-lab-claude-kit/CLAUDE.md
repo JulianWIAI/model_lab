@@ -51,6 +51,15 @@ Rules that keep this scalable:
 
   No row may claim "checked by independent test" until a test file exists in `tests/` and passes `npm test`.
 
+- **R1 Anchor first.** Before any bench plan is shown, every formula gets an independent numerical check (brute-force simulation, high-precision recomputation or a different algorithm). The result is printed in the plan next to the expected value.
+- **R2 Tolerances.** Deterministic checks: 1e-10 unless the algorithm limits it. Stochastic checks: 4 × the analytic standard error of the statistic, derived in a comment. Never tune a seed or tolerance to pass. Numerical checks must also pass when dt or h is halved (convergence), not only at the chosen step.
+- **R3 Conventions.** One symbol table per bench. The model, the Derive-it steps, the Predict questions and the Where-it-breaks text use the same symbols and conventions.
+- **R4 Domains.** State the valid parameter domain; test its boundaries; no silent clamping (show a visible "outside model domain" state).
+- **R5 Data.** No constant or table value from memory. Fetch it, or mark it "unverified" in code, SOURCES.md and the UI. If a fetch fails, stop and tell me.
+- **R6 Status words.** Per bench, "formulas" and "data" are separate. "checked by independent test" is allowed only once the test exists and passes.
+- **R7 Reports.** No claim without evidence. Corrections are reported as a table: anchor → file → test name.
+- **R8 Anchor disagreements.** If an anchor in the prompt looks wrong, stop and report the discrepancy before implementing.
+
 ## Every bench must have
 
 - `static meta`: `id`, `title`, `navLabel`, `canvasLabel`, `level` ('intro' | 'university' | 'graduate'), `keywords` (array, for search), `related` (array of `subject/id` routes).
