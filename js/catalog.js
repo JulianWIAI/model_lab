@@ -637,6 +637,19 @@ export const catalog = [
         name: 'Perception & Psychophysics',
         benches: [
           {
+            id: 'signal-detection',
+            navLabel: 'Signal detection',
+            level: 'intro',
+            keywords: [
+              'signal detection', 'SDT', 'd-prime', 'hit rate', 'false alarm', 'ROC',
+              'criterion', 'sensitivity', 'AUC', 'psychophysics',
+            ],
+            load: () =>
+              import('./benches/psychology/psychophysics/signal-detection/SignalDetectionBench.js').then(
+                (m) => m.SignalDetectionBench,
+              ),
+          },
+          {
             id: 'weber-fechner',
             navLabel: 'Weber–Fechner',
             level: 'intro',

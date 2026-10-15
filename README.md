@@ -55,6 +55,7 @@ Each bench also has two deeper layers: **Derive it** (where the equations come f
 | Economics | Compound growth | A(t)=P·(1+r/m)^(mt); compare compounding frequencies; exact doubling time vs rule-of-72 error curve |
 | Economics | Supply & demand | P*=(a−c)/(b+d); shift supply/demand; CS, PS, elasticities, cost-shock incidence |
 | Psychology | Weber–Fechner & Stevens | JND=k·I; Fechner log law; Stevens power law; exact vs Fechner step count; L'Hôpital limit |
+| Psychology | Signal detection theory | d′, criterion, H, FA; ROC curve; AUC=Φ(d′/√2); A′ (Grier); erf from scratch |
 
 ## Running tests
 
