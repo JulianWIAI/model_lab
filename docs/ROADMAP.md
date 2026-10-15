@@ -42,11 +42,10 @@ Every bench has a testable anchor with a named source and source status.
 Levels: intro / university / graduate.
 
 Source statuses:
-- **checked by independent test** — the model test suite directly verifies this formula or value.
-- **cited, not fetched** — plausible published value; source not re-fetched during this implementation.
-- **unverified** — citation is uncertain or value has not been cross-checked.
-
-A formula written from memory is never "checked by independent test".
+- **checked by independent test** — test file exists in `tests/` and currently passes.
+- **anchor derived, test planned** — formula is algebraically exact or derivable from first principles; test will be written when the bench is built. A formula written from memory does not qualify.
+- **cited, not fetched** — anchor value comes from a publication or dataset; source was not re-fetched during this planning phase, but value is consistent with the literature.
+- **unverified** — citation is uncertain, value has not been cross-checked, or source is in doubt.
 
 ---
 
@@ -57,23 +56,23 @@ A formula written from memory is never "checked by independent test".
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
 | pendulum ✓ | sim | intro | T = 2π√(L/g) small-angle; exact Bessel period at large amplitude | standard mechanics | checked by independent test |
-| orbits | sim | intro | Earth: a=1.496×10¹¹ m, GM_sun=1.3271244×10²⁰ m³/s² (IAU nominal) → T=365.25 d; energy E=−GMm/(2a) and angular momentum L=const verified over one full orbit | IAU 2012 nominal solar mass parameter | cited, not fetched |
-| oscillators | sim | intro | Displacement amplitude peaks at ω_res=√(ω₀²−2γ²); velocity amplitude peaks at ω₀; Q = ω₀/(2γ) | algebraic derivation | checked by independent test |
-| special-relativity | sim | university | γ = 1/√(1−β²); at β=0.9994, γ ≈ 28.9; muon lives 28.9× longer than at rest | algebraic + PDG muon data | checked by independent test |
+| orbits | sim | intro | 1 AU = 149 597 870 700 m (IAU 2012 exact); GM_sun = 1.3271244×10²⁰ m³/s² (IAU nominal) → T_Earth = 365.256 d ±0.02 d; energy E=−GMm/(2a) and L=const verified over one orbit | IAU 2012 nominal solar mass parameter | cited, not fetched |
+| oscillators | sim | intro | Displacement amplitude peaks at ω_res=√(ω₀²−2γ²); velocity amplitude peaks at ω₀; Q = ω₀/(2γ) | algebraic derivation | anchor derived, test planned |
+| special-relativity | sim | university | γ = 1/√(1−β²); at β=0.9994, γ = 1/√(1−0.9994²) = 28.9; muon lives 28.9× longer than at rest | algebraic; PDG muon data | anchor derived, test planned |
 
 #### Waves & Optics
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| wave-interference | sim | intro | Fringe spacing Δy = λL/d; dark fringe at d·sinθ = λ/2 | Young 1801; algebraic | checked by independent test |
-| standing-waves | sim | intro | Harmonics f_n = n·v/(2L); f_2/f_1 = 2 exactly | algebraic | checked by independent test |
+| wave-interference | sim | intro | Fringe spacing Δy = λL/d; dark fringe at d·sinθ = λ/2 | Young 1801; algebraic | anchor derived, test planned |
+| standing-waves | sim | intro | Harmonics f_n = n·v/(2L); f_2/f_1 = 2 exactly | algebraic | anchor derived, test planned |
 
 #### Electromagnetism
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| rc-circuit | sim | intro | V(t) = V₀·e^(−t/RC); half-life = RC·ln 2 | algebraic | checked by independent test |
-| lc-oscillator | sim | university | ω₀ = 1/√(LC); critical damping when R = 2√(L/C) | algebraic | checked by independent test |
+| rc-circuit | sim | intro | V(t) = V₀·e^(−t/RC); half-life = RC·ln 2 | algebraic | anchor derived, test planned |
+| lc-oscillator | sim | university | ω₀ = 1/√(LC); critical damping when R = 2√(L/C) | algebraic | anchor derived, test planned |
 
 #### Thermodynamics
 
@@ -82,23 +81,23 @@ A formula written from memory is never "checked by independent test".
 | ideal-gas ✓ | sim | university | P = NkT/V; ⟨KE⟩ = 3/2 kT | algebraic | checked by independent test |
 | maxwell-boltzmann ✓ | sim | university | v_p : v̄ : v_rms = 1 : 1.128 : 1.225 (exact ratios) | algebraic | checked by independent test |
 | van-der-waals ✓ | sim | university | Z_c = 3/8 = 0.375 exact algebraic result | algebraic | checked by independent test |
-| carnot | sim | intro | η = 1 − T_c/T_h; 500 K/300 K → η = 0.40 exactly | algebraic | checked by independent test |
-| entropy-mixing | sim | intro | ΔS = −nR·Σx_i·ln x_i; equimolar binary → nR·ln 2 | algebraic | checked by independent test |
+| carnot | sim | intro | η = 1 − T_c/T_h; 500 K/300 K → η = 0.40 exactly | algebraic | anchor derived, test planned |
+| entropy-mixing | sim | intro | ΔS = −nR·Σx_i·ln x_i; equimolar binary → nR·ln 2 | algebraic | anchor derived, test planned |
 
 #### Statistical Mechanics
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| ising | sim | university | T_c = 2J/[k_B·ln(1+√2)] ≈ 2.269 J/k_B; exact critical condition sinh(2K_c)=1, K_c=J/(k_BT_c)=ln(1+√2)/2 | Onsager 1944, *Phys. Rev.* 65:117 | cited, not fetched |
+| ising | sim | university | T_c = 2J/[k_B·ln(1+√2)] ≈ 2.269 J/k_B; exact critical condition sinh(2K_c)=1, K_c=ln(1+√2)/2; internal energy per site at T_c: u_c = −√2·J (exact) | Onsager 1944, *Phys. Rev.* 65:117 | cited, not fetched |
 | ising-scaling ★ | sim | graduate | β=1/8 (M~\|T−T_c\|^(1/8)); Binder cumulant U*≈0.61 at T_c; Wolff cluster algorithm required for efficient sampling near T_c | Yang 1952, *Phys. Rev.* 85:808 (β=1/8); Binder 1981, *Z. Phys. B* 43:119 (U*≈0.61 — unverified) | unverified |
 
 #### Quantum Mechanics
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| particle-in-box | sim | intro | E_n = n²π²ℏ²/(2mL²); E_2/E_1 = 4 exactly | Griffiths §2.2; algebraic | checked by independent test |
-| quantum-tunneling ‡ | sim | graduate | Rectangular barrier: T=[1+V₀²sinh²(κa)/(4E(V₀−E))]⁻¹; WKB for smooth barrier: T~exp(−2∫κdx); test WKB against exact for κa≫1: T→16E(V₀−E)/V₀²·e^(−2κa) | Griffiths §2.6 (exact), WKB ch. 9 (3rd ed.) / ch. 8 (2nd ed.) — chapter number unverified | unverified |
-| schrodinger-1d ★ | sim | graduate | Finite-difference eigenvalues match E_n=n²π²ℏ²/(2mL²) to ±0.1% for n=1–5 | Griffiths §2.2; algebraic | checked by independent test |
+| particle-in-box | sim | intro | E_n = n²π²ℏ²/(2mL²); E_2/E_1 = 4 exactly | Griffiths §2.2; algebraic | anchor derived, test planned |
+| quantum-tunneling ‡ | sim | graduate | Rectangular barrier: T=[1+V₀²sinh²(κa)/(4E(V₀−E))]⁻¹; WKB: T~exp(−2∫κdx); test WKB against exact for κa≫1: T→16E(V₀−E)/V₀²·e^(−2κa) | Griffiths §2.6 (exact); WKB chapter number unverified | unverified |
+| schrodinger-1d ★ | sim | graduate | Finite-difference eigenvalues match E_n=n²π²ℏ²/(2mL²) to ±0.1% for n=1–5 | Griffiths §2.2; algebraic | anchor derived, test planned |
 
 #### Particle Physics
 
@@ -118,15 +117,15 @@ A formula written from memory is never "checked by independent test".
 | goldman ✓ | sim | university | Vm(squid rest) ≈ −59.9 mV; Vm → E_K when P_Na, P_Cl → 0 | Hodgkin & Katz 1949 | checked by independent test |
 | integrate-and-fire | sim | university | f = 1/(t_ref + τ_m·ln[I/(I−g_L·V_th)]); fires only above threshold I = g_L·V_th | Lapicque 1907; Tuckwell 1988 | cited, not fetched |
 | cable-equation | sim | university | Steady-state analytic V(x)=V₀·e^(−x/λ), λ=√(r_m/r_i) — no PDE solver needed | Rall 1967, *J. Neurophysiol.* 30:1138 | cited, not fetched |
-| neuron-bifurcation ★ | sim | graduate | HH at 6.3°C: repetitive firing onset (saddle-node) near 6.26 μA/cm²; Hopf bifurcation near 9.78 μA/cm²; both computed numerically by solver | Rinzel & Ermentrout 1989, in *Methods in Neuronal Modeling* | unverified |
+| neuron-bifurcation ★ | sim | graduate | HH at 6.3°C: subcritical Hopf near 9.78 μA/cm² (rest loses stability; spiking onset on upward I-sweep); saddle-node of limit cycles near 6.26 μA/cm² (spiking offset on downward I-sweep); bistable region between. Type II excitability. Both thresholds computed numerically by solver. | Rinzel & Ermentrout 1989, in *Methods in Neuronal Modeling* | unverified |
 
 #### Synapses & Plasticity
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| synapse-kinetics | sim | intro | Alpha-function peak at t = τ exactly (by differentiation) | algebraic | checked by independent test |
+| synapse-kinetics | sim | intro | Alpha-function peak at t = τ exactly (by differentiation) | algebraic | anchor derived, test planned |
 | stdp | sim | university | LTP for pre→post Δt > 0; τ⁺ ≈ 17 ms, τ⁻ ≈ 34 ms (Song et al. 2000); τ⁺=τ⁻=20 ms is a common simplification | Song, Miller & Abbott 2000, *Nat. Neurosci.* 3:919; Bi & Poo 1998 | unverified |
-| hebbian-learning ‡ | sim | graduate | Oja rule maximises E[(w·x)²] s.t. ‖w‖=1; ‖w‖→1; w converges to dominant eigenvector of E[xx^T] | Oja 1982, *J. Math. Biol.* 15:267 | cited, not fetched |
+| hebbian-learning ‡ | sim | graduate | Oja rule with zero-mean input maximises E[(w·x)²] s.t. ‖w‖=1; ‖w‖→1; w converges to dominant eigenvector of E[xx^T] (zero-mean required: with non-zero mean the rule converges to the mean direction, not the covariance eigenvector) | Oja 1982, *J. Math. Biol.* 15:267 | cited, not fetched |
 
 #### Networks & Coding
 
@@ -140,7 +139,7 @@ A formula written from memory is never "checked by independent test".
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| receptive-fields | explorer | university | Gabor SF bandwidth=2·log₂((πσ/λ+1)/(πσ/λ−1)); orientation half-bandwidth≈30–60° for typical V1 neurons | DeValois et al. 1982, *J. Neurosci.* 2:1137 — unverified | unverified |
+| receptive-fields | explorer | university | Gabor SF bandwidth (octaves): b=log₂[(πσf+√(ln2/2))/(πσf−√(ln2/2))], f=1/λ, σ=envelope SD; verified by FFT of sampled Gabor (not by re-entering formula); orientation half-bandwidth≈30–60° | DeValois et al. 1982 — unverified | unverified |
 | perceptron | sim | university | Convergence in ≤(R/γ)² steps for linearly separable data | Novikoff 1962 (proof); Rosenblatt 1962 | cited, not fetched |
 
 ---
@@ -152,32 +151,32 @@ A formula written from memory is never "checked by independent test".
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
 | fourier ✓ | sim | university | Square-wave Gibbs overshoot → 8.9% as N → ∞ (exact) | algebraic | checked by independent test |
-| ode-explorer | sim | intro | Euler error O(h), RK4 error O(h⁴); y'=−y → y=e^(−t) exact | algebraic | checked by independent test |
+| ode-explorer | sim | intro | Euler error O(h), RK4 error O(h⁴); y'=−y → y=e^(−t) exact | algebraic | anchor derived, test planned |
 
 #### Dynamical Systems
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
 | logistic-map | sim | university | Period-2 onset at r=3.000 exactly; Feigenbaum δ ≈ 4.669 | Feigenbaum 1978, *J. Stat. Phys.* 19:25 | cited, not fetched |
-| lyapunov ★ | sim | graduate | λ=ln 2 for tent map x→2x mod 1 (algebraically exact); λ>0 for r>r_∞≈3.5699 | Tent map: algebraic; r_∞: Feigenbaum 1978 | checked by independent test / cited, not fetched |
-| mandelbrot | explorer | university | Main cardioid: c=μ/2−μ²/4 (\|μ\|<1), real-axis span −3/4..1/4; period-2 disc: \|c+1\|<1/4; tests: c=0 inside, c=0.26 escapes; c=−1 inside, c=−2.01 escapes | algebraic parametrisation | checked by independent test |
+| lyapunov ★ | sim | graduate | λ=ln 2 for tent map x→2x mod 1 (algebraically exact); λ>0 for r>r_∞≈3.5699 | Tent map: algebraic; r_∞: Feigenbaum 1978 | anchor derived, test planned / cited, not fetched |
+| mandelbrot | explorer | university | Main cardioid: c=μ/2−μ²/4 (\|μ\|<1), real-axis span −3/4..1/4; period-2 disc: \|c+1\|<1/4; tests: c=0 inside, c=0.26 escapes; c=−1 inside, c=−2.01 escapes | algebraic parametrisation | anchor derived, test planned |
 | phase-plane ‡ | sim | graduate | Stable node iff tr<0, det>0, tr²>4det; Jacobian eigenvalues classify all 6 equilibrium types; Hartman-Grobman theorem | Strogatz 2001 §5.2; algebraic | cited, not fetched |
 
 #### Probability & Statistics
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| central-limit | sim | intro | SE=σ/√n; 95% CI coverage verified by simulation | algebraic (CLT) | checked by independent test |
-| markov-chains ‡ | sim | graduate | π₁=p₂₁/(p₁₂+p₂₁) exact; spectral gap=1−\|λ₂\| (Jacobi symmetric eigensolver); t_mix(ε)≤t_rel·ln(1/(ε·π_min)) for reversible chains only | Algebraic; Levin, Peres & Wilmer 2009 *Markov Chains and Mixing Times* | cited, not fetched |
-| bayes | sim | intro | Posterior Beta(α+k, β+n−k) exact conjugate update | algebraic | checked by independent test |
+| central-limit | sim | intro | SE=σ/√n; 95% CI coverage verified by seeded simulation (tolerance from sample size, not hand-tuned) | algebraic (CLT) | anchor derived, test planned |
+| markov-chains ‡ | sim | graduate | π₁=p₂₁/(p₁₂+p₂₁) exact; spectral gap=1−\|λ₂\| (Jacobi symmetric eigensolver); t_mix(ε)≤t_rel·ln(1/(ε·π_min)) for reversible chains only | Algebraic; Levin, Peres & Wilmer 2009 | cited, not fetched |
+| bayes | sim | intro | Posterior Beta(α+k, β+n−k) exact conjugate update | algebraic | anchor derived, test planned |
 | information-theory | sim | university | H=−Σp_i·log₂p_i; H_max=log₂n uniform (exact); C=B·log₂(1+SNR) | Shannon 1948, *Bell Syst. Tech. J.* 27:379 | cited, not fetched |
-| random-walk | sim | intro | 1D: ⟨x²⟩=n, ⟨\|x\|⟩=√(2n/π) (exact); 2D: ⟨r²⟩=4Dt (general 2dDt; Einstein 1905) | algebraic; Einstein 1905 | checked by independent test |
+| random-walk | sim | intro | 1D: ⟨x²⟩=n, ⟨\|x\|⟩=√(2n/π) (exact); 2D: ⟨r²⟩=4Dt (general 2dDt; Einstein 1905) | algebraic; Einstein 1905 | anchor derived, test planned |
 
 #### Linear Algebra
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| eigenvectors | sim | university | Power iteration → dominant eigenvector; [[2,1],[1,2]] → λ=3,1 exactly | algebraic | checked by independent test |
+| eigenvectors | sim | university | Power iteration → dominant eigenvector; [[2,1],[1,2]] → λ=3,1 exactly | algebraic | anchor derived, test planned |
 
 #### Graph Theory
 
@@ -194,8 +193,8 @@ A formula written from memory is never "checked by independent test".
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
 | tax ✓ | sim | intro | DWL=½·t·ΔQ; burden split=ratio of elasticities | algebraic | checked by independent test |
-| supply-demand | sim | intro | P*,Q* at intersection; CS=½(P_max−P*)Q* linear case | algebraic | checked by independent test |
-| elasticity | sim | intro | Unit elastic E_d=−1 → PQ constant; Lerner index=−1/E_d | algebraic | checked by independent test |
+| supply-demand | sim | intro | P*,Q* at intersection; CS=½(P_max−P*)Q* linear case | algebraic | anchor derived, test planned |
+| elasticity | sim | intro | Unit elastic E_d=−1 → PQ constant; Lerner index=−1/E_d | algebraic | anchor derived, test planned |
 
 #### Game Theory
 
@@ -209,14 +208,14 @@ A formula written from memory is never "checked by independent test".
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| compound-growth | sim | intro | Doubling time=ln2/r; A=P·e^(rt); PV=FV·e^(−rT) | algebraic | checked by independent test |
+| compound-growth | sim | intro | Doubling time=ln2/r; A=P·e^(rt); PV=FV·e^(−rT); continuous limit (1+r/n)^(nt)→e^(rt) | algebraic | anchor derived, test planned |
 | solow | sim | university | k*=[sA/(n+δ)]^{1/(1−α)}; golden rule α·f(k_GR)=(n+δ)·k_GR | Solow 1956, *QJE* 70:65 | cited, not fetched |
 
 #### Finance
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| options-pricing | sim | graduate | S=100, K=100, r=5%, σ=20%, T=1 → call≈10.45 (algebraically computed); put-call parity C−P=S−K·e^(−rT). **Educational use only — not financial advice.** | Black & Scholes 1973, *JPE* 81:637 | checked by independent test |
+| options-pricing | sim | graduate | S=100, K=100, r=5%, σ=20%, T=1 → call≈10.45 (computed via Φ); put-call parity C−P=S−K·e^(−rT). **Educational use only — not financial advice.** | Black & Scholes 1973, *JPE* 81:637 | anchor derived, test planned |
 
 #### Voting & Social Choice
 
@@ -228,8 +227,8 @@ A formula written from memory is never "checked by independent test".
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| network-effects | sim | intro | Tipping-point fixed point: adoption model dx/dt=x(1−x)(x−θ) has unstable equilibrium at x=θ; above threshold system converges to full adoption | algebraic | checked by independent test |
-| inequality | sim | intro | Gini(Pareto α)=1/(2α−1); Gini(uniform [0,b])=1/3 | algebraic | checked by independent test |
+| network-effects | sim | intro | Tipping-point fixed point: adoption model dx/dt=x(1−x)(x−θ) has unstable equilibrium at x=θ; above threshold system converges to full adoption | algebraic | anchor derived, test planned |
+| inequality | sim | intro | Gini(Pareto α)=1/(2α−1); Gini(uniform [0,b])=1/3 | algebraic | anchor derived, test planned |
 
 ---
 
@@ -239,8 +238,8 @@ A formula written from memory is never "checked by independent test".
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| signal-detection | sim | intro | d'=z(H)−z(FA); unbiased d'=1: H=Φ(0.5)=0.691, FA=Φ(−0.5)=0.309 | algebraic (unit normals) | checked by independent test |
-| weber-fechner | sim | intro | Weber: ΔI/I=k_W (constant); Fechner: S=k_F·ln(I/I₀); Stevens: S=k·I^n (brightness n≈0.33: doubling S requires 8× I) | Weber 1834; Fechner 1860; Stevens 1957, *Psychol. Rev.* 64:153 | cited, not fetched |
+| signal-detection | sim | intro | d'=z(H)−z(FA); normal CDF implemented via erf series (not constants from memory); unbiased d'=1: H=Φ(0.5)=0.691, FA=Φ(−0.5)=0.309; test Φ(0)=0.5, Φ(1)=0.8413, Φ(1.96)=0.9750 | algebraic (unit normals) | anchor derived, test planned |
+| weber-fechner | sim | intro | Weber: ΔI/I=k_W (constant); Fechner: S=k_F·ln(I/I₀); Stevens: S=k·I^n (brightness n≈0.33); show all three and where Fechner fails | Weber 1834; Fechner 1860; Stevens 1957, *Psychol. Rev.* 64:153 | cited, not fetched |
 | psychometric-function | sim | university | Weibull P(x)=1−exp(−(x/α)^β); 2AFC: P=Φ(d'/√2) | algebraic; Green & Swets 1966 | cited, not fetched |
 
 #### Learning & Decision
@@ -248,10 +247,10 @@ A formula written from memory is never "checked by independent test".
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
 | rescorla-wagner | sim | intro | Asymptote V_A=λ; blocking: ΔV_B≈0 when V_A=λ | Rescorla & Wagner 1972, in *Classical Conditioning II* | cited, not fetched |
-| drift-diffusion ‡ | sim | graduate | Boundaries ±a, start 0: P=1/(1+e^(−2μa/σ²)); RT=(a/μ)·tanh(μa/σ²)+t₀ — verify both by simulation | Ratcliff 1978, *Psychol. Rev.* 85:59 | cited, not fetched |
+| drift-diffusion ‡ | sim | graduate | Boundaries ±a, start 0: P=1/(1+e^(−2μa/σ²)); RT=(a/μ)·tanh(μa/σ²)+t₀; both verified by numerical simulation of the SDE | Ratcliff 1978, *Psychol. Rev.* 85:59 | anchor derived, test planned |
 | reinforcement-learning ‡ | sim | graduate | Bellman: Q*(s,a)=R+γ·max Q*(s',a'); convergence via stochastic approximation (Robbins-Monro) | Watkins & Dayan 1992, *Machine Learning* 8:279 | cited, not fetched |
 | bayesian-observer | sim | university | σ_comb=1/√(1/σ₁²+1/σ₂²); for σ₁=σ₂ → σ/√2; weights ∝ 1/σ² | Ernst & Banks 2002, *Nature* 415:429 | cited, not fetched |
-| bayesian-cognitive ★ | sim | graduate | Analytic limits: P(C=1\|x₁,x₂)→1 as \|x₁−x₂\|→0 (common cause); →0 as \|x₁−x₂\|→∞ (independent causes); exact posterior from product of Gaussians | Körding et al. 2007, *PLoS ONE* 2:e943 | unverified |
+| bayesian-cognitive ★ | sim | graduate | Analytic limits: P(C=1\|x₁,x₂)→1 as \|x₁−x₂\|→0; →0 as \|x₁−x₂\|→∞; exact posterior from product of Gaussians | Körding et al. 2007, *PLoS ONE* 2:e943 | unverified |
 
 #### Social & Cognitive
 
@@ -270,7 +269,7 @@ Each model has a documented failure mode for the bench's "Break it" card.
 | bench | the model cannot explain |
 |---|---|
 | signal-detection | Unequal-variance signal/noise; criterion shifts driven by feedback; metacognitive confidence |
-| weber-fechner | Stevens power law fits many modalities better; cross-cultural differences in magnitude estimation |
+| weber-fechner | Stevens power law fits many modalities better; cross-cultural differences in magnitude estimation; Fechner's derivation from Weber assumes log steps are equal in sensation — not always true |
 | psychometric-function | Threshold depends on observer's prior; lapse-rate bias at extremes; 2AFC vs. yes–no give different d' |
 | rescorla-wagner | Latent inhibition (pre-exposure retards conditioning); second-order conditioning; trial spacing effects |
 | drift-diffusion | Constant drift fails when evidence accumulates non-uniformly; urgency signals; collapsing-bound strategies |
@@ -291,8 +290,8 @@ Each model has a documented failure mode for the bench's "Break it" card.
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| competitive-exclusion | sim | university | Coexistence iff α₁₂<K₁/K₂ AND α₂₁<K₂/K₁ (necessary and sufficient); equilibrium x₁*=(K₁−α₁₂K₂)/(1−α₁₂α₂₁) | algebraic; Gause 1934 | checked by independent test |
-| age-structure | sim | university | Dominant eigenvalue λ=asymptotic growth rate; stable age dist=dominant eigenvector (Leslie 1945) | Leslie 1945, *Biometrika* 33:183 | cited, not fetched |
+| competitive-exclusion | sim | university | Coexistence iff α₁₂<K₁/K₂ AND α₂₁<K₂/K₁ (necessary and sufficient); equilibrium x₁*=(K₁−α₁₂K₂)/(1−α₁₂α₂₁) | algebraic; Gause 1934 | anchor derived, test planned |
+| age-structure | sim | university | Dominant eigenvalue λ=asymptotic growth rate; stable age dist=dominant eigenvector | Leslie 1945, *Biometrika* 33:183 | cited, not fetched |
 | pharmacokinetics | sim | university | 1-compartment IV: C(t)=C₀·e^(−ke·t), t_{1/2}=ln2/ke; 2-compartment: C(t)=Ae^(−αt)+Be^(−βt); oral Bateman: t_max=ln(ka/ke)/(ka−ke) | Rowland & Tozer, *Clinical Pharmacokinetics* 4th ed. | cited, not fetched |
 
 #### Chemistry
@@ -357,8 +356,8 @@ wave-interference: Δy=λL/d; quantum-tunneling rectangular-barrier) need no inf
 
 | module | file | pre-phase | used by | key tests |
 |---|---|---|---|---|
-| LinAlg | js/core/LinAlg.js | 7 | eigenvectors (7), markov-chains (8), hebbian-learning (12) | Power iteration + **Jacobi symmetric eigensolver**; [[2,1],[1,2]]→λ=3,1; spectral gap of 2-state chain |
-| Random.gaussian | js/core/Random.js extension | 8 | drift-diffusion (8) | mean≈0, var≈1 over 10 000 samples (±3σ) |
+| LinAlg | js/core/LinAlg.js | 7 | eigenvectors (7), markov-chains (8), hebbian-learning (12) | Power iteration + Jacobi symmetric eigensolver; [[2,1],[1,2]]→λ=3,1; spectral gap of 2-state chain |
+| Random.gaussian | js/core/Random.js extension | 8 | drift-diffusion (8) | mean≈0, var≈1 over 10 000 samples (±3σ); seeded for reproducibility |
 | Complex | js/core/Complex.js | 10 | lc-oscillator (10, optional), schrodinger-1d (12) | e^(iπ)=−1 ±1e-15; multiply, modulus, arg |
 | Graph | js/core/Graph.js | 11 | graph-theory (11) | Dijkstra on 5-node graph; Euler V−E+F=2 |
 | PDE1D | js/core/PDE1D.js | 12 | schrodinger-1d (12) | Crank-Nicolson norm conservation ±1e-10 over 1000 steps |
