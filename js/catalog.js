@@ -594,6 +594,25 @@ export const catalog = [
         ],
       },
       {
+        id: 'markets',
+        name: 'Markets',
+        benches: [
+          {
+            id: 'supply-demand',
+            navLabel: 'Supply & demand',
+            level: 'intro',
+            keywords: [
+              'supply', 'demand', 'equilibrium', 'consumer surplus', 'producer surplus',
+              'elasticity', 'incidence', 'shift', 'Marshall', 'price',
+            ],
+            load: () =>
+              import('./benches/economics/markets/supply-demand/SupplyDemandBench.js').then(
+                (m) => m.SupplyDemandBench,
+              ),
+          },
+        ],
+      },
+      {
         id: 'taxation',
         name: 'Public economics',
         benches: [

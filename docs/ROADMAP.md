@@ -193,7 +193,7 @@ Source statuses:
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
 | tax ✓ | sim | intro | DWL=½·t·ΔQ; burden split=ratio of elasticities | algebraic | checked by independent test |
-| supply-demand | sim | intro | P*,Q* at intersection; CS=½(P_max−P*)Q* linear case | algebraic | anchor derived, test planned |
+| supply-demand ✓ | sim | intro | P*=(a−c)/(b+d), Q*=(ad+bc)/(b+d); CS=½Q*²/b (not ½(P_max−P*)Q* — corrected); CS verified by Simpson integration ±1e-4; numerical brent check ±1e-6; cost-shock ΔP*=κ/(b+d); buyer-bears-all at b≈0 ±1% | algebraic | checked by independent test |
 | elasticity | sim | intro | Unit elastic E_d=−1 → PQ constant; Lerner index=−1/E_d | algebraic | anchor derived, test planned |
 
 #### Game Theory
@@ -379,7 +379,7 @@ Graduate: 2 original (options-pricing, butler-volmer) + 6 new ★ + 9 elevated �
 |---|---|---|---|
 | **5** | rc-circuit ✓ | Physics | intro |
 | **5** | radioactive-decay ✓ | Chemistry | intro |
-| 5 | supply-demand | Economics | intro |
+| **5** | supply-demand ✓ | Economics | intro |
 | 5 | signal-detection | Psychology | intro |
 | 5 | weber-fechner | Psychology | intro |
 | 5 | central-limit | Math | intro |
