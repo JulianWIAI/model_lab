@@ -273,21 +273,32 @@ async function testBench(page, baseUrl, subjectId, benchId, navLabel) {
 
 // ── Contact sheet (grid of thumbnails) ───────────────────────────────────────
 async function makeContactSheet(results, outPath) {
-  // We'll create the contact sheet using a second Playwright page with canvas
-  // Each thumbnail: 120x90, 4 per bench (2 themes × 2 widths), red border if fail
   const THUMB_W = 120, THUMB_H = 90;
-  const COLS = 4; // one row per bench
+  const COLS = 4; // one row per bench: light/1280, light/400, dark/1280, dark/400
+  const GAP = 2;
   const rows = results.length;
-  const sheetW = THUMB_W * COLS + (COLS + 1) * 2; // 2px gaps
-  const sheetH = rows * (THUMB_H + 2) + (rows + 1) * 2;
+  const sheetW = THUMB_W * COLS + GAP * (COLS + 1);
+  const sheetH = rows * (THUMB_H + GAP) + GAP;
 
-  // Use a hidden browser page to draw the contact sheet
+  // Read each screenshot from disk as a base64 data URL (Node context).
+  const payload = results.map(r => ({
+    benchId: r.benchId,
+    screenshots: r.screenshots.slice(0, COLS).map(s => ({
+      theme: s.theme,
+      width: s.width,
+      fail: s.fail,
+      dataUrl: s.screenshotPath && fs.existsSync(s.screenshotPath)
+        ? 'data:image/png;base64,' + fs.readFileSync(s.screenshotPath).toString('base64')
+        : null,
+    })),
+  }));
+
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
-  await page.setContent('<html><body><canvas id="cs"></canvas></body></html>');
+  await page.setContent('<html><body style="margin:0"><canvas id="cs"></canvas></body></html>');
 
   await page.evaluate(
-    async ({ results, THUMB_W, THUMB_H, COLS, sheetW, sheetH }) => {
+    async ({ payload, THUMB_W, THUMB_H, COLS, GAP, sheetW, sheetH }) => {
       const canvas = document.getElementById('cs');
       canvas.width = sheetW;
       canvas.height = sheetH;
@@ -295,51 +306,40 @@ async function makeContactSheet(results, outPath) {
       ctx.fillStyle = '#111';
       ctx.fillRect(0, 0, sheetW, sheetH);
 
-      for (let ri = 0; ri < results.length; ri++) {
-        const r = results[ri];
-        for (let si = 0; si < Math.min(r.screenshots.length, COLS); si++) {
+      for (let ri = 0; ri < payload.length; ri++) {
+        const r = payload[ri];
+        for (let si = 0; si < r.screenshots.length; si++) {
           const s = r.screenshots[si];
-          const col = si;
-          const row = ri;
-          const x = col * (THUMB_W + 2) + 2;
-          const y = row * (THUMB_H + 2) + 2;
+          const x = si * (THUMB_W + GAP) + GAP;
+          const y = ri * (THUMB_H + GAP) + GAP;
 
-          // Draw thumbnail image if path available
-          const img = new Image();
-          // We'll use a data URL approach - but we can't read files in page context
-          // Instead, draw a placeholder with text
-          ctx.fillStyle = s.fail ? '#3a0000' : '#1a1a2e';
-          ctx.fillRect(x, y, THUMB_W, THUMB_H);
-
-          ctx.fillStyle = s.fail ? '#ff4444' : '#44aa44';
-          ctx.font = '8px monospace';
-          ctx.fillText(`${r.benchId}`, x + 2, y + 10);
-          ctx.fillStyle = '#aaa';
-          ctx.fillText(`${s.theme}/${s.width}`, x + 2, y + 22);
-          if (s.pixelInfo && !s.pixelInfo.error) {
-            ctx.fillText(`bg:${s.pixelInfo.bgPct.toFixed(0)}%`, x + 2, y + 34);
+          if (s.dataUrl) {
+            // Draw the real screenshot scaled to thumbnail size.
+            const img = new Image();
+            await new Promise(res => { img.onload = res; img.onerror = res; img.src = s.dataUrl; });
+            if (img.naturalWidth) {
+              ctx.drawImage(img, x, y, THUMB_W, THUMB_H);
+            }
+          } else {
+            ctx.fillStyle = '#333';
+            ctx.fillRect(x, y, THUMB_W, THUMB_H);
           }
+
+          // Red border on failure.
           if (s.fail) {
-            ctx.strokeStyle = '#ff4444';
+            ctx.strokeStyle = '#ff2222';
             ctx.lineWidth = 3;
             ctx.strokeRect(x + 1.5, y + 1.5, THUMB_W - 3, THUMB_H - 3);
           }
         }
       }
     },
-    { results: results.map(r => ({
-        benchId: r.benchId,
-        screenshots: r.screenshots.map(s => ({
-          theme: s.theme, width: s.width,
-          fail: s.fail,
-          pixelInfo: s.pixelInfo,
-        })),
-      })), THUMB_W, THUMB_H, COLS, sheetW, sheetH }
+    { payload, THUMB_W, THUMB_H, COLS, GAP, sheetW, sheetH },
   );
 
-  const pngData = await page.evaluate(() => {
-    return document.getElementById('cs').toDataURL('image/png').split(',')[1];
-  });
+  const pngData = await page.evaluate(() =>
+    document.getElementById('cs').toDataURL('image/png').split(',')[1],
+  );
 
   fs.writeFileSync(outPath, Buffer.from(pngData, 'base64'));
   await browser.close();
