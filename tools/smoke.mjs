@@ -271,78 +271,161 @@ async function testBench(page, baseUrl, subjectId, benchId, navLabel) {
   return result;
 }
 
-// ── Contact sheet (grid of thumbnails) ───────────────────────────────────────
-async function makeContactSheet(results, outPath) {
-  const THUMB_W = 120, THUMB_H = 90;
-  const COLS = 4; // one row per bench: light/1280, light/400, dark/1280, dark/400
-  const GAP = 2;
-  const rows = results.length;
-  const sheetW = THUMB_W * COLS + GAP * (COLS + 1);
-  const sheetH = rows * (THUMB_H + GAP) + GAP;
+// ── Contact sheets — one PNG per subject ─────────────────────────────────────
+//
+// Layout per tile (one bench):
+//   ┌─────────────────────────────────────────┐  ← TILE_W = 400 px
+//   │ bench-id  (large label)                 │  ← LABEL_H = 38 px
+//   ├──────────────────┬──────────────────────┤
+//   │ light / 1280     │ light / 400          │  ← SHOT_H = 116 px each
+//   ├──────────────────┼──────────────────────┤
+//   │ dark  / 1280     │ dark  / 400          │
+//   └──────────────────┴──────────────────────┘
+//
+// Up to COLS=4 tiles per row, MAX_ROWS=6 rows per image.
+// Red border drawn over any failing screenshot slot.
 
-  // Read each screenshot from disk as a base64 data URL (Node context).
-  const payload = results.map(r => ({
-    benchId: r.benchId,
-    screenshots: r.screenshots.slice(0, COLS).map(s => ({
-      theme: s.theme,
-      width: s.width,
-      fail: s.fail,
-      dataUrl: s.screenshotPath && fs.existsSync(s.screenshotPath)
-        ? 'data:image/png;base64,' + fs.readFileSync(s.screenshotPath).toString('base64')
-        : null,
-    })),
-  }));
+const TILE_W   = 400;
+const LABEL_H  = 38;
+const SHOT_GAP = 3;
+const TILE_GAP = 6;
+const COLS     = 4;
+const SHOT_W   = Math.floor((TILE_W - SHOT_GAP) / 2);   // 198 px
+const SHOT_H   = 116;
+const TILE_H   = LABEL_H + SHOT_H * 2 + SHOT_GAP * 3;   // 38+116*2+9 = 279
+
+async function makeContactSheets(results, outDir) {
+  // Group results by subject, preserving catalog order.
+  const order = [...new Set(results.map(r => r.subjectId))];
+  const bySubject = {};
+  for (const r of results) {
+    (bySubject[r.subjectId] ??= []).push(r);
+  }
 
   const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage();
-  await page.setContent('<html><body style="margin:0"><canvas id="cs"></canvas></body></html>');
+  const outPaths = [];
 
-  await page.evaluate(
-    async ({ payload, THUMB_W, THUMB_H, COLS, GAP, sheetW, sheetH }) => {
-      const canvas = document.getElementById('cs');
-      canvas.width = sheetW;
-      canvas.height = sheetH;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#111';
-      ctx.fillRect(0, 0, sheetW, sheetH);
+  for (const subjectId of order) {
+    const benches = bySubject[subjectId];
+    const numCols  = Math.min(benches.length, COLS);
+    const numRows  = Math.ceil(benches.length / COLS);
+    const sheetW   = numCols * TILE_W + (numCols + 1) * TILE_GAP;
+    const sheetH   = numRows * TILE_H + (numRows + 1) * TILE_GAP;
 
-      for (let ri = 0; ri < payload.length; ri++) {
-        const r = payload[ri];
-        for (let si = 0; si < r.screenshots.length; si++) {
-          const s = r.screenshots[si];
-          const x = si * (THUMB_W + GAP) + GAP;
-          const y = ri * (THUMB_H + GAP) + GAP;
+    // Read screenshots from disk as base64 data URLs (Node context).
+    const payload = benches.map(r => ({
+      benchId: r.benchId,
+      pass:    r.pass,
+      // screenshots order: light/1280, light/400, dark/1280, dark/400
+      shots: r.screenshots.slice(0, 4).map(s => ({
+        label:   `${s.theme} / ${s.width}`,
+        fail:    s.fail,
+        dataUrl: s.screenshotPath && fs.existsSync(s.screenshotPath)
+          ? 'data:image/png;base64,' + fs.readFileSync(s.screenshotPath).toString('base64')
+          : null,
+      })),
+    }));
 
-          if (s.dataUrl) {
-            // Draw the real screenshot scaled to thumbnail size.
-            const img = new Image();
-            await new Promise(res => { img.onload = res; img.onerror = res; img.src = s.dataUrl; });
-            if (img.naturalWidth) {
-              ctx.drawImage(img, x, y, THUMB_W, THUMB_H);
+    const page = await browser.newPage();
+    await page.setViewportSize({ width: sheetW, height: sheetH });
+    await page.setContent('<html><body style="margin:0;background:#111"><canvas id="cs"></canvas></body></html>');
+
+    await page.evaluate(
+      async ({ payload, subjectId, TILE_W, TILE_H, LABEL_H, SHOT_W, SHOT_H, SHOT_GAP, TILE_GAP, COLS, sheetW, sheetH }) => {
+        const canvas = document.getElementById('cs');
+        canvas.width  = sheetW;
+        canvas.height = sheetH;
+        const ctx = canvas.getContext('2d');
+
+        // Sheet background
+        ctx.fillStyle = '#111111';
+        ctx.fillRect(0, 0, sheetW, sheetH);
+
+        const loadImg = (dataUrl) => new Promise(res => {
+          if (!dataUrl) { res(null); return; }
+          const img = new Image();
+          img.onload  = () => res(img);
+          img.onerror = () => res(null);
+          img.src = dataUrl;
+        });
+
+        for (let bi = 0; bi < payload.length; bi++) {
+          const bench = payload[bi];
+          const col   = bi % COLS;
+          const row   = Math.floor(bi / COLS);
+          const tx    = TILE_GAP + col * (TILE_W + TILE_GAP);
+          const ty    = TILE_GAP + row * (TILE_H + TILE_GAP);
+
+          // Tile background
+          ctx.fillStyle = bench.pass ? '#1c2030' : '#2a1020';
+          ctx.fillRect(tx, ty, TILE_W, TILE_H);
+
+          // Bench ID label
+          ctx.font         = 'bold 19px system-ui, sans-serif';
+          ctx.textBaseline = 'middle';
+          ctx.textAlign    = 'left';
+          ctx.fillStyle    = bench.pass ? '#c8d8ff' : '#ff9999';
+          ctx.fillText(bench.benchId, tx + 8, ty + LABEL_H / 2);
+
+          // 4 screenshots in a 2×2 grid
+          // [0]=light/1280  [1]=light/400
+          // [2]=dark/1280   [3]=dark/400
+          const positions = [[0,0],[1,0],[0,1],[1,1]];
+          for (let si = 0; si < bench.shots.length; si++) {
+            const s         = bench.shots[si];
+            const [sc, sr]  = positions[si];
+            const sx        = tx + sc * (SHOT_W + SHOT_GAP) + SHOT_GAP;
+            const sy        = ty + LABEL_H + sr * (SHOT_H + SHOT_GAP) + SHOT_GAP;
+
+            const img = await loadImg(s.dataUrl);
+            if (img) {
+              // Aspect-fit inside the shot box (letterbox if needed)
+              const scale  = Math.min(SHOT_W / img.naturalWidth, SHOT_H / img.naturalHeight);
+              const dw     = Math.round(img.naturalWidth  * scale);
+              const dh     = Math.round(img.naturalHeight * scale);
+              const dx     = sx + Math.round((SHOT_W - dw) / 2);
+              const dy     = sy + Math.round((SHOT_H - dh) / 2);
+              ctx.fillStyle = '#222';
+              ctx.fillRect(sx, sy, SHOT_W, SHOT_H);
+              ctx.drawImage(img, dx, dy, dw, dh);
+            } else {
+              ctx.fillStyle = '#333';
+              ctx.fillRect(sx, sy, SHOT_W, SHOT_H);
             }
-          } else {
-            ctx.fillStyle = '#333';
-            ctx.fillRect(x, y, THUMB_W, THUMB_H);
-          }
 
-          // Red border on failure.
-          if (s.fail) {
-            ctx.strokeStyle = '#ff2222';
-            ctx.lineWidth = 3;
-            ctx.strokeRect(x + 1.5, y + 1.5, THUMB_W - 3, THUMB_H - 3);
+            // Small overlay label (theme / width)
+            ctx.fillStyle    = 'rgba(0,0,0,0.55)';
+            ctx.fillRect(sx, sy, SHOT_W, 14);
+            ctx.font         = '9px monospace';
+            ctx.textBaseline = 'middle';
+            ctx.textAlign    = 'left';
+            ctx.fillStyle    = '#ddd';
+            ctx.fillText(s.label, sx + 3, sy + 7);
+
+            // Red border on failure
+            if (s.fail) {
+              ctx.strokeStyle = '#ff2020';
+              ctx.lineWidth   = 3;
+              ctx.strokeRect(sx + 1.5, sy + 1.5, SHOT_W - 3, SHOT_H - 3);
+            }
           }
         }
-      }
-    },
-    { payload, THUMB_W, THUMB_H, COLS, GAP, sheetW, sheetH },
-  );
+      },
+      { payload, subjectId, TILE_W, TILE_H, LABEL_H, SHOT_W, SHOT_H, SHOT_GAP, TILE_GAP, COLS, sheetW, sheetH },
+    );
 
-  const pngData = await page.evaluate(() =>
-    document.getElementById('cs').toDataURL('image/png').split(',')[1],
-  );
+    const pngData = await page.evaluate(() =>
+      document.getElementById('cs').toDataURL('image/png').split(',')[1],
+    );
+    await page.close();
 
-  fs.writeFileSync(outPath, Buffer.from(pngData, 'base64'));
+    const outPath = path.join(outDir, `contact-${subjectId}.png`);
+    fs.writeFileSync(outPath, Buffer.from(pngData, 'base64'));
+    outPaths.push(outPath);
+  }
+
   await browser.close();
+  return outPaths;
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────
@@ -385,32 +468,30 @@ const jsonPath = path.join(OUT_DIR, 'smoke.json');
 fs.writeFileSync(jsonPath, JSON.stringify(results, null, 2));
 console.log(`\nResults written to ${jsonPath}`);
 
-// ── Contact sheet ─────────────────────────────────────────────────────────────
-const contactSheetPath = path.join(OUT_DIR, 'contact-sheet.png');
+// ── Contact sheets (one per subject) ─────────────────────────────────────────
 try {
-  await makeContactSheet(results, contactSheetPath);
-  console.log(`Contact sheet written to ${contactSheetPath}`);
+  const sheets = await makeContactSheets(results, OUT_DIR);
+  for (const p of sheets) console.log(`Contact sheet: ${p}`);
 } catch (err) {
   console.error(`Contact sheet failed: ${err.message}`);
 }
 
 // ── Summary ───────────────────────────────────────────────────────────────────
-const total = results.length;
+const total  = results.length;
 const passed = results.filter(r => r.pass).length;
 const failed = total - passed;
 
 const byType = {};
 for (const r of results) {
   for (const t of r.failureTypes) {
-    // normalise (strip @theme/width suffix)
     const base = t.replace(/@.*/, '');
     byType[base] = (byType[base] ?? 0) + 1;
   }
 }
 
 console.log('\n═══════════════════════════════════════');
-console.log(`SMOKE TEST SUMMARY`);
-console.log(`═══════════════════════════════════════`);
+console.log('SMOKE TEST SUMMARY');
+console.log('═══════════════════════════════════════');
 console.log(`Total benches : ${total}`);
 console.log(`Passed        : ${passed}`);
 console.log(`Failed        : ${failed}`);
@@ -423,4 +504,45 @@ if (Object.keys(byType).length) {
 console.log('\nFailed benches:');
 for (const r of results.filter(r => !r.pass)) {
   console.log(`  ${r.subjectId}/${r.benchId} — ${r.failureTypes.join(', ')}`);
+}
+
+// ── Per-viewport failure counts ───────────────────────────────────────────────
+// Categories:
+//   blank        – pixelInfo.error === 'all transparent' (zero-content canvas)
+//   solid        – pixelInfo.solid (colorCount ≤ 2, monochrome)
+//   black-fill   – top colour is pure black AND bgPct > 90 (dark blank bug)
+//   console-err  – any JS errors present at time of screenshot
+//   readout-dash – a visible readout span still shows '–'
+//   no-canvas    – pixelInfo.error === 'no canvas' (element missing)
+const VIEWPORTS = ['light/1280', 'light/400', 'dark/1280', 'dark/400'];
+const CATS      = ['blank', 'solid', 'black-fill', 'console-err', 'readout-dash', 'no-canvas'];
+const counts    = {};
+for (const vp of VIEWPORTS) counts[vp] = Object.fromEntries(CATS.map(c => [c, 0]));
+
+for (const r of results) {
+  for (const s of r.screenshots) {
+    const vp = `${s.theme}/${s.width}`;
+    if (!counts[vp]) continue;
+    const pi = s.pixelInfo ?? {};
+    if (pi.error === 'all transparent')                    counts[vp]['blank']++;
+    if (pi.error === 'no canvas')                          counts[vp]['no-canvas']++;
+    if (pi.solid)                                          counts[vp]['solid']++;
+    // black-fill: near-pure-black background, bgPct > 90, AND very few colours
+    // (≤ 5 colours means no real content was drawn; more colours = dark-bg chart)
+    if (pi.topColor === '0,0,0' && (pi.bgPct ?? 0) > 90 && (pi.colorCount ?? 0) <= 5)
+      counts[vp]['black-fill']++;
+    if ((s.consoleErrorsAtCapture ?? []).length > 0)       counts[vp]['console-err']++;
+    if (s.hasDashes)                                       counts[vp]['readout-dash']++;
+  }
+}
+
+const COL_W = 12;
+console.log('\nPer-viewport failure counts:');
+console.log('  ' + 'category'.padEnd(14) + VIEWPORTS.map(v => v.padEnd(COL_W)).join(''));
+console.log('  ' + '─'.repeat(14 + COL_W * VIEWPORTS.length));
+for (const cat of CATS) {
+  const row = VIEWPORTS.map(vp => String(counts[vp][cat]).padEnd(COL_W)).join('');
+  const anyNonZero = VIEWPORTS.some(vp => counts[vp][cat] > 0);
+  const marker = anyNonZero ? ' ◄' : '';
+  console.log('  ' + cat.padEnd(14) + row + marker);
 }
