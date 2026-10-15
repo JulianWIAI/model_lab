@@ -101,16 +101,20 @@ test('rw: boundary ab=1 one-trial learning', () => {
 });
 
 test('rw: outside domain oscillates at compound β·Σα > 1', () => {
-  // IMPORTANT: for compound AB trial, error factor = β·(α_A+α_B) = 0.9·1.6 = 1.44 > 1 → oscillates
-  // Single-cue closed form: V_n = λ(1−(1−αβ)^n).
-  // For αβ=1.5, (1−αβ)=−0.5, so odd trials have V_n > λ and even trials V_n < λ.
-  // Oscillation means V alternates above and below λ; specifically V[1]=1.5 > λ=1, V[2]=0.75 < λ.
-  // The series converges (|1−αβ|=0.5<1) but oscillates around λ with alternating overshoot.
-  const m = new RescorlaWagnerModel({ alphaA: 1.5, beta: 1, lambda: 1 });
-  const { VA } = m.simulate('acquisition', 20);
-  // V[1] = 1.5 > λ (overshoot), V[2] = 0.75 < λ (undershoot): confirms oscillation
-  assert.ok(VA[1] > 1, `αβ=1.5 trial 1 should overshoot λ=1, VA[1] = ${VA[1]}`);
-  assert.ok(VA[2] < 1, `αβ=1.5 trial 2 should undershoot λ=1, VA[2] = ${VA[2]}`);
+  // IMPORTANT: this tests a COMPOUND AB trial where β·(α_A+α_B) = 0.9·1.6 = 1.44 > 1.
+  // In a compound trial both A and B are present: ΔV_A = α_A·β·(λ−V_A−V_B)
+  //                                                    ΔV_B = α_B·β·(λ−V_A−V_B)
+  // Total update Δ(V_A+V_B) = β·(α_A+α_B)·(λ−ΣV) with β·Σα = 0.9·1.6 = 1.44 > 1 → oscillates.
+  // Both V_A and V_B should alternate above/below their asymptotes.
+  const m = new RescorlaWagnerModel({ alphaA: 0.8, alphaB: 0.8, beta: 0.9, lambda: 1 });
+  const { VA, VB } = m.simulate('overshadowing', 30); // overshadowing uses compound AB+ trials
+  // With β·Σα=1.44 > 1: total V_A+V_B should oscillate above and below λ=1
+  // After trial 1: ΔV total = 0.9·1.6·(1−0) = 1.44 → V_A+V_B = 1.44 > λ=1 (overshoot)
+  const sum1 = VA[1] + VB[1];
+  assert.ok(sum1 > 1, `β·Σα=1.44: after trial 1, V_A+V_B = ${sum1.toFixed(4)} should overshoot λ=1`);
+  // After trial 2: ΔV total = 0.9·1.6·(1−1.44) = −0.634 → sum ≈ 0.806 < λ=1 (undershoot)
+  const sum2 = VA[2] + VB[2];
+  assert.ok(sum2 < 1, `β·Σα=1.44: after trial 2, V_A+V_B = ${sum2.toFixed(4)} should undershoot λ=1`);
 });
 
 test('rw: outside domain diverges at αβ > 2', () => {
