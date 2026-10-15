@@ -14,14 +14,22 @@
  *     activity of the giant axon of the squid.
  *     J. Physiol. 108, 37–77. https://doi.org/10.1113/jphysiol.1949.sp004310
  *
- * Default concentrations — squid giant axon at rest (Hodgkin & Katz 1949, Table 1):
+ * Default concentrations — squid giant axon at rest (Hodgkin & Katz 1949, Table 1;
+ *   not checked against primary source):
  *   K⁺:  [K]_i  = 400 mM,  [K]_o  =  20 mM
  *   Na⁺: [Na]_i =  50 mM,  [Na]_o = 440 mM
  *   Cl⁻: [Cl]_i =  52 mM,  [Cl]_o = 560 mM
  *
- * Default permeability ratios at rest (Hodgkin & Katz 1949):
+ * Default permeability ratios at rest (Hodgkin & Katz 1949; not checked against
+ *   primary source):
  *   P_K : P_Na : P_Cl = 1 : 0.04 : 0.45
  *   (P_K normalised to 1; only ratios enter the equation)
+ *
+ * Computed resting Vm (squid axon, T = 293.15 K):
+ *   num = 1·20 + 0.04·440 + 0.45·52  = 61.0
+ *   den = 1·400 + 0.04·50 + 0.45·560 = 654.0
+ *   Vm  = (RT/F)·ln(61/654)·1000 ≈ −59.9 mV
+ *   (Mammalian neurons at 37 °C use different concentrations and give ≈ −74 mV.)
  *
  * Secondary source for concentration overview:
  *   B. Hille (2001). Ion Channels of Excitable Membranes, 3rd ed.

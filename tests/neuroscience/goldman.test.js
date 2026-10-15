@@ -64,14 +64,20 @@ test('Vm = 0 when all concentrations are symmetric', () => {
 });
 
 // ─── 5. Squid-axon resting potential ─────────────────────────────────────────
-test('default squid-axon resting Vm ≈ −61 mV (Hodgkin & Katz 1949)', () => {
-  // Numerator: PK·Ko + PNa·Nao + PCl·Cli = 1·20 + 0.04·440 + 0.45·52 = 61
-  // Denominator: PK·Ki + PNa·Nai + PCl·Clo = 1·400 + 0.04·50 + 0.45·560 = 654
-  // Vm = RT/F · ln(61/654) ≈ −61 mV
+test('default squid-axon resting Vm matches exact formula (squid axon, 20 °C)', () => {
+  // Default concentrations: squid axon (Hodgkin & Katz 1949, Table 1) — not checked against primary source.
+  //   PK=1, PNa=0.04, PCl=0.45  Ko=20, Nao=440, Cli=52 mM (numerator ions)
+  //   Ki=400, Nai=50, Clo=560 mM (denominator ions)
+  // num = 1·20 + 0.04·440 + 0.45·52 = 20 + 17.6 + 23.4 = 61.0 (exact)
+  // den = 1·400 + 0.04·50 + 0.45·560 = 400 + 2.0 + 252.0 = 654.0 (exact)
+  // Vm = (RT/F) · ln(61/654) · 1000 mV ≈ −59.9 mV at T = 293.15 K
+  // (Mammalian neurons at 37 °C with K 155/4, Na 12/145, Cl 4/120 mM give ≈ −74 mV — different system.)
+  const T = 293.15;
+  const expected = (R * T / F) * Math.log(61 / 654) * 1000;
   const m = new GoldmanModel();
   assert.ok(
-    m.Vm > -65 && m.Vm < -58,
-    `Resting Vm should be ≈−61 mV; got ${m.Vm.toFixed(2)} mV`,
+    Math.abs(m.Vm - expected) < 1e-8,
+    `Vm=${m.Vm.toFixed(4)} mV, expected=${expected.toFixed(4)} mV`,
   );
 });
 
