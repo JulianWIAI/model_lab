@@ -37,141 +37,149 @@ Physics → Thermodynamics.
 
 ## Curriculum map
 
-Every bench has a testable anchor: an analytic solution, published numerical value, or named
-textbook result that a unit test can verify.  ✓ = already built.  Levels: intro / university / graduate.
+Every bench has a testable anchor with a named source and source status.
+✓ = already built.  ★ = new bench added in this revision.  ‡ = level elevated to graduate.
+Levels: intro / university / graduate.
+Source status: **verified** = algebraically exact or checked during implementation;
+**secondary** = textbook or paper value consistent with primary sources, not re-fetched;
+**unverified** = cited but not cross-checked.
 
 ---
 
-### Physics (17 benches, 5 built)
+### Physics (19 benches, 5 built)
 
 #### Mechanics
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| pendulum ✓ | Pendulum | sim | intro | T = 2π√(L/g) small-angle; exact Bessel period at large amplitude |
-| orbits | Planetary orbits | sim | intro | circular period T = 2π√(a³/GM); Kepler III: T²∝a³ |
-| oscillators | Driven oscillator & resonance | sim | intro | amplitude peak at ω = ω₀ (zero damping); Q = ω₀/(2γ) |
-| special-relativity | Special relativity | sim | university | γ = 1/√(1−β²); muon at β=0.9994 lives 28× longer than at rest |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| pendulum ✓ | sim | intro | T = 2π√(L/g) small-angle; exact Bessel period at large amplitude | standard mechanics | verified |
+| orbits | sim | intro | T = 2π√(a³/GM); Kepler III T²∝a³ | Kepler 1619; Newton *Principia* | secondary |
+| oscillators | sim | intro | amplitude peak at ω = ω₀; Q = ω₀/(2γ) | algebraic | verified |
+| special-relativity | sim | university | γ = 1/√(1−β²); muon at β=0.9994 lives 28× longer than at rest | algebraic + PDG muon data | secondary |
 
 #### Waves & Optics
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| wave-interference | Wave interference (double-slit) | sim | intro | fringe spacing Δy = λL/d; first dark fringe at d·sinθ = λ/2 |
-| standing-waves | Standing waves | sim | intro | harmonics f_n = n·v/(2L); ratio f_2/f_1 = 2 exactly |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| wave-interference | sim | intro | fringe spacing Δy = λL/d; dark fringe at d·sinθ = λ/2 | Young 1801; algebraic | verified |
+| standing-waves | sim | intro | harmonics f_n = n·v/(2L); f_2/f_1 = 2 exactly | algebraic | verified |
 
 #### Electromagnetism
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| rc-circuit | RC circuit | sim | intro | V(t) = V₀·e^(−t/RC); half-life = RC·ln 2 |
-| lc-oscillator | LC/RLC oscillator | sim | university | ω₀ = 1/√(LC); critical damping when R = 2√(L/C) |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| rc-circuit | sim | intro | V(t) = V₀·e^(−t/RC); half-life = RC·ln 2 | algebraic | verified |
+| lc-oscillator | sim | university | ω₀ = 1/√(LC); critical damping when R = 2√(L/C) | algebraic | verified |
 
 #### Thermodynamics
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| ideal-gas ✓ | Ideal gas simulation | sim | university | P = NkT/V; ⟨KE⟩ = 3/2 kT (exact in reduced units) |
-| maxwell-boltzmann ✓ | Maxwell–Boltzmann | sim | university | v_p : v̄ : v_rms = 1 : 1.128 : 1.225 (exact ratios) |
-| van-der-waals ✓ | Van der Waals | sim | university | Z_c = 3/8 = 0.375 (Onsager; exact algebraic result) |
-| carnot | Carnot engine | sim | intro | η_max = 1 − T_c/T_h; T_h=500 K, T_c=300 K → η = 0.40 |
-| entropy-mixing | Entropy of mixing | sim | intro | ΔS = −nR·Σx_i·ln x_i; equimolar binary → nR·ln 2 ≈ 5.76 J/(mol·K) |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| ideal-gas ✓ | sim | university | P = NkT/V; ⟨KE⟩ = 3/2 kT | algebraic | verified |
+| maxwell-boltzmann ✓ | sim | university | v_p : v̄ : v_rms = 1 : 1.128 : 1.225 (exact ratios) | algebraic | verified |
+| van-der-waals ✓ | sim | university | Z_c = 3/8 = 0.375 exact algebraic result | Onsager; algebraic | verified |
+| carnot | sim | intro | η = 1 − T_c/T_h; 500 K/300 K → η = 0.40 | algebraic | verified |
+| entropy-mixing | sim | intro | ΔS = −nR·Σx_i·ln x_i; equimolar binary → nR·ln 2 | algebraic | verified |
 
 #### Statistical Mechanics
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| ising | Ising model | sim | university | 2D critical T_c = 2J/[k_B·ln(1+√2)] ≈ 2.269 J/k_B (Onsager 1944) |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| ising | sim | university | T_c = 2J/[k_B·ln(1+√2)] ≈ 2.269 J/k_B | Onsager 1944, *Phys. Rev.* 65:117 | secondary |
+| ising-scaling ★ | sim | graduate | β = 1/8: M ~ \|T−T_c\|^(1/8); ν = 1: ξ ~ \|T−T_c\|^(−1) (exact 2D) | Onsager 1944 (exact analytic exponents) | secondary |
 
 #### Quantum Mechanics
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| particle-in-box | Particle in a box | sim | intro | E_n = n²π²ℏ²/(2mL²); E_2/E_1 = 4 exactly |
-| quantum-tunneling | Quantum tunnelling | sim | university | T = [1 + V₀²·sinh²(κa)/(4E(V₀−E))]⁻¹; T → 1 as V₀ → 0 |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| particle-in-box | sim | intro | E_n = n²π²ℏ²/(2mL²); E_2/E_1 = 4 | Griffiths §2.2; algebraic | verified |
+| quantum-tunneling ‡ | sim | graduate | Rectangular barrier: T = [1 + V₀²sinh²(κa)/(4E(V₀−E))]⁻¹; WKB for smooth barrier: T ~ exp(−2∫κdx) — comparison of both is the graduate exercise | Griffiths §2.6 (exact), §9.2 (WKB) | secondary |
+| schrodinger-1d ★ | sim | graduate | Finite-difference eigenvalues match E_n = n²π²ℏ²/(2mL²) to ±0.1% for n = 1–5 | Griffiths §2.2; algebraic | verified |
 
 #### Particle Physics
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| quarks ✓ | Quarks | explorer | university | proton = uud; mass ≈ 938 MeV/c² from quark + binding contributions |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| quarks ✓ | explorer | university | proton = uud; mass ≈ 938 MeV/c² | PDG 2022 | verified |
 
 ---
 
-### Neuroscience (12 benches, 2 built)
+### Neuroscience (13 benches, 2 built)
 
 #### Electrophysiology
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| neuron ✓ | Action potential (HH) | sim | university | spike threshold, refractory period; TTX blocks Na⁺ channel |
-| goldman ✓ | Goldman equation (GHK) | sim | university | Vm(squid rest) ≈ −59.9 mV; Vm → E_K when P_Na, P_Cl → 0 |
-| integrate-and-fire | Integrate-and-fire neuron | sim | university | steady-state f = 1/(t_ref + τ_m·ln[I/(I − g_L·V_th)]); fires only above threshold I |
-| cable-equation | Passive cable & dendrite | sim | university | V(x) = V₀·e^(−x/λ); space constant λ = √(r_m/r_i) |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| neuron ✓ | sim | university | spike threshold; TTX blocks Na⁺ | Hodgkin & Huxley 1952 | verified |
+| goldman ✓ | sim | university | Vm(squid rest) ≈ −59.9 mV; Vm → E_K when P_Na, P_Cl → 0 | Hodgkin & Katz 1949 | verified |
+| integrate-and-fire | sim | university | f = 1/(t_ref + τ_m·ln[I/(I − g_L·V_th)]); fires only above threshold | Lapicque 1907; Tuckwell 1988 | secondary |
+| cable-equation | sim | university | V(x) = V₀·e^(−x/λ); λ = √(r_m/r_i) — steady-state analytic, no PDE solver needed | Rall 1967, *J. Neurophysiol.* 30:1138 | secondary |
+| neuron-bifurcation ★ | sim | graduate | Saddle-node (type I) vs. subcritical Hopf (type II); I_∞ ≈ 9.78 μA/cm² for HH | Rinzel & Ermentrout 1989, in *Methods in Neuronal Modeling* | secondary |
 
 #### Synapses & Plasticity
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| synapse-kinetics | Synaptic waveforms | sim | intro | alpha-function peak at t = τ; EPSP decay time constant |
-| stdp | Spike-timing-dependent plasticity | sim | university | LTP for pre→post Δt>0; Bi & Poo (1998) τ⁺ ≈ τ⁻ ≈ 20 ms |
-| hebbian-learning | Hebbian learning (Oja rule) | sim | university | weight ‖w‖ → 1; w aligns with first PC of input (Oja 1982) |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| synapse-kinetics | sim | intro | alpha-function peak at t = τ (exact by differentiation) | algebraic | verified |
+| stdp | sim | university | LTP for pre→post Δt > 0; τ⁺ ≈ τ⁻ ≈ 20 ms | Bi & Poo 1998, *J. Neurosci.* 18:10464 | secondary |
+| hebbian-learning ‡ | sim | graduate | ‖w‖ → 1; w aligns with dominant eigenvector of input covariance (online PCA equivalence) | Oja 1982, *J. Math. Biol.* 15:267 | secondary |
 
 #### Networks & Coding
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| hopfield | Hopfield network | sim | university | storage capacity ≈ 0.138N patterns (McEliece et al. 1987); energy E = −½Σw_{ij}s_is_j |
-| population-coding | Neural population coding | sim | university | decoding error ∝ 1/√N (Fisher information); population vector readout |
-| wilson-cowan | Wilson–Cowan E–I model | sim | university | fixed points from nullcline intersections; Hopf bifurcation → limit cycle (Wilson & Cowan 1972) |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| hopfield ‡ | sim | graduate | Storage capacity ≈ 0.138N; spurious mixture states; E = −½Σw_{ij}s_is_j | McEliece et al. 1987, *IEEE Trans. IT* 33:461 | secondary |
+| population-coding ‡ | sim | graduate | CRB: Var(θ̂) ≥ 1/I(θ); decoding error ∝ 1/√N for Poisson neurons | Seung & Sompolinsky 1993, *PNAS* 90:10749 | secondary |
+| wilson-cowan ‡ | sim | graduate | Hopf bifurcation: Jacobian eigenvalues cross imaginary axis → limit cycle; nullcline topology | Wilson & Cowan 1972, *Biophys. J.* 12:1 | secondary |
 
 #### Sensory Systems
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| receptive-fields | Visual receptive fields | explorer | university | Gabor filter peak SF at chosen ν; orientation bandwidth ≈ 30° (DeValois et al. 1982) |
-| perceptron | Perceptron | sim | university | converges in ≤ (R/γ)² steps for linearly separable data (Rosenblatt 1962) |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| receptive-fields | explorer | university | Gabor peak SF at chosen ν; orientation bandwidth ≈ 30° | DeValois et al. 1982, *J. Neurosci.* 2:1137 | secondary |
+| perceptron | sim | university | Convergence in ≤ (R/γ)² steps for linearly separable data | Novikoff 1962 (proof); Rosenblatt 1962 | secondary |
 
 ---
 
-### Mathematics (12 benches, 1 built)
+### Mathematics (13 benches, 1 built)
 
 #### Analysis
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| fourier ✓ | Fourier series | sim | university | square-wave Gibbs overshoot → 8.9% as N → ∞ (exact) |
-| ode-explorer | ODE explorer | sim | intro | Euler error O(h), RK4 error O(h⁴); exact check: y'=−y gives y=e^(−t) |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| fourier ✓ | sim | university | Square-wave Gibbs overshoot → 8.9% as N → ∞ | algebraic (exact) | verified |
+| ode-explorer | sim | intro | Euler error O(h), RK4 error O(h⁴); y'=−y → y = e^(−t) exact | algebraic | verified |
 
 #### Dynamical Systems
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| logistic-map | Logistic map & chaos | sim | university | period-2 onset at r=3.000; Feigenbaum δ ≈ 4.669 (Feigenbaum 1978) |
-| mandelbrot | Mandelbrot set | explorer | university | period-1 cardioid boundary: c inside iff |c−1/4|<1/4 (approx); period-2 bulb centre at c=−1 |
-| phase-plane | Phase plane & stability | sim | university | stable node when tr<0, det>0, tr²>4det; eigenvalues of Jacobian classify equilibria |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| logistic-map | sim | university | Period-2 onset at r = 3.000; Feigenbaum δ ≈ 4.669 | Feigenbaum 1978, *J. Stat. Phys.* 19:25 | secondary |
+| lyapunov ★ | sim | graduate | λ = ln 2 for tent map (algebraically exact); λ > 0 for r > r_∞ ≈ 3.5699 | Tent map: verified; r_∞: Feigenbaum 1978 | verified / secondary |
+| mandelbrot | explorer | university | Period-1 cardioid \|c−1/4\| < 1/4; period-2 bulb centre at c = −1 | algebraic; Mandelbrot 1980 | secondary |
+| phase-plane ‡ | sim | graduate | tr < 0, det > 0, tr² > 4det → stable node; Jacobian eigenvalues + Hartman-Grobman theorem | Strogatz 2001 §5.2; algebraic | secondary |
 
 #### Probability & Statistics
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| central-limit | Central limit theorem | sim | intro | SE = σ/√n; 95% CI coverage verified by simulation |
-| markov-chains | Markov chains | sim | university | 2-state stationary distribution: π₁ = p₂₁/(p₁₂+p₂₁) (exact) |
-| bayes | Bayesian inference | sim | intro | beta-binomial posterior Beta(α+k, β+n−k) after k heads in n flips (exact) |
-| random-walk | Random walk & diffusion | sim | intro | ⟨x²⟩ = n steps; ⟨|x|⟩ = √(2n/π) (exact); 2D: ⟨r²⟩ = 2Dt (Einstein 1905) |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| central-limit | sim | intro | SE = σ/√n; 95% CI coverage verified by simulation | algebraic (CLT) | verified |
+| markov-chains ‡ | sim | graduate | π₁ = p₂₁/(p₁₂+p₂₁) exact; spectral gap = 1−\|λ₂\|; τ_mix ≤ (1/gap)·ln(1/ε) | Algebraic; Levin et al. 2009, *Markov Chains and Mixing Times* | secondary |
+| bayes | sim | intro | Posterior Beta(α+k, β+n−k) exact conjugate update | algebraic | verified |
+| information-theory | sim | university | H = −Σp_i·log₂p_i; H_max = log₂n; C = B·log₂(1+SNR) | Shannon 1948, *Bell Syst. Tech. J.* 27:379 | secondary |
+| random-walk | sim | intro | ⟨x²⟩ = n; ⟨\|x\|⟩ = √(2n/π); 2D ⟨r²⟩ = 2Dt | algebraic; Einstein 1905 | verified |
 
 #### Linear Algebra
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| eigenvectors | Eigenvalues, PCA | sim | university | power iteration → dominant eigenvector; for [[2,1],[1,2]] eigenvalues = 3,1 (exact) |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| eigenvectors | sim | university | Power iteration → dominant eigenvector; [[2,1],[1,2]] → λ = 3, 1 exactly | algebraic | verified |
 
 #### Graph Theory
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| graph-theory | Graph theory | explorer | university | Euler's formula V−E+F=2; handshaking 2|E|=Σdeg(v); Dijkstra shortest path |
-| information-theory | Information theory | sim | university | H = −Σp_i·log₂p_i; H_max = log₂n for uniform (exact); Shannon capacity C = B·log₂(1+SNR) |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| graph-theory | explorer | university | V−E+F = 2; 2\|E\| = Σdeg(v); Dijkstra shortest path | Euler 1736; algebraic | secondary |
 
 ---
 
@@ -179,107 +187,192 @@ textbook result that a unit test can verify.  ✓ = already built.  Levels: intr
 
 #### Markets
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| tax ✓ | Tax incidence | sim | intro | DWL = ½·t·ΔQ; burden split = ratio of elasticities |
-| supply-demand | Supply & demand | sim | intro | equilibrium P*, Q* at intersection; CS = ½(P_max−P*)Q* (linear case) |
-| elasticity | Price elasticity | sim | intro | unit elastic E_d = −1 → revenue PQ constant; Lerner index = −1/E_d at monopoly optimum |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| tax ✓ | sim | intro | DWL = ½·t·ΔQ; burden split = ratio of elasticities | algebraic | verified |
+| supply-demand | sim | intro | P*, Q* at intersection; CS = ½(P_max−P*)Q* linear case | algebraic | verified |
+| elasticity | sim | intro | Unit elastic E_d = −1 → PQ constant; Lerner index = −1/E_d | algebraic | verified |
 
 #### Game Theory
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| nash-equilibria | Nash equilibria | sim | university | matching pennies unique NE at (½,½); Battle of Sexes: two pure + one mixed NE (Nash 1950) |
-| auctions | Auction theory | sim | university | Vickrey second-price: dominant strategy = bid true value (Vickrey 1961); revenue equivalence theorem |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| nash-equilibria | sim | university | Matching pennies NE at (½,½); Battle of Sexes: 2 pure + 1 mixed NE | Nash 1950, *PNAS* 36:48 | secondary |
+| auctions | sim | university | Vickrey: dominant strategy = bid true value; revenue equivalence theorem | Vickrey 1961, *J. Finance* 16:8 | secondary |
+| mechanism-design ★ | sim | graduate | Revelation principle; optimal reserve p* = (1−F(p*))/f(p*) | Myerson 1981, *Math. Oper. Res.* 6:58 | secondary |
 
 #### Growth & Macroeconomics
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| compound-growth | Compound growth | sim | intro | doubling time = ln 2/r ≈ 72/r%; Rule of 72; A = P·e^(rt) continuous limit |
-| solow | Solow growth model | sim | university | steady state k* = [sA/(n+δ)]^{1/(1−α)} (Cobb-Douglas); golden rule α·f(k_GR) = (n+δ)·k_GR (Solow 1956) |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| compound-growth | sim | intro | Doubling time = ln 2/r; A = P·e^(rt); PV = FV·e^(−rT) continuous limit | algebraic | verified |
+| solow | sim | university | k* = [sA/(n+δ)]^{1/(1−α)}; golden rule α·f(k_GR) = (n+δ)·k_GR | Solow 1956, *QJE* 70:65 | secondary |
 
 #### Finance
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| compound-interest | Compound interest & NPV | sim | intro | (1+1/n)^n → e as n → ∞ (exact); PV = FV·e^(−rT) |
-| options-pricing | Options pricing (Black-Scholes) | sim | graduate | put-call parity C−P = S−K·e^(−rT); at expiry C = max(S−K, 0) (Black & Scholes 1973) |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| options-pricing | sim | graduate | S=100, K=100, r=5%, σ=20%, T=1 → call ≈ 10.45 (algebraically computed); put-call parity C−P = S−K·e^(−rT). **Educational use only — not financial advice.** | Black & Scholes 1973, *JPE* 81:637 | secondary / verified |
 
 #### Voting & Social Choice
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| voting-systems | Voting systems | explorer | intro | Condorcet paradox: A>B>C>A preference cycle; Arrow's impossibility theorem |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| voting-systems | explorer | intro | Condorcet paradox: A>B>C>A cycle; Arrow's impossibility theorem | Arrow 1951 (algebraic) | secondary |
 
 #### Network Economics
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| network-effects | Network effects | sim | intro | Metcalfe value V ∝ n²; tipping point in two-sided markets; S-curve adoption (Schelling 1971 type) |
-| inequality | Lorenz curve & inequality | sim | intro | Gini(Pareto α) = 1/(2α−1); Gini(uniform [0,b]) = 1/3 (exact) |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| network-effects | sim | intro | Metcalfe value V ∝ n²; tipping point; S-curve adoption | Schelling 1971 type; Metcalfe | secondary |
+| inequality | sim | intro | Gini(Pareto α) = 1/(2α−1); Gini(uniform [0,b]) = 1/3 | algebraic | verified |
 
 ---
 
-### Psychology & Cognition (12 benches, 0 built)
+### Psychology & Cognition (13 benches, 0 built)
 
 #### Perception & Psychophysics
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| signal-detection | Signal detection theory | sim | intro | d' = z(H) − z(FA); at d'=1: H=0.841, FA=0.159 (unit normal separation, exact) |
-| weber-fechner | Weber–Fechner & Stevens | sim | intro | S = k·I^n; for brightness n≈0.33: doubling S requires 8× increase in I (Stevens 1957) |
-| psychometric-function | Psychometric functions | sim | university | Weibull P(x) = 1−exp(−(x/α)^β); threshold at 75% criterion; 2AFC: P = Φ(d'/√2) |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| signal-detection | sim | intro | d' = z(H) − z(FA); at d'=1: H=0.841, FA=0.159 | algebraic (unit normals) | verified |
+| weber-fechner | sim | intro | S = k·I^n; brightness n ≈ 0.33: doubling S requires 8× increase in I | Stevens 1957, *Psychol. Rev.* 64:153 | secondary |
+| psychometric-function | sim | university | Weibull P(x) = 1−exp(−(x/α)^β); 2AFC: P = Φ(d'/√2) | algebraic; Green & Swets 1966 | secondary |
 
 #### Learning & Decision
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| rescorla-wagner | Rescorla–Wagner model | sim | intro | asymptote V_A = λ; blocking: ΔV_B ≈ 0 when V_A already = λ (Rescorla & Wagner 1972) |
-| drift-diffusion | Drift–diffusion model | sim | university | P(correct) = 1/(1+e^(−2μa/σ²)); mean RT = (a/2μ)·tanh(μa/σ²) + t_0 (Ratcliff 1978) |
-| reinforcement-learning | Reinforcement learning (Q-learning) | sim | university | Bellman: Q*(s,a) = R + γ·max Q*(s',a'); converges to Q* with ε-greedy exploration (Watkins & Dayan 1992) |
-| bayesian-observer | Bayesian sensory combination | sim | university | σ_comb = 1/√(1/σ₁²+1/σ₂²); for σ₁=σ₂ → σ/√2; weights ∝ 1/σ² (Ernst & Banks 2002) |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| rescorla-wagner | sim | intro | Asymptote V_A = λ; blocking ΔV_B ≈ 0 when V_A = λ | Rescorla & Wagner 1972, in *Classical Conditioning II* | secondary |
+| drift-diffusion ‡ | sim | graduate | P(correct) = 1/(1+e^(−2μa/σ²)); mean RT = (a/2μ)·tanh(μa/σ²) + t_0 — derived via Fokker-Planck | Ratcliff 1978, *Psychol. Rev.* 85:59 | secondary |
+| reinforcement-learning ‡ | sim | graduate | Bellman: Q*(s,a) = R + γ·max Q*(s',a'); convergence via stochastic approximation with ε-greedy | Watkins & Dayan 1992, *Machine Learning* 8:279 | secondary |
+| bayesian-observer | sim | university | σ_comb = 1/√(1/σ₁²+1/σ₂²); for σ₁=σ₂ → σ/√2; weights ∝ 1/σ² | Ernst & Banks 2002, *Nature* 415:429 | secondary |
+| bayesian-cognitive ★ | sim | graduate | P(C=1\|x₁,x₂) from GHK integral; well-separated stimuli → P(C=1) → 0; matches Körding & Wolpert (2004) Fig. 2 qualitative pattern | Körding & Wolpert 2004, *Nat. Neurosci.* 7:69 | secondary |
 
 #### Social & Cognitive
 
-| id | title | kind | level | testable anchor |
-|---|---|---|---|---|
-| prisoner-dilemma | Prisoner's dilemma (repeated) | sim | intro | single-play NE = (Defect,Defect); cooperation iff δ ≥ (T−R)/(T−P) (grim trigger; Axelrod 1984) |
-| opinion-dynamics | Opinion dynamics | sim | university | Deffuant bounded-confidence: consensus for ε>0.5; polarisation for ε<0.5 (Deffuant et al. 2000) |
-| forgetting | Ebbinghaus forgetting curve | sim | intro | R(t) = e^(−t/S); retention ≈ 58% at 20 min, ≈ 33% at 1 day (Ebbinghaus 1885 data) |
-| matching-law | Matching law | sim | university | B₁/B₂ = R₁/R₂; at equal reward rates, 50% allocation; generalised: B_i = R_i/(ΣR + k) (Herrnstein 1961) |
-| serial-position | Serial position effect | sim | university | U-shaped free recall; items 1–3 and last 3 recalled >70% in Murdock (1962) published data |
+| id | kind | level | testable anchor | source | status |
+|---|---|---|---|---|---|
+| prisoner-dilemma | sim | intro | Single-play NE = (D,D); cooperation iff δ ≥ (T−R)/(T−P) (grim trigger) | algebraic; Axelrod 1984 | secondary |
+| opinion-dynamics | sim | university | Deffuant: consensus for ε > 0.5; polarisation for ε < 0.5 | Deffuant et al. 2000, *Adv. Complex Syst.* 3:87 | secondary |
+| forgetting | sim | intro | R(t) = e^(−t/S); 58% at 20 min, 33% at 1 day | Ebbinghaus 1885 (data from tables) | secondary |
+| matching-law | sim | university | B₁/B₂ = R₁/R₂; generalised: B_i = R_i/(ΣR + k) *(low priority)* | Herrnstein 1961, *J. Exp. Anal. Behav.* 4:267 | secondary |
+| serial-position | sim | university | Items 1–3 and last 3 recalled > 70% *(low priority)* | Murdock 1962, *J. Exp. Psychol.* 64:482 | secondary |
+
+#### Psychology — Where it breaks
+
+Each model has a documented failure mode that belongs in the bench's "Break it" card.
+
+| bench | the model cannot explain |
+|---|---|
+| signal-detection | Unequal-variance signal/noise; criterion shifts driven by feedback; metacognitive confidence |
+| weber-fechner | Stevens power law fits many modalities better; cross-cultural differences in magnitude estimation |
+| psychometric-function | Threshold depends on observer's prior; lapse-rate bias at extremes; 2AFC vs. yes–no give different d' |
+| rescorla-wagner | Latent inhibition (pre-exposure retards conditioning); second-order conditioning; trial spacing effects |
+| drift-diffusion | Constant drift fails when evidence accumulates non-uniformly; urgency signals; collapsing-bound strategies |
+| reinforcement-learning | Non-Markovian tasks; non-stationary environments; ε-greedy is a strong simplification of exploration |
+| bayesian-observer | Gaussian noise assumed; prior miscalibration produces systematic bias; people do not always weight ∝ 1/σ² |
+| bayesian-cognitive | Ideal integration is computationally intractable; people show systematic deviations; prior precision unknown |
+| prisoner-dilemma | Grim trigger requires perfect memory and no noise; cooperation fragile under trembling-hand perturbations |
+| opinion-dynamics | Deterministic update; ignores network topology, media influence, identity-protective cognition |
+| forgetting | Power-law forgetting (Wickelgren 1974) fits many datasets better than exponential; Ebbinghaus data is n = 1 |
+| matching-law | Generalised matching handles bias but not concurrent VR schedules; conflates time allocation with response rate |
+| serial-position | Primacy disappears in rapid-serial-visual-presentation; long-term recency challenges the modal two-store model |
 
 ---
 
 ### Biology & Chemistry — remaining planned benches
 
-These add to the fields already built in Phases 1–4.
-
 #### Biology
 
-| id | title | field | kind | level | testable anchor |
+| id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| competitive-exclusion | Competitive exclusion (LV) | ecology | sim | university | coexistence iff α₁₂·α₂₁ < 1; x* = (K₁−α₁₂K₂)/(1−α₁₂α₂₁) (Lotka-Volterra; Gause 1934) |
-| age-structure | Age-structured populations | ecology | sim | university | dominant eigenvalue λ = asymptotic growth rate; stable age dist = dominant eigenvector (Leslie 1945) |
-| pharmacokinetics | Pharmacokinetics (1-compartment) | physiology | sim | university | C(t) = C₀·e^(−ke·t); t_{1/2} = ln 2/ke; clearance CL = Vd·ke (Rowland & Tozer) |
+| competitive-exclusion | sim | university | Coexistence iff α₁₂·α₂₁ < 1; x* = (K₁−α₁₂K₂)/(1−α₁₂α₂₁) | algebraic; Gause 1934 | secondary |
+| age-structure | sim | university | Dominant eigenvalue λ = asymptotic growth rate; stable age dist = dominant eigenvector | Leslie 1945, *Biometrika* 33:183 | secondary |
+| pharmacokinetics | sim | university | C(t) = C₀·e^(−ke·t); t_{1/2} = ln 2/ke; CL = Vd·ke | Rowland & Tozer, *Clinical Pharmacokinetics* 4th ed. | secondary |
 
 #### Chemistry
 
-| id | title | field | kind | level | testable anchor |
+| id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| radioactive-decay | Radioactive decay | nuclear | sim | intro | N(t) = N₀·2^(−t/t_{1/2}); t_{1/2}(¹⁴C) = 5730 y (published); t = t_{1/2}·log₂(N₀/N) |
-| phase-diagram | Phase diagrams (Clausius-Clapeyron) | thermodynamics | sim | university | dP/dT = ΔH_vap/(T·ΔV); water boils at 100°C when P = 1 atm (exact by definition) |
-| butler-volmer | Butler-Volmer electrode kinetics | electrochemistry | sim | graduate | i = i₀[exp(αFη/RT)−exp(−(1−α)Fη/RT)]; Tafel slope = RT/(αF)·ln10 ≈ 118 mV/dec for α=0.5 |
+| radioactive-decay | sim | intro | N(t) = N₀·2^(−t/t_{1/2}); t_{1/2}(¹⁴C) = 5730 y | IAEA; NIST published value | secondary |
+| phase-diagram | sim | university | dP/dT = ΔH_vap/(T·ΔV); water boils at 100°C at P = 1 atm | algebraic; NIST water data | secondary |
+| butler-volmer | sim | graduate | i = i₀[exp(αFη/RT)−exp(−(1−α)Fη/RT)]; Tafel slope = RT/(αF)·ln10 ≈ 118 mV/dec for α = 0.5 | Bard & Faulkner 2001 §3.4 | secondary |
+
+---
+
+### Phase 14+ backlog
+
+Unbuilt biology and chemistry topics not scheduled in Phases 5–13. Every item is
+explicitly listed; nothing is dropped silently.
+
+#### Phase 14 candidates
+
+| id | title | field | level | notes |
+|---|---|---|---|---|
+| mwc-allosteric | MWC allosteric model | biochemistry | university | T↔R equilibrium; cooperative binding beyond Hill-equation approximation |
+| turing-diffusion | Turing reaction-diffusion | development | graduate | Turing (1952) instability condition; stripe/spot wavelength λ = 2π/√k_c |
+| goodwin-oscillator | Goodwin biochemical oscillator | molecular | graduate | Limit cycle when Hill n > 8 (Goodwin 1965); period from Jacobian eigenvalues |
+| van-deemter | Van Deemter equation | analytical | university | H = A + B/u + Cu; optimal flow rate u_opt = √(B/C) |
+| binding-energy | Nuclear binding energy | nuclear | university | Weizsäcker semi-empirical formula; Fe-56 maximum ≈ 8.79 MeV/nucleon |
+| nmr-larmor | NMR Larmor precession | analytical | university | ν_L = γB₀/(2π); ¹H at 9.4 T → 400 MHz (exact from γ) |
+| langmuir | Langmuir adsorption isotherm | surface | university | θ = Kp/(1+Kp); at Kp = 1, θ = 0.5 (exact) |
+
+#### Phase 15 candidates
+
+| id | title | field | level | notes |
+|---|---|---|---|---|
+| neutral-theory | Kimura neutral theory | evolution | graduate | Fixation probability 1/(2N) for neutral allele (Kimura 1968) |
+| coalescence | Coalescent theory | evolution | graduate | E[T_MRCA] = 4N generations; E[S] = θ·Σ1/i (Tajima's D numerator) |
+| mapk-cascade | MAPK signalling cascade | cell biology | graduate | Ultrasensitivity nH ≈ n (Huang & Ferrell 1996); bistability for n ≥ 2 |
+| marcus-theory | Marcus electron-transfer | physical chemistry | graduate | k_ET = A·exp(−(ΔG°+λ)²/(4λk_BT)); activationless at ΔG° = −λ (Marcus 1956) |
+| flory-polymer | Flory polymer chain statistics | physical chemistry | university | R_F = bN^ν; ν = 3/5 good solvent vs. ½ ideal chain (Flory 1953) |
+
+#### Deferred (no phase assigned)
+
+| id | topic | reason deferred |
+|---|---|---|
+| protein-folding | Protein structure & folding | Requires MD or AlphaFold API; no closed-form testable anchor |
+| cell-cycle | Cell cycle control network | >10 coupled ODE species; high effort, specialist topic |
+| somitogenesis | Somitogenesis clock | Spatiotemporal PDE + delay ODE; specialist topic |
+| organic-mechanisms | Organic reaction mechanisms | Qualitative explorer; no single numeric anchor |
+| crystal-field-theory | Crystal-field splitting | Requires matrix diagonalisation and spectroscopy data |
+| immunology-clonal | Clonal selection & affinity maturation | Stochastic agent model; data-fitting required |
+| pharmacodynamics | PK/PD receptor models | Extension of pharmacokinetics; schedule after that bench |
+| electrophoresis | Gel electrophoresis (Ferguson plot) | Data-table bench; low algorithmic interest |
+| nmr-coupling | NMR J-coupling and spin systems | Requires product-operator formalism |
+| scattering | Rutherford scattering | Good intro bench; lower priority than Phases 5–13 |
+
+---
+
+## Shared infrastructure modules
+
+Each module ships as its own commit (with unit tests) immediately before the first
+phase that requires it.  Benches that use an analytic formula (cable-equation,
+wave-interference, quantum-tunneling rectangular-barrier) need no infrastructure module.
+
+| module | file | pre-phase | used by | key test |
+|---|---|---|---|---|
+| LinAlg | js/core/LinAlg.js | 7 | eigenvectors (7), markov-chains (8), hebbian-learning (12) | [[2,1],[1,2]] → eigenvalues 3, 1 (exact) |
+| Random.gaussian | js/core/Random.js extension | 8 | drift-diffusion (8) | mean ≈ 0, var ≈ 1 over 10 000 samples (±3σ) |
+| Complex | js/core/Complex.js | 10 | lc-oscillator (10, optional), schrodinger-1d (12) | e^(iπ) = −1 ±1e-15; multiply, modulus, arg |
+| Graph | js/core/Graph.js | 11 | graph-theory (11) | Dijkstra on 5-node graph; Euler V−E+F=2 |
+| PDE1D | js/core/PDE1D.js | 12 | schrodinger-1d (12) | Crank-Nicolson norm conservation ±1e-10 over 1000 steps |
+| MandelbrotWorker | js/workers/MandelbrotWorker.js | 13 | mandelbrot (13) | period-1 cardioid test; c=−1 period-2 bulb |
 
 ---
 
 ## Phase plan (Phases 5–13)
 
-Seven benches per phase.  Order prioritises intro-level accessibility, then builds
-on established infrastructure.  All phases require `npm test` green before committing.
+`[infra]` rows are standalone commits with tests, not benches.  † = graduate.
+All phases: `npm test` green before committing each item.
 
-| Phase | Bench (id) | Subject | Level |
+**Count reconciliation:**
+Previous plan had 62 unbuilt benches.  This revision removes `compound-interest`
+(merged into `compound-growth`; −1) and adds 6 new ★ graduate benches (+6): net 67.
+Graduate: 2 original (options-pricing, butler-volmer) + 6 new ★ + 9 elevated ‡ = **17 / 67 = 25.4%**.
+
+| Phase | id | Subject | Level |
 |---|---|---|---|
 | **5** | rc-circuit | Physics | intro |
 | 5 | radioactive-decay | Chemistry | intro |
@@ -288,13 +381,14 @@ on established infrastructure.  All phases require `npm test` green before commi
 | 5 | weber-fechner | Psychology | intro |
 | 5 | central-limit | Math | intro |
 | 5 | compound-growth | Economics | intro |
+| **[infra]** | LinAlg.js | — | — |
 | **6** | orbits | Physics | intro |
 | 6 | oscillators | Physics | intro |
 | 6 | ode-explorer | Math | intro |
 | 6 | logistic-map | Math | university |
 | 6 | integrate-and-fire | Neuroscience | university |
 | 6 | rescorla-wagner | Psychology | intro |
-| 6 | compound-interest | Economics | intro |
+| 6 | forgetting | Psychology | intro |
 | **7** | wave-interference | Physics | intro |
 | 7 | standing-waves | Physics | intro |
 | 7 | synapse-kinetics | Neuroscience | intro |
@@ -302,11 +396,13 @@ on established infrastructure.  All phases require `npm test` green before commi
 | 7 | nash-equilibria | Economics | university |
 | 7 | prisoner-dilemma | Psychology | intro |
 | 7 | bayes | Math | intro |
+| 7 | information-theory | Math | university |
+| **[infra]** | Random.gaussian() | — | — |
 | **8** | particle-in-box | Physics | intro |
 | 8 | carnot | Physics | intro |
-| 8 | markov-chains | Math | university |
-| 8 | drift-diffusion | Psychology | university |
-| 8 | phase-plane | Math | university |
+| 8 | markov-chains | Math | graduate † |
+| 8 | drift-diffusion | Psychology | graduate † |
+| 8 | phase-plane | Math | graduate † |
 | 8 | competitive-exclusion | Biology | university |
 | 8 | pharmacokinetics | Biology | university |
 | **9** | entropy-mixing | Physics | intro |
@@ -315,37 +411,46 @@ on established infrastructure.  All phases require `npm test` green before commi
 | 9 | random-walk | Math | intro |
 | 9 | solow | Economics | university |
 | 9 | opinion-dynamics | Psychology | university |
-| 9 | forgetting | Psychology | intro |
+| 9 | age-structure | Biology | university |
+| **[infra]** | Complex.js | — | — |
 | **10** | lc-oscillator | Physics | university |
-| 10 | quantum-tunneling | Physics | university |
-| 10 | hopfield | Neuroscience | university |
-| 10 | reinforcement-learning | Psychology | university |
+| 10 | butler-volmer | Chemistry | graduate † |
+| 10 | options-pricing | Economics | graduate † |
+| 10 | hopfield | Neuroscience | graduate † |
+| 10 | reinforcement-learning | Psychology | graduate † |
 | 10 | auctions | Economics | university |
 | 10 | voting-systems | Economics | intro |
-| 10 | age-structure | Biology | university |
+| 10 | psychometric-function | Psychology | university |
+| **[infra]** | Graph.js | — | — |
 | **11** | ising | Physics | university |
-| 11 | population-coding | Neuroscience | university |
-| 11 | wilson-cowan | Neuroscience | university |
-| 11 | psychometric-function | Psychology | university |
+| 11 | population-coding | Neuroscience | graduate † |
+| 11 | wilson-cowan | Neuroscience | graduate † |
 | 11 | bayesian-observer | Psychology | university |
 | 11 | graph-theory | Math | university |
 | 11 | elasticity | Economics | intro |
-| **12** | special-relativity | Physics | university |
-| 12 | options-pricing | Economics | graduate |
-| 12 | inequality | Economics | intro |
-| 12 | network-effects | Economics | intro |
+| 11 | inequality | Economics | intro |
+| **[infra]** | PDE1D.js | — | — |
+| **12** | quantum-tunneling | Physics | graduate † |
+| 12 | schrodinger-1d | Physics | graduate † |
+| 12 | special-relativity | Physics | university |
+| 12 | hebbian-learning | Neuroscience | graduate † |
+| 12 | neuron-bifurcation | Neuroscience | graduate † |
 | 12 | receptive-fields | Neuroscience | university |
 | 12 | perceptron | Neuroscience | university |
-| 12 | hebbian-learning | Neuroscience | university |
+| 12 | network-effects | Economics | intro |
+| **[infra]** | MandelbrotWorker | — | — |
 | **13** | mandelbrot | Math | university |
-| 13 | information-theory | Math | university |
+| 13 | lyapunov | Math | graduate † |
+| 13 | ising-scaling | Physics | graduate † |
 | 13 | phase-diagram | Chemistry | university |
-| 13 | butler-volmer | Chemistry | graduate |
-| 13 | matching-law | Psychology | university |
-| 13 | serial-position | Psychology | university |
+| 13 | mechanism-design | Economics | graduate † |
+| 13 | bayesian-cognitive | Psychology | graduate † |
+| 13 | matching-law *(low priority)* | Psychology | university |
+| 13 | serial-position *(low priority)* | Psychology | university |
 
-**Total planned:** 62 new benches across 9 phases (Phases 5–13).
-**Cumulative total at Phase 13:** 97 benches (35 built + 62 planned).
+**Total planned:** 67 new benches across Phases 5–13 (7–8 per phase).
+**Graduate benches:** 17 / 67 = 25.4%.
+**Cumulative total at Phase 13:** 102 benches (35 built + 67 planned).
 
 ---
 
