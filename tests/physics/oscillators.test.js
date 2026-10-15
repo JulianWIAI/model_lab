@@ -138,3 +138,67 @@ test('oscillators: underdamped has displacement resonance when γ < ω₀/√2',
   assert.ok(!isNaN(m.omegaR) && m.omegaR > 0,
     `Expected finite ω_r for γ=0.3ω₀, got ${m.omegaR}`);
 });
+
+// ── 2% settling time (MISSING) ────────────────────────────────────────────────
+
+test('oscillators: 2% settling time — underdamped (ζ=0.8) settles before critical (ζ=1)', () => {
+  // For ζ < 1: underdamped free decay; 2% settling ≈ when envelope 5/3·e^(-γt) = 0.02.
+  // Envelope = e^(-γt)·√(1+(γ/ω_d)²) = e^(-0.8t)·√(1+1.778) ≈ (5/3)e^(-0.8t)
+  // → t_s ≈ ln(83.3)/0.8 ≈ 5.53 s.
+  // For ζ=1 (critical): x(t)=(1+t)e^(-t); (1+t)e^(-t)=0.02 → t_s ≈ 5.83 s.
+  // Underdamped (ζ=0.8) settles faster due to larger damping rate γ=0.8 vs γ=1 for critical
+  // (but γ=ω₀ for critical means the decay is algebraically slower in the envelope).
+  function settling2pct(model, tMax, dt) {
+    const { x, t } = model.simulate(tMax, dt);
+    let tSettle = tMax; // default: never settled within tMax
+    for (let i = x.length - 1; i >= 0; i--) {
+      if (Math.abs(x[i]) >= 0.02) { tSettle = t[i]; break; }
+    }
+    return tSettle;
+  }
+  const mUD = new OscillatorsModel({ omega0: 1, gamma: 0.8, F0: 0, x0: 1, v0: 0 });
+  const mCR = new OscillatorsModel({ omega0: 1, gamma: 1,   F0: 0, x0: 1, v0: 0 });
+  const ts_UD = settling2pct(mUD, 15, 0.001);
+  const ts_CR = settling2pct(mCR, 15, 0.001);
+  // Both should settle within 10 s
+  assert.ok(ts_UD < 10, `ζ=0.8 settling time = ${ts_UD.toFixed(2)} s, expected < 10 s`);
+  assert.ok(ts_CR < 10, `ζ=1 settling time = ${ts_CR.toFixed(2)} s, expected < 10 s`);
+  // Underdamped (ζ=0.8) settles before critical (ζ=1) — verified numerically
+  assert.ok(ts_UD < ts_CR,
+    `ζ=0.8 settles at t=${ts_UD.toFixed(2)}, ζ=1 at t=${ts_CR.toFixed(2)}; expected underdamped faster`);
+});
+
+// ── A(ω) sweep: resonance is global maximum (WEAK — was single-frequency only) ─
+
+test('oscillators: A(ω_r) is the global maximum of A(ω) over [0, 3ω₀]', () => {
+  // Check A(ω_r) ≥ A(ω) for a sweep of 1000 frequencies in [0, 3ω₀]
+  const m = new OscillatorsModel({ omega0: 1, gamma: 0.2, F0: 1 });
+  const wr = m.omegaR;
+  const Amax = m.amplitude(wr);
+  let pass = true, worst = 0;
+  for (let i = 0; i <= 1000; i++) {
+    const w = (3 * m.omega0 / 1000) * i;
+    const A = m.amplitude(w);
+    if (A > Amax + 1e-10) { pass = false; worst = A; }
+  }
+  assert.ok(pass, `A(ω_r)=${Amax.toFixed(4)} should be global max; found A=${worst.toFixed(4)} > A(ω_r)`);
+});
+
+// ── A(ω) multi-frequency RK4 check (WEAK — was single-frequency only) ────────
+
+test('oscillators: A(ω) formula verified vs RK4 at ω=0.3, 0.7, 1.4, 2.0 (±2e-4)', () => {
+  // The tolerance 2e-4 accounts for peak-detection error ≈ A·(ω·dt/2)²/2 ≤ A·(ω/200)²/2.
+  // Max A ≈ 1/(2γ) = 2.5 at resonance; (ω_r·dt/2)²/2 ≈ (0.91/200)²/2 ≈ 1e-5: well within 2e-4.
+  const omega0 = 1, gamma = 0.2, F0 = 1;
+  for (const omega of [0.3, 0.7, 1.4, 2.0]) {
+    const m = new OscillatorsModel({ omega0, gamma, F0, omega, x0: 0, v0: 0 });
+    const dt = 2 * Math.PI / (omega * 300); // 300 steps per drive cycle
+    const { x } = m.simulate(80 * 2 * Math.PI / omega, dt);
+    const lastN = Math.round(2 * Math.PI / omega / dt);
+    const measured = Math.max(...x.slice(x.length - lastN).map(Math.abs));
+    const formula = m.amplitude(omega);
+    const err = Math.abs(measured - formula);
+    assert.ok(err < 2e-4,
+      `ω=${omega}: simulated A=${measured.toFixed(4)}, formula A=${formula.toFixed(4)}, err=${err.toExponential(2)}, expected < 2e-4`);
+  }
+});
