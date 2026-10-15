@@ -110,7 +110,7 @@ export class QuarkBench extends Bench {
     ]));
     this.layout.addHint('Solid circles are quarks, rings are antiquarks. Masses in MeV (938 MeV ≈ one proton).');
 
-    this.refresh();
+    this.loadProton();
   }
 
   loadProton() {

@@ -100,7 +100,7 @@ export class SignalDetectionView {
       yFormat: v => v.toFixed(2),
     });
 
-    const gauss = (x, mu) => Math.exp(-(x - mu) ** 2 / 2) / Math.sqrt(2 * Math.PI);
+    const gauss = (x, mu) => Math.exp(-((x - mu) ** 2) / 2) / Math.sqrt(2 * Math.PI);
 
     // criterion absolute position
     const cAbs = model.d / 2 + model.c;

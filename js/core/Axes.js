@@ -18,6 +18,11 @@ export class Axes {
     [this.yMin, this.yMax] = yRange;
   }
 
+  get left()   { return this.box.left; }
+  get right()  { return this.box.right; }
+  get top()    { return this.box.top; }
+  get bottom() { return this.box.bottom; }
+
   /** Data x value -> pixel x */
   x(value) {
     const { left, right } = this.box;
@@ -76,19 +81,40 @@ export class Axes {
    * @param {[number, number][]} points
    * @param {{color: string, width?: number, dash?: number[], alpha?: number}} style
    */
-  polyline(points, { color, width = 2, dash = [], alpha = 1 }) {
+  polyline(points, { color, width, lineWidth, dash = [], alpha = 1 }) {
     if (points.length < 2) return;
+    const lw = width ?? lineWidth ?? 2;
     const c = this.ctx;
     c.save();
     this.#clip();
     c.strokeStyle = color;
-    c.lineWidth = width;
+    c.lineWidth = lw;
     c.lineJoin = 'round';
     c.setLineDash(dash);
     c.globalAlpha = alpha;
     c.beginPath();
-    points.forEach(([px, py], i) => (i ? c.lineTo(this.x(px), this.y(py)) : c.moveTo(this.x(px), this.y(py))));
+    if (Array.isArray(points[0])) {
+      // Data coordinates: [x, y] pairs
+      points.forEach(([px, py], i) => (i ? c.lineTo(this.x(px), this.y(py)) : c.moveTo(this.x(px), this.y(py))));
+    } else {
+      // Pixel coordinates: {x, y} objects (pre-converted via toPixel)
+      points.forEach(({ x, y }, i) => (i ? c.lineTo(x, y) : c.moveTo(x, y)));
+    }
     c.stroke();
+    c.restore();
+  }
+
+  /** Draws a filled circle at a data-coordinate point. */
+  point([xv, yv], { color, r = 4, fill = true }) {
+    const px = this.x(xv);
+    const py = this.y(yv);
+    const c = this.ctx;
+    c.save();
+    c.fillStyle = color;
+    c.strokeStyle = color;
+    c.beginPath();
+    c.arc(px, py, r, 0, 2 * Math.PI);
+    if (fill) c.fill(); else c.stroke();
     c.restore();
   }
 
@@ -121,6 +147,16 @@ export class Axes {
     c.closePath();
     c.fill();
     c.restore();
+  }
+
+  /**
+   * Converts a data point to pixel coordinates.
+   * @param {number} xValue
+   * @param {number} yValue
+   * @returns {{x: number, y: number}}
+   */
+  toPixel(xValue, yValue) {
+    return { x: this.x(xValue), y: this.y(yValue) };
   }
 
   /** Writes a small label at a data position. */

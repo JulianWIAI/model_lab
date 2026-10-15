@@ -76,11 +76,17 @@ export class BenchLayout {
   }
 
   setReadouts(panel) {
+    this._readoutPanel = panel;
     this.readoutSlot.replaceChildren(panel.element);
   }
 
   /** Alias used by Phase 6 benches. */
   addReadout(panel) { this.setReadouts(panel); }
+
+  /** Updates a single readout by key (forwards to the mounted ReadoutPanel). */
+  setReadout(key, value) {
+    this._readoutPanel?.set(key, value);
+  }
 
   setFormula(text) {
     this.formulaEl.textContent = text;
