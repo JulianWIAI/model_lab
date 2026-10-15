@@ -214,6 +214,13 @@ export const catalog = [
                 (m) => m.GibbsBench,
               ),
           },
+          {
+            id: 'hess',
+            navLabel: 'Hess\'s law',
+            level: 'intro',
+            keywords: ['Hess', 'enthalpy', 'formation enthalpy', 'thermochemistry', 'combustion', 'Hess\'s law'],
+            load: () => import('./benches/chemistry/thermodynamics/hess/HessBench.js').then((m) => m.HessBench),
+          },
         ],
       },
       {
@@ -245,6 +252,32 @@ export const catalog = [
               import('./benches/chemistry/kinetics/mechanisms/MechanismsBench.js').then(
                 (m) => m.MechanismsBench,
               ),
+          },
+        ],
+      },
+      {
+        id: 'electrochemistry',
+        name: 'Electrochemistry',
+        benches: [
+          {
+            id: 'nernst-cell',
+            navLabel: 'Nernst cell',
+            level: 'university',
+            keywords: ['Nernst equation', 'electrochemistry', 'cell potential', 'EMF', 'Daniell cell', 'reduction potential', 'equilibrium'],
+            load: () => import('./benches/chemistry/electrochemistry/nernst-cell/NernstCellBench.js').then((m) => m.NernstCellBench),
+          },
+        ],
+      },
+      {
+        id: 'bonding',
+        name: 'Bonding',
+        benches: [
+          {
+            id: 'vsepr',
+            navLabel: 'VSEPR',
+            level: 'intro',
+            keywords: ['VSEPR', 'molecular geometry', 'bond angle', 'lone pair', 'tetrahedral', 'octahedral', 'linear', 'electron pair repulsion'],
+            load: () => import('./benches/chemistry/bonding/vsepr/VSEPRBench.js').then((m) => m.VSEPRBench),
           },
         ],
       },
@@ -348,6 +381,33 @@ export const catalog = [
         ],
       },
       {
+        id: 'ecology',
+        name: 'Ecology',
+        benches: [
+          {
+            id: 'logistic',
+            navLabel: 'Logistic growth',
+            level: 'intro',
+            keywords: ['logistic', 'population growth', 'carrying capacity', 'Verhulst', 'sigmoid', 'dN/dt'],
+            load: () => import('./benches/biology/ecology/logistic/LogisticBench.js').then((m) => m.LogisticBench),
+          },
+          {
+            id: 'predator-prey',
+            navLabel: 'Predator–prey',
+            level: 'university',
+            keywords: ['Lotka-Volterra', 'predator', 'prey', 'population dynamics', 'ecology', 'oscillation', 'cycle'],
+            load: () => import('./benches/biology/ecology/predator-prey/PredatorPreyBench.js').then((m) => m.PredatorPreyBench),
+          },
+          {
+            id: 'sir',
+            navLabel: 'SIR epidemic',
+            level: 'university',
+            keywords: ['SIR', 'epidemic', 'R0', 'herd immunity', 'Kermack-McKendrick', 'infectious disease', 'final size'],
+            load: () => import('./benches/biology/ecology/sir/SIRBench.js').then((m) => m.SIRBench),
+          },
+        ],
+      },
+      {
         id: 'genetics',
         name: 'Genetics',
         benches: [
@@ -398,6 +458,19 @@ export const catalog = [
               import('./benches/biology/genetics/linkage/LinkageBench.js').then(
                 (m) => m.LinkageBench,
               ),
+          },
+        ],
+      },
+      {
+        id: 'evolution',
+        name: 'Evolution',
+        benches: [
+          {
+            id: 'selection',
+            navLabel: 'Truncation selection',
+            level: 'university',
+            keywords: ['breeder\'s equation', 'truncation selection', 'heritability', 'selection differential', 'response', 'quantitative genetics'],
+            load: () => import('./benches/biology/evolution/selection/SelectionBench.js').then((m) => m.SelectionBench),
           },
         ],
       },
