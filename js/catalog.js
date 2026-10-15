@@ -32,6 +32,32 @@ export const catalog = [
             load: () =>
               import('./benches/physics/mechanics/pendulum/PendulumBench.js').then((m) => m.PendulumBench),
           },
+          {
+            id: 'oscillators',
+            navLabel: 'Damped oscillator',
+            level: 'intro',
+            keywords: [
+              'harmonic oscillator', 'damping', 'resonance', 'driven oscillator', 'quality factor',
+              'log decrement', 'transient', 'steady state', 'frequency response',
+            ],
+            load: () =>
+              import('./benches/physics/mechanics/oscillators/OscillatorsBench.js').then(
+                (m) => m.OscillatorsBench,
+              ),
+          },
+          {
+            id: 'orbits',
+            navLabel: 'Kepler orbits',
+            level: 'intro',
+            keywords: [
+              'Kepler', 'orbit', 'ellipse', 'eccentricity', 'Verlet', 'RK4', 'symplectic',
+              'energy conservation', 'angular momentum', 'vis-viva', 'period', 'escape speed',
+            ],
+            load: () =>
+              import('./benches/physics/mechanics/orbits/OrbitsBench.js').then(
+                (m) => m.OrbitsBench,
+              ),
+          },
         ],
       },
       {
@@ -546,6 +572,19 @@ export const catalog = [
                 (m) => m.GoldmanBench,
               ),
           },
+          {
+            id: 'integrate-and-fire',
+            navLabel: 'Integrate-and-fire',
+            level: 'university',
+            keywords: [
+              'integrate-and-fire', 'IAF', 'leaky integrator', 'neuron', 'spike',
+              'firing rate', 'rheobase', 'refractory', 'membrane potential', 'ISI',
+            ],
+            load: () =>
+              import('./benches/neuroscience/electrophysiology/integrate-and-fire/IntegrateAndFireBench.js').then(
+                (m) => m.IntegrateAndFireBench,
+              ),
+          },
         ],
       },
     ],
@@ -554,6 +593,38 @@ export const catalog = [
     id: 'math',
     name: 'Math',
     fields: [
+      {
+        id: 'dynamics',
+        name: 'Dynamical Systems',
+        benches: [
+          {
+            id: 'ode-explorer',
+            navLabel: 'ODE explorer',
+            level: 'intro',
+            keywords: [
+              'ODE', 'Euler', 'Runge-Kutta', 'RK4', 'numerical integration', 'stability',
+              'stiff', 'convergence', 'order', 'logistic', 'backward Euler',
+            ],
+            load: () =>
+              import('./benches/math/dynamics/ode-explorer/OdeExplorerBench.js').then(
+                (m) => m.OdeExplorerBench,
+              ),
+          },
+          {
+            id: 'logistic-map',
+            navLabel: 'Logistic map',
+            level: 'university',
+            keywords: [
+              'logistic map', 'chaos', 'bifurcation', 'period doubling', 'Feigenbaum',
+              'Lyapunov exponent', 'attractor', 'cobweb', 'fixed point', 'orbit',
+            ],
+            load: () =>
+              import('./benches/math/dynamics/logistic-map/LogisticMapBench.js').then(
+                (m) => m.LogisticMapBench,
+              ),
+          },
+        ],
+      },
       {
         id: 'probability',
         name: 'Probability & Statistics',
@@ -679,6 +750,25 @@ export const catalog = [
             load: () =>
               import('./benches/psychology/psychophysics/weber-fechner/WeberFechnerBench.js').then(
                 (m) => m.WeberFechnerBench,
+              ),
+          },
+        ],
+      },
+      {
+        id: 'learning',
+        name: 'Learning & Decision',
+        benches: [
+          {
+            id: 'rescorla-wagner',
+            navLabel: 'Rescorla–Wagner',
+            level: 'intro',
+            keywords: [
+              'Rescorla-Wagner', 'associative learning', 'classical conditioning',
+              'blocking', 'overshadowing', 'prediction error', 'Pavlov', 'Kamin',
+            ],
+            load: () =>
+              import('./benches/psychology/learning/rescorla-wagner/RescorlaWagnerBench.js').then(
+                (m) => m.RescorlaWagnerBench,
               ),
           },
         ],
