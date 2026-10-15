@@ -338,6 +338,27 @@ their values are unambiguous.
 
 ---
 
+## Phase 5 benches
+
+### Radioactive decay (`chemistry/nuclear/radioactive-decay`)
+
+Half-lives fetched from **NUBASE2020 via AMDC** (https://www-nds.iaea.org/amdc/ame2020/nubase_4.mas20.txt)
+on **2026-10-15**. Citation: F.G. Kondev, M. Wang, W.J. Huang, S. Naimi, and G. Audi,
+*Chin. Phys. C* **45**, 030001 (2021).
+
+| Isotope | t½ (NUBASE2020) | Uncertainty | Unit | Notes |
+|---|---|---|---|---|
+| C-14 | 5700 | 30 | y | NUBASE2020 (Wang et al. 2021). Godwin (1962) gives 5730 y; Libby (1955) uses 5568 y (radiocarbon convention). Bench preset uses NUBASE2020 value; all three displayed. |
+| U-238 | 4.463 | 0.003 | Gy | NUBASE2020 (Wang et al. 2021). |
+| I-131 | 8.0249 | 0.0006 | d | NUBASE2020 (Wang et al. 2021). |
+| Ra-226 | 1600 | 7 | y | NUBASE2020 (Wang et al. 2021). 1 g Ra-226 ≈ 3.66×10¹⁰ Bq (computed: N=2.6643e21, t½=5.0492e10 s, λ=1.3729e-11 s⁻¹). |
+
+Year length used for unit conversion: **Julian year = 3.15576×10⁷ s** (= 365.25 × 86400 s).
+Molar mass Ra-226: **226.0254 g/mol** (from standard atomic weight).
+N_A used: 6.02214076×10²³ mol⁻¹ (from `js/data/constants.js`).
+
+---
+
 ## Open verification items
 
 The following items were noted as uncertain during implementation and have not been resolved:

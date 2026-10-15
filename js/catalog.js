@@ -119,6 +119,26 @@ export const catalog = [
     name: 'Chemistry',
     fields: [
       {
+        id: 'nuclear',
+        name: 'Nuclear chemistry',
+        benches: [
+          {
+            id: 'radioactive-decay',
+            navLabel: 'Radioactive decay',
+            level: 'intro',
+            keywords: [
+              'radioactive decay', 'half-life', 'decay constant', 'activity',
+              'Becquerel', 'Curie', 'Carbon-14', 'Uranium-238', 'stochastic', 'binomial',
+              'nuclear chemistry', 'exponential', 'NUBASE2020',
+            ],
+            load: () =>
+              import('./benches/chemistry/nuclear/radioactive-decay/RadioactiveDecayBench.js').then(
+                (m) => m.RadioactiveDecayBench,
+              ),
+          },
+        ],
+      },
+      {
         id: 'acids-bases',
         name: 'Acids & bases',
         benches: [

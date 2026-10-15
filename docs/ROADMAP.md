@@ -298,7 +298,7 @@ Each model has a documented failure mode for the bench's "Break it" card.
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| radioactive-decay | sim | intro | N(t)=N₀·2^(−t/t_{1/2}); bench uses Cambridge t_{1/2}=5730 y (physical); notes Libby t_{1/2}=5568 y (radiocarbon age convention) | Godwin 1962, *Nature* 195:984 (Cambridge value) | cited, not fetched |
+| radioactive-decay ✓ | sim | intro | N(t)=N₀·e^(−λt) where λ=ln2/t½; t½ from NUBASE2020 (fetched 2026-10-15); A(0)=λ·N₀; Curie anchor (1g Ra-226 ≈ 3.66e10 Bq, independent derivation); stochastic M=500 trials mean≈500±2.83 (4×SE), variance≈250±63 | NUBASE2020 (Kondev et al. 2021) | checked by independent test |
 | phase-diagram | sim | university | dP/dT=ΔH_vap/(T·ΔV); water boils at 100°C at 1 atm | algebraic; NIST water data | cited, not fetched |
 | butler-volmer | sim | graduate | i=i₀[exp(αFη/RT)−exp(−(1−α)Fη/RT)]; Tafel slope=RT/(αF)·ln10≈118 mV/dec for α=0.5, 25°C | Bard & Faulkner 2001 §3.4 | cited, not fetched |
 
@@ -378,7 +378,7 @@ Graduate: 2 original (options-pricing, butler-volmer) + 6 new ★ + 9 elevated �
 | Phase | id | Subject | Level |
 |---|---|---|---|
 | **5** | rc-circuit ✓ | Physics | intro |
-| 5 | radioactive-decay | Chemistry | intro |
+| **5** | radioactive-decay ✓ | Chemistry | intro |
 | 5 | supply-demand | Economics | intro |
 | 5 | signal-detection | Psychology | intro |
 | 5 | weber-fechner | Psychology | intro |
