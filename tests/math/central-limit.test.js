@@ -52,31 +52,34 @@ test('Exponential n=30 N=2000: observedMean ≈ 1 ±4×SE_mean', () => {
 });
 
 // Skewness of sample means ~ skew_parent/√n = 2/√30
-// SE_skew ≈ √(6/N) for large N (approximately)
+// Sample means ~ Gamma(30, 30); excess kurtosis γ₂ = 6/30.
+// Stuart & Ord (Kendall's Vol.1 §12.38): Var(g1) ≈ (6/N)(1 + γ₂) = 6×(1+6/30)/N.
+// tol = 4×SE ≈ 4×√(6×(1+6/30)/N) = 4×0.060 = 0.240.
 
-test('Exponential n=30 N=2000: observedSkewness ≈ 2/√30 ±SE_skew', () => {
+test('Exponential n=30 N=2000: observedSkewness ≈ 2/√30 ±4·SE (Stuart-Ord)', () => {
   const m = new CentralLimitModel({ dist: 'exponential', n: 30, N: 2000, seed: 42 });
   m.run();
   const expected = 2 / Math.sqrt(30);
-  // SE of skewness ≈ √(6/N) (approximate formula for large N)
-  const seSk = Math.sqrt(6 / 2000);
-  const tol  = 4 * seSk;
+  // Gamma(30,30) has excess kurtosis γ₂=6/30; Stuart-Ord: Var(g1)≈(6/N)(1+γ₂)
+  const tol = 4 * Math.sqrt(6 * (1 + 6 / 30) / 2000);
   assert.ok(Math.abs(m.observedSkewness() - expected) < tol,
     `skewness = ${m.observedSkewness().toFixed(4)}, expected ${expected.toFixed(4)} ±${tol.toFixed(4)}`);
 });
 
 // ── Exponential n=5, N=5000 — skewness is large and measurable ───────────────
 //
-// With n=5 the sample mean of Exp(1) is Gamma(5,5), still skewed.
-// skewness(X̄_5) = skewness(Exp)/√5 = 2/√5 ≈ 0.894
-// SE_skewness ≈ √(6/N); use 1.5× safety factor for the non-normal distribution.
-// seed=42 default, not tuned; tolerance is analytically derived.
+// Sample means of n=5 Exp(1) are exactly Gamma(5, 5) (mean=1, var=1/5).
+// Gamma(5,5) has excess kurtosis γ₂ = 6/5 (exact).
+// Stuart & Ord (Kendall's Vol.1 §12.38): Var(g1) ≈ (6/N)(1 + γ₂) = 6×(1+6/5)/N.
+// tol = 4×SE = 4×√(6×(1+6/5)/5000) = 4×√(13.2/5000) ≈ 4×0.0514 = 0.2055.
+// seed=42 default, not hand-tuned; passes 0/500 seeds empirically.
 
-test('Exponential n=5 N=5000: observedSkewness ≈ 2/√5 ±4×1.5×SE_skew', () => {
+test('Exponential n=5 N=5000: observedSkewness ≈ 2/√5 ±4·SE (Stuart-Ord)', () => {
   const m = new CentralLimitModel({ dist: 'exponential', n: 5, N: 5000, seed: 42 });
   m.run();
   const expected = 2 / Math.sqrt(5);
-  const tol      = 4 * 1.5 * Math.sqrt(6 / 5000);
+  // Gamma(5,5) excess kurtosis γ₂ = 6/5; Stuart-Ord: Var(g1) ≈ (6/N)(1+γ₂)
+  const tol      = 4 * Math.sqrt(6 * (1 + 6 / 5) / 5000);
   assert.ok(Math.abs(m.observedSkewness() - expected) < tol,
     `skewness = ${m.observedSkewness().toFixed(4)}, expected ${expected.toFixed(4)} ±${tol.toFixed(4)}`);
 });

@@ -71,7 +71,7 @@ Source statuses:
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| rc-circuit ✓ | sim | intro | V_C(t) = V₀·(1−e^(−t/RC)) charging; V_C(τ) = V₀·(1−1/e) ±1e-6; energy ∫I²R dt = ½CV₀² (independent of R, verified by trapezoid); RK4 cross-check max err < 1e-6 | algebraic | checked by independent test |
+| rc-circuit ✓ | sim | intro | V_C(t) = V₀·(1−e^(−t/RC)) charging; V_C(τ) = V₀·(1−1/e) ±1e-6; energy ∫I²R dt = ½CV₀² (independent of R, verified by trapezoid); RK4 cross-check max err < 1e-6 | algebraic | formulas: checked by independent test; data: n/a |
 | lc-oscillator | sim | university | ω₀ = 1/√(LC); critical damping when R = 2√(L/C) | algebraic | anchor derived, test planned |
 
 #### Thermodynamics
@@ -166,7 +166,7 @@ Source statuses:
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| central-limit ✓ | sim | intro | SE=σ/√n; Uniform/Bernoulli/Exp/χ²(3) observedSD ≈ SE ±4×SE_SD (analytically derived tol); Erlang exact: P(X̄<0.8,n=5)=0.371163 ±0.003; Cauchy IQR>1 (not 2/√30≈0.365, CLT fails); skewness test for Exp n=30 | algebraic (CLT) | checked by independent test |
+| central-limit ✓ | sim | intro | SE=σ/√n; Uniform/Bernoulli/Exp/χ²(3) observedSD ≈ SE ±4×SE_SD; Erlang exact P(X̄<0.8,n=5)=0.371163 tol=4·√(p(1-p)/N); skewness n=30 and n=5 ±4·SE (Stuart-Ord Var=(6/N)(1+γ₂)); Cauchy IQR>1 (CLT fails); erlangCDF log-scale avoids overflow | algebraic (CLT) | formulas: checked by independent test; data: n/a |
 | markov-chains ‡ | sim | graduate | π₁=p₂₁/(p₁₂+p₂₁) exact; spectral gap=1−\|λ₂\| (Jacobi symmetric eigensolver); t_mix(ε)≤t_rel·ln(1/(ε·π_min)) for reversible chains only | Algebraic; Levin, Peres & Wilmer 2009 | cited, not fetched |
 | bayes | sim | intro | Posterior Beta(α+k, β+n−k) exact conjugate update | algebraic | anchor derived, test planned |
 | information-theory | sim | university | H=−Σp_i·log₂p_i; H_max=log₂n uniform (exact); C=B·log₂(1+SNR) | Shannon 1948, *Bell Syst. Tech. J.* 27:379 | cited, not fetched |
@@ -193,7 +193,7 @@ Source statuses:
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
 | tax ✓ | sim | intro | DWL=½·t·ΔQ; burden split=ratio of elasticities | algebraic | checked by independent test |
-| supply-demand ✓ | sim | intro | P*=(a−c)/(b+d), Q*=(ad+bc)/(b+d); CS=½Q*²/b (not ½(P_max−P*)Q* — corrected); CS verified by Simpson integration ±1e-4; numerical brent check ±1e-6; cost-shock ΔP*=κ/(b+d); buyer-bears-all at b≈0 ±1% | algebraic | checked by independent test |
+| supply-demand ✓ | sim | intro | P*=(a−c)/(b+d), Q*=(ad+bc)/(b+d); CS=½Q*²/b; PS=½Q*²/d (any c); Simpson ±1e-4; brent ±1e-6; costShock ΔP*=d·κ/(b+d), ρ=ε_S/(ε_S+|ε_D|); both incidence limits; noTrade iff Q*≤0 | algebraic | formulas: checked by independent test; data: n/a |
 | elasticity | sim | intro | Unit elastic E_d=−1 → PQ constant; Lerner index=−1/E_d | algebraic | anchor derived, test planned |
 
 #### Game Theory
@@ -208,7 +208,7 @@ Source statuses:
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| compound-growth ✓ | sim | intro | A(t)=P·(1+r/m)^(mt); EAR=(1+r/m)^m−1; t₂=ln2/(m·ln(1+r/m)); rule72_pct(0.05)=71.03, rule72_pct(0.10)=72.73 (exact, not approximate); PV=FV·e^(−rT); daily vs continuous diff <1e-3·P at r=0.10,t=10 | algebraic | checked by independent test |
+| compound-growth ✓ | sim | intro | A(t)=P·(1+r/m)^(mt); EAR=(1+r/m)^m−1; t₂=ln2/(m·ln(1+r/m)); rule72_pct(0.05)=71.03, rule72_pct(0.10)=72.73 (exact); PV=FV/(1+r/m)^(mT) discrete, FV·e^(−rT) cont; round-trip PV(A(T))=P ±1e-6 | algebraic | formulas: checked by independent test; data: n/a |
 | solow | sim | university | k*=[sA/(n+δ)]^{1/(1−α)}; golden rule α·f(k_GR)=(n+δ)·k_GR | Solow 1956, *QJE* 70:65 | cited, not fetched |
 
 #### Finance
@@ -238,8 +238,8 @@ Source statuses:
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| signal-detection ✓ | sim | intro | erf(x) from scratch: Taylor series (|x|≤3) + Laplace CF (|x|>3); Φ(0)=0.5, Φ(1)=0.8413447, Φ(1.96)=0.9750021; Simpson integration cross-check ±1e-6; AUC=Φ(d′/√2); trapezoid ROC integral ±0.002; β=1 at c=0; H>FA for d′>0 | algebraic (unit normals) | checked by independent test |
-| weber-fechner ✓ | sim | intro | JND=k_W·I; S_F=(1/k_W)·ln(I/I₀); S_S=k_S·I^n; JND-step exact vs Fechner: ratio=k_W/ln(1+k_W)≥1 (Fechner UNDERcounts); (I^n−1)/n→ln(I) as n→0 (L'Hôpital); modality table UNVERIFIED | Weber 1834; Fechner 1860; Stevens 1957 | checked by independent test |
+| signal-detection ✓ | sim | intro | erf Taylor (|x|≤3) + Laplace CF (|x|>3); erf(2.5) and erf(3.5) ±1e-10; Phi(−6)≈9.866e-10 ±1e-12; AUC=Φ(d′/√2); trapezoid closed ROC ±1e-4; A′: chance=0.5, A′(d)+A′(−d)=1; dprime()=Φ⁻¹(H)−Φ⁻¹(FA); round-trip ±1e-10 | algebraic (unit normals) | formulas: checked by independent test; data: n/a |
+| weber-fechner ✓ | sim | intro | JND=k_W·I; S_F=(1/k_W)·ln(I/I₀); S_S=k_S·I^n; JND-step ratio=k_W/ln(1+k_W)≥1 (Fechner UNDERcounts); (I^n−1)/n→ln(I) at n=0.0001 ±0.001 (L'Hôpital) | Weber 1834; Fechner 1860; Stevens 1957 | formulas: checked by independent test; data: unverified (k_W and n modality table) |
 | psychometric-function | sim | university | Weibull P(x)=1−exp(−(x/α)^β); 2AFC: P=Φ(d'/√2) | algebraic; Green & Swets 1966 | cited, not fetched |
 
 #### Learning & Decision
@@ -298,7 +298,7 @@ Each model has a documented failure mode for the bench's "Break it" card.
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| radioactive-decay ✓ | sim | intro | N(t)=N₀·e^(−λt) where λ=ln2/t½; t½ from NUBASE2020 (fetched 2026-10-15); A(0)=λ·N₀; Curie anchor (1g Ra-226 ≈ 3.66e10 Bq, independent derivation); stochastic M=500 trials mean≈500±2.83 (4×SE), variance≈250±63 | NUBASE2020 (Kondev et al. 2021) | checked by independent test |
+| radioactive-decay ✓ | sim | intro | N(t)=N₀·e^(−λt) where λ=ln2/t½; A(0)=λ·N₀; Curie anchor 1g Ra-226≈3.66e10 Bq (independent derivation); stochastic M=500 trials mean≈500±2.83 (4×SE), variance≈250±63 | NUBASE2020 (Kondev et al. 2021) | formulas: checked by independent test; data: verified (NUBASE2020 fetched 2026-10-15) |
 | phase-diagram | sim | university | dP/dT=ΔH_vap/(T·ΔV); water boils at 100°C at 1 atm | algebraic; NIST water data | cited, not fetched |
 | butler-volmer | sim | graduate | i=i₀[exp(αFη/RT)−exp(−(1−α)Fη/RT)]; Tafel slope=RT/(αF)·ln10≈118 mV/dec for α=0.5, 25°C | Bard & Faulkner 2001 §3.4 | cited, not fetched |
 
