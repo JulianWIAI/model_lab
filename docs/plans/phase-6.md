@@ -234,8 +234,9 @@ All formulas are algebraically derived from Newton's second law.
 | Vis-viva: v²=GM(2/r−1/a), circular orbit v²=GM/a | v_circ = 29.7847 km/s | 29.7847 km/s | `orbits: vis-viva circular orbit` |
 | Escape speed at r_E: v_esc=√(2GM_E/r_E) | 11.186 km/s ±0.01 | **11.1861 km/s** | `orbits: Earth escape speed 11.186 km/s` |
 | Kepler III: period independent of e at fixed a | T(e=0) = T(e=0.5) = T(e=0.9) ±0.01% | (verified by halving dt; periods agree) | `orbits: period independent of eccentricity` |
-| Verlet energy BOUNDED over 10 000 orbits (e=0.5, dt=T/2000): max|ΔE/E| at orbit 10000 ≈ max at orbit 100 | ratio ≤ 2 | **2.63e-5 at orbit 10000 vs 1.47e-5 at orbit 1000 (ratio 1.79; bounded)** | `orbits: verlet energy bounded (ratio over 10x time ≤ 2)` |
-| RK4 energy SECULAR over 10 000 orbits (e=0.5, dt=T/2000): |ΔE/E| grows linearly | ratio orbit-10000 / orbit-1000 ≈ 10 | **9.28e-8 at orbit 10000 vs 9.28e-9 at orbit 1000 (ratio 10.0; secular)** | `orbits: rk4 energy grows linearly (ratio ≈ 10 over 10x orbits)` |
+| Verlet energy BOUNDED over 10 000 orbits (e=0.5, dt=T/2000): max|ΔE/E| at orbit 10000 ≈ max at orbit 100 | ratio ≤ 2 | **2.63e-5 at orbit 10000 vs 1.47e-5 at orbit 1000 (ratio 1.79; saturated/bounded)** | `orbits: verlet energy bounded (ratio over 10x time ≤ 2)` |
+| RK4 energy SECULAR over 10 000 orbits (e=0.5, dt=T/2000): |ΔE/E| grows linearly | ratio orbit-10000 / orbit-1000 ≈ 10 | **9.28e-8 at orbit 10000 vs 9.28e-9 at orbit 1000 (ratio 10.0; linear secular drift)** | `orbits: rk4 energy grows linearly (ratio ≈ 10 over 10x orbits)` |
+| NOTE: RK4 absolute |ΔE/E| is SMALLER than Verlet at any practical dt — the educational point is that Verlet's error is FLAT while RK4's error LINE SLOPES upward. The bench shows this visually (error vs orbit-number plot). Tests check the ratio, not magnitude. | — | Background task confirmed: RK4 still below Verlet even at 10 000 orbits at dt=T/2000. | (informational only — not a separate test) |
 | Kepler II: area swept in Δt constant | |dA₁/dt − dA₂/dt| < 1e-6 | (algebraic consequence of L conservation) | `orbits: kepler II equal areas` |
 | v_p at perihelion (e=0.9, a=1 AU) | 129.829 km/s ±0.001 | 129.8285 km/s | `orbits: perihelion speed e=0.9` |
 
