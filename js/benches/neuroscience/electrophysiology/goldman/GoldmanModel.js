@@ -29,7 +29,14 @@
  *   num = 1·20 + 0.04·440 + 0.45·52  = 61.0
  *   den = 1·400 + 0.04·50 + 0.45·560 = 654.0
  *   Vm  = (RT/F)·ln(61/654)·1000 ≈ −59.9 mV
- *   (Mammalian neurons at 37 °C use different concentrations and give ≈ −74 mV.)
+ *
+ * Second preset — mammalian skeletal muscle at rest, 37 °C:
+ *   Concentrations from Hille (2001) Chapter 1 (not checked against primary source):
+ *     K⁺:  [K]_i = 155 mM,  [K]_o =  4 mM
+ *     Na⁺: [Na]_i = 12 mM,  [Na]_o = 145 mM
+ *     Cl⁻: [Cl]_i =  4 mM,  [Cl]_o = 120 mM
+ *   Permeability ratios: P_K : P_Na : P_Cl = 1 : 0.05 : 0.45
+ *   T = 310.15 K (37 °C)  →  Vm ≈ −74 mV
  *
  * Secondary source for concentration overview:
  *   B. Hille (2001). Ion Channels of Excitable Membranes, 3rd ed.
@@ -59,6 +66,19 @@ export const SQUID_AXON_REST = Object.freeze({ PK: 1, PNa: 0.04, PCl: 0.45 });
 
 /** Permeability ratios at action-potential peak (Hodgkin & Katz 1949). */
 export const SQUID_AXON_AP = Object.freeze({ PK: 1, PNa: 20, PCl: 0.45 });
+
+/**
+ * Mammalian skeletal muscle at rest, 37 °C.
+ * Concentrations: Hille (2001) Chapter 1 — not checked against primary source.
+ * Permeability ratios: typical mammalian values; not checked against primary source.
+ */
+export const MAMMALIAN_MUSCLE = Object.freeze({
+  Ki: 155, Ko:   4,   // mM
+  Nai: 12, Nao: 145,  // mM
+  Cli:  4, Clo: 120,  // mM
+  PK: 1, PNa: 0.05, PCl: 0.45,
+  T: 310.15,           // K (37 °C)
+});
 
 export class GoldmanModel {
   /**

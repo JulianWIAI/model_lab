@@ -3,7 +3,7 @@
  * Compares resting (K⁺-dominated) and action-potential (Na⁺-dominated) states.
  */
 import { Bench } from '../../../../core/Bench.js';
-import { GoldmanModel, SQUID_AXON_REST, SQUID_AXON_AP } from './GoldmanModel.js';
+import { GoldmanModel, SQUID_AXON, SQUID_AXON_REST, SQUID_AXON_AP, MAMMALIAN_MUSCLE } from './GoldmanModel.js';
 import { GoldmanView } from './GoldmanView.js';
 import { Slider } from '../../../../ui/Slider.js';
 import { ButtonGroup } from '../../../../ui/ButtonGroup.js';
@@ -61,32 +61,35 @@ export class GoldmanBench extends Bench {
   build() {
     this.model = new GoldmanModel();
     this.ghkView = new GoldmanView(this.view);
+    this.layout.setStageNote('Squid giant axon, 20 °C (Hodgkin & Katz 1949)');
 
     // ── Preset buttons ──
     this.layout.addControl(new ButtonGroup({
       id: this.controlId('preset'),
       label: 'Preset',
       options: [
-        { label: 'Resting', value: 'rest' },
-        { label: 'AP peak', value: 'ap' },
+        { label: 'Squid axon, rest (20 °C)', value: 'rest' },
+        { label: 'Squid axon, AP peak (20 °C)', value: 'ap' },
+        { label: 'Mammalian muscle, rest (37 °C)', value: 'mammal' },
         { label: 'Custom', value: 'custom' },
       ],
       value: 'rest',
       onChange: (v) => {
         if (v === 'rest') {
-          this.model.PK  = SQUID_AXON_REST.PK;
-          this.model.PNa = SQUID_AXON_REST.PNa;
-          this.model.PCl = SQUID_AXON_REST.PCl;
+          Object.assign(this.model, { ...SQUID_AXON, ...SQUID_AXON_REST, T: 293.15 });
           this._pNaSlider.setValue(this.model.PNa);
           this._pClSlider.setValue(this.model.PCl);
-          this.layout.setStageNote('');
+          this.layout.setStageNote('Squid giant axon, 20 °C (Hodgkin & Katz 1949)');
         } else if (v === 'ap') {
-          this.model.PK  = SQUID_AXON_AP.PK;
-          this.model.PNa = SQUID_AXON_AP.PNa;
-          this.model.PCl = SQUID_AXON_AP.PCl;
+          Object.assign(this.model, { ...SQUID_AXON, ...SQUID_AXON_AP, T: 293.15 });
           this._pNaSlider.setValue(this.model.PNa);
           this._pClSlider.setValue(this.model.PCl);
-          this.layout.setStageNote('Action-potential peak: P_Na/P_K ≈ 20 (Hodgkin & Katz 1949)');
+          this.layout.setStageNote('Action-potential peak: P_Na/P_K ≈ 20 (squid axon, 20 °C; Hodgkin & Katz 1949)');
+        } else if (v === 'mammal') {
+          Object.assign(this.model, MAMMALIAN_MUSCLE);
+          this._pNaSlider.setValue(this.model.PNa);
+          this._pClSlider.setValue(this.model.PCl);
+          this.layout.setStageNote('Mammalian skeletal muscle, 37 °C (concentrations: Hille 2001 Ch. 1 — not checked against primary source)');
         } else {
           this.layout.setStageNote('');
         }
