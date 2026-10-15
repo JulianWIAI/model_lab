@@ -111,16 +111,12 @@ test('PV(A(T, continuous), T) ≈ P ±1e-6', () => {
     `PV round-trip = ${pv}, expected ${m.P}`);
 });
 
-test('PV(A(T, chosen m), T) uses continuous discounting ±1e-3·P', () => {
-  // PV uses e^(-rT) regardless of m; A uses (1+r/m)^(mT)
-  // For m=12, A(T) ≠ P·e^(rT) exactly, so PV will differ from P by
-  // the continuous/discrete difference — verify the formula is applied correctly:
-  // PV(A_discrete(T), T) = A_discrete(T) · e^(-rT)  (NOT divided by (1+r/m)^mT)
+test('PV(A(T, monthly), T) ≈ P ±1e-6 (same-m round-trip)', () => {
+  // PV uses same m as A: PV = FV / (1+r/m)^(mT); round-trip recovers P exactly
   const mdl = new CompoundGrowthModel({ P: 1000, r: 0.06, m: 12 });
   const T   = 10;
   const FV  = mdl.A(T);
   const pv  = mdl.PV(FV, T);
-  const expected = FV * Math.exp(-mdl.r * T);
-  assert.ok(Math.abs(pv - expected) < 1e-6,
-    `PV = ${pv}, expected ${expected}`);
+  assert.ok(Math.abs(pv - mdl.P) < 1e-6,
+    `PV round-trip (m=12) = ${pv}, expected ${mdl.P}`);
 });

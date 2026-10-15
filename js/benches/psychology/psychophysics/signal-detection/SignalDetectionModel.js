@@ -130,6 +130,13 @@ export class SignalDetectionModel {
   beta() { return Math.exp(this.d * this.c); }
 
   /**
+   * Recover d′ from observed hit and false-alarm rates.
+   * d′ = Phi^{-1}(H) - Phi^{-1}(FA)
+   * Independent of this.d — uses only this.H() and this.FA().
+   */
+  dprime() { return this.PhiInverse(this.H()) - this.PhiInverse(this.FA()); }
+
+  /**
    * Parametric AUC (primary): AUC = Φ(d′ / √2).
    * This is the area under the ROC for equal-variance Gaussian SDT.
    */

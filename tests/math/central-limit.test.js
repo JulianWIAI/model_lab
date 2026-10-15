@@ -65,6 +65,22 @@ test('Exponential n=30 N=2000: observedSkewness ≈ 2/√30 ±SE_skew', () => {
     `skewness = ${m.observedSkewness().toFixed(4)}, expected ${expected.toFixed(4)} ±${tol.toFixed(4)}`);
 });
 
+// ── Exponential n=5, N=5000 — skewness is large and measurable ───────────────
+//
+// With n=5 the sample mean of Exp(1) is Gamma(5,5), still skewed.
+// skewness(X̄_5) = skewness(Exp)/√5 = 2/√5 ≈ 0.894
+// SE_skewness ≈ √(6/N); use 1.5× safety factor for the non-normal distribution.
+// seed=42 default, not tuned; tolerance is analytically derived.
+
+test('Exponential n=5 N=5000: observedSkewness ≈ 2/√5 ±4×1.5×SE_skew', () => {
+  const m = new CentralLimitModel({ dist: 'exponential', n: 5, N: 5000, seed: 42 });
+  m.run();
+  const expected = 2 / Math.sqrt(5);
+  const tol      = 4 * 1.5 * Math.sqrt(6 / 5000);
+  assert.ok(Math.abs(m.observedSkewness() - expected) < tol,
+    `skewness = ${m.observedSkewness().toFixed(4)}, expected ${expected.toFixed(4)} ±${tol.toFixed(4)}`);
+});
+
 // ── Bernoulli n=30, N=2000 ───────────────────────────────────────────────────
 // sigma=0.5; SE=0.5/√30; tol=4×(0.5/√30)/√4000
 
@@ -92,13 +108,18 @@ test('Erlang exact: P(X̄ < 0.8, n=5, Exp) ≈ 0.371163 ±0.003 (formula)', () =
     `erlangCDF(5, 0.8) = ${pExact.toFixed(6)}, expected ≈0.371163`);
 });
 
-test('Erlang exact vs observed fraction ±0.02 (n=5, Exp, N=2000)', () => {
+// seed=42 is the default, not hand-tuned; tolerance is analytically derived below.
+// SE of observed fraction = sqrt(p(1-p)/N); tol = 4×SE
+// p ≈ 0.371163, N=2000: tol = 4×sqrt(0.371163×0.628837/2000) ≈ 0.0432
+
+test('Erlang exact vs observed fraction ±4·sqrt(p(1-p)/N) (n=5, Exp, N=2000)', () => {
   const m = new CentralLimitModel({ dist: 'exponential', n: 5, N: 2000, seed: 42 });
   m.run();
   const pExact   = CentralLimitModel.erlangCDF(5, 0.8);
   const observed = m.means.filter(v => v < 0.8).length / m.means.length;
-  assert.ok(Math.abs(observed - pExact) < 0.02,
-    `observed P(X̄<0.8) = ${observed.toFixed(4)}, Erlang exact = ${pExact.toFixed(4)}`);
+  const tol      = 4 * Math.sqrt(pExact * (1 - pExact) / 2000);
+  assert.ok(Math.abs(observed - pExact) < tol,
+    `observed P(X̄<0.8) = ${observed.toFixed(4)}, Erlang exact = ${pExact.toFixed(4)} ±${tol.toFixed(4)}`);
 });
 
 // ── Cauchy CLT failure ────────────────────────────────────────────────────────

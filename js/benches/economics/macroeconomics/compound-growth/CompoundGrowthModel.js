@@ -10,8 +10,9 @@
  * Exact doubling time:
  *   discrete:   t₂ = ln(2) / (m·ln(1 + r/m))
  *   continuous: t₂ = ln(2) / r
- * Present value (continuous discounting):
- *   PV = FV · e^(−r·T)
+ * Present value (same compounding frequency as growth):
+ *   discrete:   PV = FV / (1 + r/m)^(m·T)
+ *   continuous: PV = FV · e^(−r·T)
  * Rule-of-72 approximation (annual compounding, m=1):
  *   t₂_72 ≈ 0.72 / r   (r as decimal)
  *
@@ -66,12 +67,15 @@ export class CompoundGrowthModel {
   }
 
   /**
-   * Present value — continuous discounting: PV = FV · e^(−r·T).
+   * Present value using the same compounding frequency as growth.
+   * discrete:   PV = FV / (1 + r/m)^(m*T)
+   * continuous: PV = FV * e^(-r*T)
    * @param {number} FV  future value
    * @param {number} T   years from now
    */
   PV(FV, T) {
-    return FV * Math.exp(-this.r * T);
+    if (this.m === Infinity) return FV * Math.exp(-this.r * T);
+    return FV / Math.pow(1 + this.r / this.m, this.m * T);
   }
 
   /** Effective annual rate: EAR = (1+r/m)^m − 1 */

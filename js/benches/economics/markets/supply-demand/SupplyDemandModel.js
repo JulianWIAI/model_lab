@@ -12,17 +12,22 @@
  *   CS = ½ · Q*² / b
  *
  * Producer surplus (triangle below P* above supply up from P-intercept):
- *   PS = ½ · Q*² / d          [exact when c=0, i.e. supply passes through origin]
- *   General: PS = ½ · d · P*² − c·P* + c²/(2d)  but bench uses default c=0.
+ *   PS = ½ · Q*² / d          [holds for any c, not just c=0]
+ *
+ *   Proof: supply P-intercept = -c/d; PS = (1/2)Qe*(Pe - (-c/d)) = (1/2)Qe*(Pe + c/d)
+ *   Pe + c/d = (a-c)/(b+d) + c/d = Qe/d  =>  PS = (1/2)Qe^2/d  (QED)
  *
  * Price elasticities at equilibrium:
- *   eD = −b · P*divided by Q*  (negative; price elasticity of demand)
- *   eS =  d · P*divided by Q*  (positive)
+ *   eD = -b * Pe/Qe  (negative; price elasticity of demand)
+ *   eS =  d * Pe/Qe  (positive)
  *
- * Cost shock κ (supply shifts: c_new = c − κ, cost rise shifts supply left):
- *   New P* = P* + κ/(b+d)     buyers bear κ·b/(b+d), sellers bear κ·d/(b+d)
+ * Cost shock κ = parallel upward shift of marginal cost:
+ *   c_new = c − d·κ  (supply shifts left by κ in quantity space)
+ *   ΔP* = d·κ/(b+d)   buyers bear d/(b+d) = ε_S/(ε_S+|ε_D|)
+ *   ΔQ* = −b·d·κ/(b+d)
+ *   Pass-through ρ = d/(b+d)  = ε_S/(ε_S+|ε_D|)  (computed from elasticities independently)
  *
- * No-trade condition: P* ≤ 0 or Q* ≤ 0 (noTrade = true).
+ * No-trade condition: Q* ≤ 0, i.e. a·d + b·c ≤ 0 (noTrade = true).
  *
  * Independent numerical check via RootFinding.brent on Q_D(P) − Q_S(P) = 0.
  */
@@ -57,7 +62,7 @@ export class SupplyDemandModel {
     const { a, b, c, d } = this;
     const Pstar = (a - c) / (b + d);
     const Qstar = (a * d + b * c) / (b + d);
-    const noTrade = Pstar <= 0 || Qstar <= 0;
+    const noTrade = Qstar <= 0;  // iff a·d + b·c ≤ 0
 
     if (noTrade) {
       return { Pstar, Qstar, CS: 0, PS: 0, eD: 0, eS: 0, noTrade: true };
@@ -65,13 +70,32 @@ export class SupplyDemandModel {
 
     // CS = ½ · Q*² / b  (triangle under demand above P*)
     const CS = 0.5 * Qstar * Qstar / b;
-    // PS = ½ · Q*² / d  (exact when c=0)
+    // PS = ½ · Q*² / d  (holds for any c; proof in file header)
     const PS = 0.5 * Qstar * Qstar / d;
 
     const eD = -b * Pstar / Qstar;
     const eS =  d * Pstar / Qstar;
 
     return { Pstar, Qstar, CS, PS, eD, eS, noTrade: false };
+  }
+
+  /**
+   * Apply a cost shock κ and return the new equilibrium.
+   * A cost shock is a parallel upward shift of marginal cost: c_new = c − d·κ.
+   * ΔP* = d·κ/(b+d);  ΔQ* = −b·d·κ/(b+d)
+   * Pass-through ρ = d/(b+d) = ε_S/(ε_S+|ε_D|)
+   * @param {number} kappa  size of the cost shock (>0 = costs rise)
+   * @returns {{ Pstar, Qstar, deltaP, deltaQ, rho, noTrade }}
+   */
+  costShock(kappa) {
+    const { b, d } = this;
+    const base = this.solve();
+    const shocked = new SupplyDemandModel({ a: this.a, b, c: this.c - d * kappa, d });
+    const result  = shocked.solve();
+    const deltaP  = result.Pstar - base.Pstar;
+    const deltaQ  = result.Qstar - base.Qstar;
+    const rho     = d / (b + d);
+    return { ...result, deltaP, deltaQ, rho };
   }
 
   /**

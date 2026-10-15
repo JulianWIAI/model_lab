@@ -20,6 +20,37 @@ test('solve().Qstar === (a·d+b·c)/(b+d) ±1e-10', () => {
     `Qstar = ${Qstar}, expected ${expected}`);
 });
 
+// ── noTrade: condition is Q* ≤ 0  (i.e. a·d + b·c ≤ 0) ─────────────────────
+//
+// Example 1: a=1, b=1, c=−5, d=1
+//   Q* = (1·1 + 1·(−5))/(1+1) = −4/2 = −2 ≤ 0 → noTrade
+//   P* = (1−(−5))/(1+1) = 3 > choke price (a/b = 1), confirms no trade
+//
+// Example 2: a=80, b=1, c=−10, d=1
+//   Q* = (80·1 + 1·(−10))/2 = 35 > 0 → trade
+//   (c<0 means supply starts at positive price −c/d = 10)
+
+test('noTrade true: a=1,b=1,c=−5,d=1 → Q*=−2 ≤ 0', () => {
+  const m = new SupplyDemandModel({ a: 1, b: 1, c: -5, d: 1 });
+  const r = m.solve();
+  assert.strictEqual(r.noTrade, true,
+    `Q* = ${r.Qstar}, expected noTrade`);
+  assert.ok(r.Qstar <= 0, `Q* should be ≤0, got ${r.Qstar}`);
+});
+
+test('noTrade false: a=80,b=1,c=−10,d=1 → Q*=35 > 0', () => {
+  const m = new SupplyDemandModel({ a: 80, b: 1, c: -10, d: 1 });
+  const r = m.solve();
+  assert.strictEqual(r.noTrade, false,
+    `Q* = ${r.Qstar}, expected trade`);
+  assert.ok(r.Qstar > 0);
+});
+
+test('noTrade false: standard case a=80,b=1,c=0,d=1 → Q*=40', () => {
+  const m = new SupplyDemandModel({ a: 80, b: 1, c: 0, d: 1 });
+  assert.strictEqual(m.solve().noTrade, false);
+});
+
 // ── Numerical check (independent of closed form) ─────────────────────────────
 
 test('solveNumerical().Pstar agrees with closed form ±1e-6', () => {
@@ -30,75 +61,87 @@ test('solveNumerical().Pstar agrees with closed form ±1e-6', () => {
     `numeric P* = ${numeric}, closed-form P* = ${closed}`);
 });
 
-// ── Consumer + producer surplus ──────────────────────────────────────────────
+// ── CS and PS formulas hold for any c ────────────────────────────────────────
 //
-// CS = ½·Q*²/b, PS = ½·Q*²/d (for c=0).
-// CS + PS = ½·Q*²·(1/b + 1/d) = ½·Q*²·(b+d)/(b·d)
+// CS = ½·Q*²/b  (always: triangle under demand above P*)
+// PS = ½·Q*²/d  (always: proved in model header; holds for any c including c<0)
 //
-// Simpson welfare test: CS via numerical integration ∫_P* ^(a/b) Q_D(P) dP
-// This is independent of the algebraic formula.
+// Total surplus = CS + PS = ½·Q*²·(b+d)/(b·d)
+// Independent check: ∫₀^{Q*} (P_D(Q) − P_S(Q)) dQ via Simpson's rule
+// where P_D(Q) = (a−Q)/b and P_S(Q) = (Q−c)/d
 
-test('CS + PS = ½·Q*²·(b+d)/(bd) ±1e-10 (c=0)', () => {
-  const b = 1.4, d = 0.7;
-  const m = new SupplyDemandModel({ a: 80, b, c: 0, d });
-  const { Pstar, Qstar, CS, PS } = m.solve();
-  const expected = 0.5 * Qstar * Qstar * (b + d) / (b * d);
-  assert.ok(Math.abs(CS + PS - expected) < 1e-10,
-    `CS+PS = ${CS + PS}, expected ${expected}`);
-});
+test('CS+PS = Simpson ∫₀^{Q*}(P_D−P_S)dQ ±1e-4  (c=−10, c<0)', () => {
+  const a = 80, b = 1.2, c = -10, d = 0.8;
+  const m = new SupplyDemandModel({ a, b, c, d });
+  const { Qstar, CS, PS, noTrade } = m.solve();
+  assert.strictEqual(noTrade, false, 'expected trade');
 
-test('CS numerical (Simpson) ≈ algebraic CS ±1e-4', () => {
-  const b = 1.2, d = 0.8;
-  const m = new SupplyDemandModel({ a: 80, b, c: 0, d });
-  const { Pstar, CS } = m.solve();
-  // CS = ∫_P* ^{a/b} Q_D(P) dP = ∫_P* ^{a/b} (a - b·P) dP
-  const Pchoke = m.a / b;
-  const n = 10000;
-  const h = (Pchoke - Pstar) / n;
-  let sum = 0;
-  for (let i = 0; i <= n; i++) {
-    const P = Pstar + h * i;
-    const w = (i === 0 || i === n) ? 1 : (i % 2 === 0 ? 2 : 4);
-    sum += w * m.QD(P);
+  const n = 10000;  // must be even
+  const h = Qstar / n;
+  // Simpson's 1/3 rule: ∫₀^{Q*} f(Q) dQ
+  const PD = Q => (a - Q) / b;
+  const PS_ = Q => (Q - c) / d;
+  let sum = (PD(0) - PS_(0)) + (PD(Qstar) - PS_(Qstar));
+  for (let i = 1; i < n; i++) {
+    const Q = h * i;
+    sum += (i % 2 === 0 ? 2 : 4) * (PD(Q) - PS_(Q));
   }
-  const CS_numeric = (h / 3) * sum;
-  assert.ok(Math.abs(CS_numeric - CS) < 1e-4,
-    `CS_numeric = ${CS_numeric.toFixed(4)}, CS_algebraic = ${CS.toFixed(4)}`);
-});
+  const TS_simpson = (h / 3) * sum;
+  const TS_formula = CS + PS;
 
-// ── No-trade condition ────────────────────────────────────────────────────────
-
-test('noTrade === true when a < c (demand below supply)', () => {
-  // Q* = (a·d + b·c)/(b+d); if a<c and c large enough Q*<0
-  const m = new SupplyDemandModel({ a: 10, b: 1, c: 50, d: 1 });
-  assert.strictEqual(m.solve().noTrade, true);
-});
-
-test('noTrade === false when a > c with positive equilibrium', () => {
-  const m = new SupplyDemandModel({ a: 80, b: 1, c: 0, d: 1 });
-  assert.strictEqual(m.solve().noTrade, false);
+  assert.ok(Math.abs(TS_formula - TS_simpson) < 1e-4,
+    `formula CS+PS = ${TS_formula.toFixed(4)}, Simpson = ${TS_simpson.toFixed(4)}`);
 });
 
 // ── Cost-shock incidence ──────────────────────────────────────────────────────
 //
-// Supply shift: costs rise by κ → c_new = c − κ (supply curve shifts left).
-// ΔP* = κ/(b+d)   buyers bear κ·b/(b+d), sellers bear κ·d/(b+d)
+// Cost shock κ: c_new = c − d·κ (parallel upward shift of marginal cost)
+// ΔP* = d·κ/(b+d)
+// ΔQ* = −b·d·κ/(b+d)
+// Pass-through ρ = d/(b+d) = ε_S/(ε_S + |ε_D|)  [computed from elasticities]
 
-test('cost shock ΔP* = κ/(b+d) ±1e-10', () => {
+test('cost shock ΔP* = d·κ/(b+d) ±1e-10', () => {
   const b = 1.5, d = 0.8, kappa = 10;
-  const m1 = new SupplyDemandModel({ a: 80, b, c: 5,         d });
-  const m2 = new SupplyDemandModel({ a: 80, b, c: 5 - kappa, d });
-  const dP = m2.solve().Pstar - m1.solve().Pstar;
-  const expected = kappa / (b + d);
-  assert.ok(Math.abs(dP - expected) < 1e-10,
-    `ΔP* = ${dP}, expected ${expected}`);
+  const m = new SupplyDemandModel({ a: 80, b, c: 5, d });
+  const { deltaP } = m.costShock(kappa);
+  const expected = d * kappa / (b + d);
+  assert.ok(Math.abs(deltaP - expected) < 1e-10,
+    `ΔP* = ${deltaP}, expected ${expected}`);
 });
 
-test('buyer-bears-all limit: b≈0, ΔP* ≈ κ (±1%)', () => {
-  const b = 0.001, d = 1, kappa = 1;
-  const m1 = new SupplyDemandModel({ a: 80, b, c: 5,         d });
-  const m2 = new SupplyDemandModel({ a: 80, b, c: 5 - kappa, d });
-  const dP = m2.solve().Pstar - m1.solve().Pstar;
-  assert.ok(Math.abs(dP - kappa) / kappa < 0.01,
-    `ΔP* = ${dP.toFixed(4)}, expected ≈${kappa} (buyers bear >99%)`);
+test('cost shock ΔQ* = −b·d·κ/(b+d) ±1e-10', () => {
+  const b = 1.5, d = 0.8, kappa = 10;
+  const m = new SupplyDemandModel({ a: 80, b, c: 5, d });
+  const { deltaQ } = m.costShock(kappa);
+  const expected = -b * d * kappa / (b + d);
+  assert.ok(Math.abs(deltaQ - expected) < 1e-10,
+    `ΔQ* = ${deltaQ}, expected ${expected}`);
+});
+
+test('pass-through ρ = d/(b+d) = ε_S/(ε_S+|ε_D|) ±1e-10', () => {
+  const b = 1.2, d = 0.9;
+  const m  = new SupplyDemandModel({ a: 80, b, c: 0, d });
+  const { rho, eD, eS } = m.costShock(1);  // κ=1; rho unchanged
+  const rhoExpected    = d / (b + d);
+  const rhoElasticity  = eS / (eS + Math.abs(eD));  // from elasticities
+  assert.ok(Math.abs(rho - rhoExpected) < 1e-10,
+    `ρ = ${rho}, expected ${rhoExpected}`);
+  assert.ok(Math.abs(rho - rhoElasticity) < 1e-10,
+    `ρ from elasticities = ${rhoElasticity}, expected ${rhoExpected}`);
+});
+
+test('buyer-bears-all limit: b→0, ρ→1 (buyers absorb >99%)', () => {
+  const b = 0.001, d = 1;
+  const m = new SupplyDemandModel({ a: 80, b, c: 5, d });
+  const { rho } = m.costShock(1);
+  assert.ok(Math.abs(rho - 1) < 0.01,
+    `ρ = ${rho.toFixed(4)}, expected ≈1`);
+});
+
+test('seller-bears-all limit: d→0, ρ→0 (sellers absorb >99%)', () => {
+  const b = 1, d = 0.001;
+  const m = new SupplyDemandModel({ a: 80, b, c: 5, d });
+  const { rho } = m.costShock(1);
+  assert.ok(rho < 0.01,
+    `ρ = ${rho.toFixed(4)}, expected ≈0`);
 });

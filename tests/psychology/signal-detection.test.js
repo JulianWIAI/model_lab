@@ -132,3 +132,113 @@ test('rocCurve FA is monotonically non-increasing as c increases', () => {
       `FA not decreasing at i=${i}: ${roc[i].FA} > ${roc[i - 1].FA}`);
   }
 });
+
+// ── erf CF branch (|erf_arg| > 3, i.e., |x| > 3√2 for Phi) ─────────────────
+// Phi(-6): erf_arg = -6/√2 ≈ -4.243; uses CF branch of erf.
+// Phi(5):  erf_arg =  5/√2 ≈  3.536; uses CF branch.
+// Reference values computed from the asymptotic series and cross-checked.
+
+test('Phi(-6) ≈ 9.8659e-10 ±1e-12 (CF branch, extreme left tail)', () => {
+  const m = new SignalDetectionModel();
+  const got = m.Phi(-6);
+  assert.ok(Math.abs(got - 9.865876e-10) < 1e-12,
+    `Phi(-6) = ${got.toExponential(6)}, expected ≈9.865876e-10`);
+});
+
+test('Phi(5) ≈ 0.9999997133 ±1e-9 (CF branch)', () => {
+  const m = new SignalDetectionModel();
+  const got = m.Phi(5);
+  assert.ok(Math.abs(got - 0.9999997133484) < 1e-9,
+    `Phi(5) = ${got.toFixed(13)}`);
+});
+
+// Cross-check: erf near boundary (series branch at 2.5, CF branch at 3.5)
+// using known accurate values.
+// erf(2.5) ≈ 0.999593047982553  (series branch; |2.5| ≤ 3)
+// erf(3.5) ≈ 0.999999256901628  (CF branch;    |3.5| > 3)
+// Tolerance 1e-10 exercises both branches in the cross-over range 2.5–3.5.
+
+test('erf(2.5) ≈ 0.999593047982553 ±1e-10 (series branch, near boundary)', () => {
+  const m = new SignalDetectionModel();
+  assert.ok(Math.abs(m.erf(2.5) - 0.999593047982553) < 1e-10,
+    `erf(2.5) = ${m.erf(2.5).toFixed(15)}`);
+});
+
+test('erf(3.5) ≈ 0.999999256901628 ±1e-10 (CF branch, near boundary)', () => {
+  const m = new SignalDetectionModel();
+  assert.ok(Math.abs(m.erf(3.5) - 0.999999256901628) < 1e-10,
+    `erf(3.5) = ${m.erf(3.5).toFixed(15)}`);
+});
+
+// ── Φ⁻¹ round-trip ───────────────────────────────────────────────────────────
+
+test('PhiInverse(Phi(x)) ≈ x ±1e-10 for x ∈ {-2, 0, 1.5, 2.5}', () => {
+  const m = new SignalDetectionModel();
+  for (const x of [-2, 0, 1.5, 2.5]) {
+    const rt = m.PhiInverse(m.Phi(x));
+    assert.ok(Math.abs(rt - x) < 1e-10,
+      `PhiInverse(Phi(${x})) = ${rt}, expected ${x}`);
+  }
+});
+
+// ── dprime() ─────────────────────────────────────────────────────────────────
+// dprime() = Phi^{-1}(H) - Phi^{-1}(FA).  Must recover stored d regardless of c.
+
+test('dprime() recovers d′ regardless of c ±1e-6', () => {
+  for (const [d, c] of [[2, 0], [1.5, 0.5], [0.5, -1]]) {
+    const m  = new SignalDetectionModel({ d, c });
+    const dp = m.dprime();
+    assert.ok(Math.abs(dp - d) < 1e-6,
+      `dprime(d=${d},c=${c}) = ${dp}, expected ${d}`);
+  }
+});
+
+// ── A′ (Grier 1971) boundary conditions ─────────────────────────────────────
+
+test('Aprime(d=0, c=0) === 0.5 (chance performance)', () => {
+  const m = new SignalDetectionModel({ d: 0, c: 0 });
+  assert.ok(Math.abs(m.Aprime() - 0.5) < 1e-10,
+    `Aprime(d=0) = ${m.Aprime()}`);
+});
+
+test('Aprime(d=8, c=0) ≈ 1 ±0.001 (near-perfect discrimination)', () => {
+  const m = new SignalDetectionModel({ d: 8, c: 0 });
+  assert.ok(Math.abs(m.Aprime() - 1) < 0.001,
+    `Aprime(d=8) = ${m.Aprime().toFixed(8)}`);
+});
+
+test('Aprime(d=-1) + Aprime(d=1) === 1 ±1e-10 (H<FA symmetry)', () => {
+  // When d<0 the observer reverses signal/noise; A′ should be symmetric:
+  //   A′(d) + A′(-d) = 1
+  const m1  = new SignalDetectionModel({ d:  1, c: 0 });
+  const mn1 = new SignalDetectionModel({ d: -1, c: 0 });
+  const sum = m1.Aprime() + mn1.Aprime();
+  assert.ok(Math.abs(sum - 1) < 1e-10,
+    `A′(1) + A′(-1) = ${sum}, expected 1`);
+});
+
+test('Aprime(d=0) === AUC(d=0) === 0.5 (chance: both measures agree)', () => {
+  const m = new SignalDetectionModel({ d: 0, c: 0 });
+  assert.ok(Math.abs(m.Aprime() - m.AUC()) < 1e-10,
+    `Aprime = ${m.Aprime()}, AUC = ${m.AUC()}`);
+});
+
+// ── Improved trapezoid AUC (endpoints closed) ─────────────────────────────────
+// Close the ROC polygon with (FA=1,H=1) and (FA=0,H=0) before integrating.
+// With 500 interior pts + 2 endpoints, error < 1e-4 for any d′ ∈ {0.5,1,2,3}.
+
+test('trapezoid AUC (closed curve, d′∈{0.5,1,2,3}) ≈ Phi(d/√2) ±1e-4', () => {
+  for (const d of [0.5, 1, 2, 3]) {
+    const m   = new SignalDetectionModel({ d, c: 0 });
+    const roc = m.rocCurve(500);
+    // Close: prepend (FA=1,H=1) and append (FA=0,H=0)
+    const pts = [{ H: 1, FA: 1 }, ...roc, { H: 0, FA: 0 }];
+    let trapAUC = 0;
+    for (let i = 1; i < pts.length; i++) {
+      const dFA = pts[i - 1].FA - pts[i].FA;   // positive (FA decreases)
+      trapAUC += dFA * (pts[i].H + pts[i - 1].H) / 2;
+    }
+    assert.ok(Math.abs(trapAUC - m.AUC()) < 1e-4,
+      `d=${d}: trapAUC=${trapAUC.toFixed(6)}, Phi(d/√2)=${m.AUC().toFixed(6)}`);
+  }
+});
