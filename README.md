@@ -50,6 +50,7 @@ Each bench also has two deeper layers: **Derive it** (where the equations come f
 | Chemistry | Nernst cell (Daniell) | E = E° − (RT/nF)·ln Q; drive the Daniell cell away from standard state |
 | Chemistry | Hess's law | Build reaction enthalpy from formation enthalpies; compare combustion cycles |
 | Chemistry | VSEPR geometries | Rotate all 12 electron-pair geometries in 3D; compare ideal and real bond angles |
+| Physics | RC circuit | Charge and discharge a capacitor; read off τ = RC and the energy stored or lost |
 
 ## Running tests
 

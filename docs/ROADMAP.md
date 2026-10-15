@@ -71,7 +71,7 @@ Source statuses:
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| rc-circuit | sim | intro | V(t) = V₀·e^(−t/RC); half-life = RC·ln 2 | algebraic | anchor derived, test planned |
+| rc-circuit ✓ | sim | intro | V_C(t) = V₀·(1−e^(−t/RC)) charging; V_C(τ) = V₀·(1−1/e) ±1e-6; energy ∫I²R dt = ½CV₀² (independent of R, verified by trapezoid); RK4 cross-check max err < 1e-6 | algebraic | checked by independent test |
 | lc-oscillator | sim | university | ω₀ = 1/√(LC); critical damping when R = 2√(L/C) | algebraic | anchor derived, test planned |
 
 #### Thermodynamics
@@ -377,7 +377,7 @@ Graduate: 2 original (options-pricing, butler-volmer) + 6 new ★ + 9 elevated �
 
 | Phase | id | Subject | Level |
 |---|---|---|---|
-| **5** | rc-circuit | Physics | intro |
+| **5** | rc-circuit ✓ | Physics | intro |
 | 5 | radioactive-decay | Chemistry | intro |
 | 5 | supply-demand | Economics | intro |
 | 5 | signal-detection | Psychology | intro |

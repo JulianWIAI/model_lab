@@ -49,6 +49,25 @@ export const catalog = [
         ],
       },
       {
+        id: 'electromagnetism',
+        name: 'Electromagnetism',
+        benches: [
+          {
+            id: 'rc-circuit',
+            navLabel: 'RC circuit',
+            level: 'intro',
+            keywords: [
+              'RC circuit', 'resistor', 'capacitor', 'time constant', 'charging',
+              'discharging', 'exponential', 'Kirchhoff', 'electromagnetism', 'filter',
+            ],
+            load: () =>
+              import('./benches/physics/electromagnetism/rc-circuit/RCCircuitBench.js').then(
+                (m) => m.RCCircuitBench,
+              ),
+          },
+        ],
+      },
+      {
         id: 'thermodynamics',
         name: 'Thermodynamics',
         benches: [
