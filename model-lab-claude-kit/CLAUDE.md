@@ -43,6 +43,7 @@ Rules that keep this scalable:
 - The `info.research.papers` list contains only real publications. If you are not certain of a DOI, omit `url`; BenchLayout then links to a Google Scholar search.
 - Never invent experimental values. If a value cannot be verified, leave it out and say so in the commit message.
 - If a remote data source (script fetch, API call) cannot be reached, stop and tell the user. Never fill the gap from memory.
+- **A formula written from memory is never "verified".** Source statuses in `docs/ROADMAP.md`: **checked by independent test** = the model test suite directly verifies this formula or value; **cited, not fetched** = plausible published value, source not re-fetched during this implementation; **unverified** = citation is uncertain or value has not been cross-checked.
 
 ## Every bench must have
 
