@@ -57,6 +57,12 @@ Each bench also has two deeper layers: **Derive it** (where the equations come f
 | Psychology | Weber–Fechner & Stevens | JND=k·I; Fechner log law; Stevens power law; exact vs Fechner step count; L'Hôpital limit |
 | Psychology | Signal detection theory | d′, criterion, H, FA; ROC curve; AUC=Φ(d′/√2); A′ (Grier); erf from scratch |
 | Math | Central Limit Theorem | Uniform, Exp, Bernoulli, χ²(3), Cauchy; histogram vs N(μ,σ²/n); Erlang exact check; Cauchy CLT failure |
+| Physics | Kepler orbits | Two-body orbit; Verlet (bounded energy) vs RK4 (secular drift); Kepler III; vis-viva; escape speed |
+| Physics | Damped oscillator | Driven damped SHO; A(ω) resonance; ω_r = √(ω₀²−2γ²); log decrement; critical damping |
+| Math | ODE explorer | Euler/Heun/RK4/backward-Euler on 4 presets; stability at λh=2.5/3.0; convergence order log-log plot |
+| Math | Logistic map | Bifurcation diagram, cobweb; R₁=1+√5, Feigenbaum δ; Lyapunov λ(r=4)=ln 2 |
+| Neuroscience | Integrate-and-fire | ISI=t_ref+τ_m·ln[(V_∞−V_reset)/(V_∞−V_th)]; f-I curve; rheobase; logarithmic divergence at I_th |
+| Psychology | Rescorla–Wagner | ΔV_i=α_i·β·(λ−ΣV); acquisition, extinction, blocking, overshadowing, overexpectation, conditioned inhibition |
 
 ## Running tests
 

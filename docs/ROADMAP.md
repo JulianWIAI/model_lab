@@ -56,8 +56,8 @@ Source statuses:
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
 | pendulum ✓ | sim | intro | T = 2π√(L/g) small-angle; exact Bessel period at large amplitude | standard mechanics | checked by independent test |
-| orbits | sim | intro | 1 AU = 149 597 870 700 m (IAU 2012 exact); GM_sun = 1.3271244×10²⁰ m³/s² (IAU nominal) → T_Earth = 365.256 d ±0.02 d; energy E=−GMm/(2a) and L=const verified over one orbit | IAU 2012 nominal solar mass parameter | cited, not fetched |
-| oscillators | sim | intro | Displacement amplitude peaks at ω_res=√(ω₀²−2γ²); velocity amplitude peaks at ω₀; Q = ω₀/(2γ) | algebraic derivation | anchor derived, test planned |
+| orbits ✓ | sim | intro | formulas: T=2π√(a³/GM), vis-viva, Verlet bounded/RK4 secular — checked by independent test; data: GM_sun, AU, GM_E, r_E — cited, not fetched | IAU 2015 B3; IAU 2012 B2 | formulas: checked by independent test; data: cited, not fetched |
+| oscillators ✓ | sim | intro | formulas: A(ω), ω_r, phase=π/2, log decrement, critical damping — checked by independent test | algebraic (L&L §22) | formulas: checked by independent test; data: n/a |
 | special-relativity | sim | university | γ = 1/√(1−β²); at β=0.9994, γ = 1/√(1−0.9994²) = 28.9; muon lives 28.9× longer than at rest | algebraic; PDG muon data | anchor derived, test planned |
 
 #### Waves & Optics
@@ -115,7 +115,7 @@ Source statuses:
 |---|---|---|---|---|---|
 | neuron ✓ | sim | university | Spike threshold; TTX blocks Na⁺ | Hodgkin & Huxley 1952 | checked by independent test |
 | goldman ✓ | sim | university | Vm(squid rest) ≈ −59.9 mV; Vm → E_K when P_Na, P_Cl → 0 | Hodgkin & Katz 1949 | checked by independent test |
-| integrate-and-fire | sim | university | f = 1/(t_ref + τ_m·ln[I/(I−g_L·V_th)]); fires only above threshold I = g_L·V_th | Lapicque 1907; Tuckwell 1988 | cited, not fetched |
+| integrate-and-fire ✓ | sim | university | formulas: ISI=t_ref+τ_m·ln[(V_∞−V_reset)/(V_∞−V_th)], rheobase, 63.2% rule — checked by independent test | Lapicque 1907; Gerstner et al. 2014 | formulas: checked by independent test; data: n/a (illustrative parameters) |
 | cable-equation | sim | university | Steady-state analytic V(x)=V₀·e^(−x/λ), λ=√(r_m/r_i) — no PDE solver needed | Rall 1967, *J. Neurophysiol.* 30:1138 | cited, not fetched |
 | neuron-bifurcation ★ | sim | graduate | HH at 6.3°C: subcritical Hopf near 9.78 μA/cm² (rest loses stability; spiking onset on upward I-sweep); saddle-node of limit cycles near 6.26 μA/cm² (spiking offset on downward I-sweep); bistable region between. Type II excitability. Both thresholds computed numerically by solver. | Rinzel & Ermentrout 1989, in *Methods in Neuronal Modeling* | unverified |
 
@@ -151,13 +151,13 @@ Source statuses:
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
 | fourier ✓ | sim | university | Square-wave Gibbs overshoot → 8.9% as N → ∞ (exact) | algebraic | checked by independent test |
-| ode-explorer | sim | intro | Euler error O(h), RK4 error O(h⁴); y'=−y → y=e^(−t) exact | algebraic | anchor derived, test planned |
+| ode-explorer ✓ | sim | intro | formulas: Euler O(h), Heun O(h²), RK4 O(h⁴) log-log slopes; RK4 stability limit 2.785294; logistic exact match — checked by independent test | algebraic (HNW) | formulas: checked by independent test; data: n/a |
 
 #### Dynamical Systems
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| logistic-map | sim | university | Period-2 onset at r=3.000 exactly; Feigenbaum δ ≈ 4.669 | Feigenbaum 1978, *J. Stat. Phys.* 19:25 | cited, not fetched |
+| logistic-map ✓ | sim | university | formulas: fixed point, period-2 cycle, R1=1+√5, Feigenbaum 3-iterate 4.6808, λ(r=4)=ln2 — checked by independent test; data: δ=4.6692, r_∞ — cited, not fetched | Feigenbaum 1978, *J. Stat. Phys.* 19:25 | formulas: checked by independent test; data: cited, not fetched |
 | lyapunov ★ | sim | graduate | λ=ln 2 for tent map x→2x mod 1 (algebraically exact); λ>0 for r>r_∞≈3.5699 | Tent map: algebraic; r_∞: Feigenbaum 1978 | anchor derived, test planned / cited, not fetched |
 | mandelbrot | explorer | university | Main cardioid: c=μ/2−μ²/4 (\|μ\|<1), real-axis span −3/4..1/4; period-2 disc: \|c+1\|<1/4; tests: c=0 inside, c=0.26 escapes; c=−1 inside, c=−2.01 escapes | algebraic parametrisation | anchor derived, test planned |
 | phase-plane ‡ | sim | graduate | Stable node iff tr<0, det>0, tr²>4det; Jacobian eigenvalues classify all 6 equilibrium types; Hartman-Grobman theorem | Strogatz 2001 §5.2; algebraic | cited, not fetched |
@@ -246,7 +246,7 @@ Source statuses:
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| rescorla-wagner | sim | intro | Asymptote V_A=λ; blocking: ΔV_B≈0 when V_A=λ | Rescorla & Wagner 1972, in *Classical Conditioning II* | cited, not fetched |
+| rescorla-wagner ✓ | sim | intro | formulas: acquisition/extinction closed forms, blocking, overshadowing asymptote, overexpectation, conditioned inhibition — checked by independent test | Rescorla & Wagner 1972; Kamin 1969 | formulas: checked by independent test; data: n/a |
 | drift-diffusion ‡ | sim | graduate | Boundaries ±a, start 0: P=1/(1+e^(−2μa/σ²)); RT=(a/μ)·tanh(μa/σ²)+t₀; both verified by numerical simulation of the SDE | Ratcliff 1978, *Psychol. Rev.* 85:59 | anchor derived, test planned |
 | reinforcement-learning ‡ | sim | graduate | Bellman: Q*(s,a)=R+γ·max Q*(s',a'); convergence via stochastic approximation (Robbins-Monro) | Watkins & Dayan 1992, *Machine Learning* 8:279 | cited, not fetched |
 | bayesian-observer | sim | university | σ_comb=1/√(1/σ₁²+1/σ₂²); for σ₁=σ₂ → σ/√2; weights ∝ 1/σ² | Ernst & Banks 2002, *Nature* 415:429 | cited, not fetched |
@@ -385,12 +385,12 @@ Graduate: 2 original (options-pricing, butler-volmer) + 6 new ★ + 9 elevated �
 | **5** | central-limit ✓ | Math | intro |
 | **5** | compound-growth ✓ | Economics | intro |
 | **[infra]** | LinAlg.js | — | — |
-| **6** | orbits | Physics | intro |
-| 6 | oscillators | Physics | intro |
-| 6 | ode-explorer | Math | intro |
-| 6 | logistic-map | Math | university |
-| 6 | integrate-and-fire | Neuroscience | university |
-| 6 | rescorla-wagner | Psychology | intro |
+| **6** | orbits ✓ | Physics | intro |
+| 6 | oscillators ✓ | Physics | intro |
+| 6 | ode-explorer ✓ | Math | intro |
+| 6 | logistic-map ✓ | Math | university |
+| 6 | integrate-and-fire ✓ | Neuroscience | university |
+| 6 | rescorla-wagner ✓ | Psychology | intro |
 | 6 | forgetting | Psychology | intro |
 | **7** | wave-interference | Physics | intro |
 | 7 | standing-waves | Physics | intro |
