@@ -52,6 +52,7 @@ Each bench also has two deeper layers: **Derive it** (where the equations come f
 | Chemistry | VSEPR geometries | Rotate all 12 electron-pair geometries in 3D; compare ideal and real bond angles |
 | Physics | RC circuit | Charge and discharge a capacitor; read off τ = RC and the energy stored or lost |
 | Chemistry | Radioactive decay | N(t)=N₀·e^(−λt); switch between C-14, U-238, I-131, Ra-226; continuous or stochastic (Binomial) mode |
+| Economics | Compound growth | A(t)=P·(1+r/m)^(mt); compare compounding frequencies; exact doubling time vs rule-of-72 error curve |
 
 ## Running tests
 

@@ -575,6 +575,25 @@ export const catalog = [
     name: 'Economics',
     fields: [
       {
+        id: 'macroeconomics',
+        name: 'Growth & Macroeconomics',
+        benches: [
+          {
+            id: 'compound-growth',
+            navLabel: 'Compound growth',
+            level: 'intro',
+            keywords: [
+              'compound interest', 'growth', 'exponential', 'doubling time', 'rule of 72',
+              'effective annual rate', 'present value', 'compounding', 'continuous compounding',
+            ],
+            load: () =>
+              import('./benches/economics/macroeconomics/compound-growth/CompoundGrowthBench.js').then(
+                (m) => m.CompoundGrowthBench,
+              ),
+          },
+        ],
+      },
+      {
         id: 'taxation',
         name: 'Public economics',
         benches: [

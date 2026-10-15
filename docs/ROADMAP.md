@@ -208,7 +208,7 @@ Source statuses:
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| compound-growth | sim | intro | Doubling time=ln2/r; A=P·e^(rt); PV=FV·e^(−rT); continuous limit (1+r/n)^(nt)→e^(rt) | algebraic | anchor derived, test planned |
+| compound-growth ✓ | sim | intro | A(t)=P·(1+r/m)^(mt); EAR=(1+r/m)^m−1; t₂=ln2/(m·ln(1+r/m)); rule72_pct(0.05)=71.03, rule72_pct(0.10)=72.73 (exact, not approximate); PV=FV·e^(−rT); daily vs continuous diff <1e-3·P at r=0.10,t=10 | algebraic | checked by independent test |
 | solow | sim | university | k*=[sA/(n+δ)]^{1/(1−α)}; golden rule α·f(k_GR)=(n+δ)·k_GR | Solow 1956, *QJE* 70:65 | cited, not fetched |
 
 #### Finance
@@ -383,7 +383,7 @@ Graduate: 2 original (options-pricing, butler-volmer) + 6 new ★ + 9 elevated �
 | 5 | signal-detection | Psychology | intro |
 | 5 | weber-fechner | Psychology | intro |
 | 5 | central-limit | Math | intro |
-| 5 | compound-growth | Economics | intro |
+| **5** | compound-growth ✓ | Economics | intro |
 | **[infra]** | LinAlg.js | — | — |
 | **6** | orbits | Physics | intro |
 | 6 | oscillators | Physics | intro |
