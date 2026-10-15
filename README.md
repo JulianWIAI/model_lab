@@ -43,6 +43,13 @@ Each bench also has two deeper layers: **Derive it** (where the equations come f
 | Physics | Maxwell–Boltzmann | Speed distribution for He, N₂, O₂, Ar, CO₂; compare v_p, v̄ and v_rms |
 | Physics | Van der Waals | Reduced isotherms P_r vs V_r; compare VdW Z_c = 0.375 with real CO₂ Z_c ≈ 0.275 |
 | Chemistry | Gibbs free energy | ΔG = ΔH − TΔS; find crossover T* and equilibrium constant K for ice fusion |
+| Biology | Logistic growth | Watch a population follow dN/dt = rN(1−N/K); find the inflection at K/2 |
+| Biology | Predator–prey | Lotka–Volterra oscillations; watch prey and predator cycle around the equilibrium |
+| Biology | SIR epidemic | Tune R₀ = β/γ past the herd-immunity threshold; compute the final epidemic size |
+| Biology | Truncation selection | Breeder's equation R = h²S; vary heritability and selection intensity |
+| Chemistry | Nernst cell (Daniell) | E = E° − (RT/nF)·ln Q; drive the Daniell cell away from standard state |
+| Chemistry | Hess's law | Build reaction enthalpy from formation enthalpies; compare combustion cycles |
+| Chemistry | VSEPR geometries | Rotate all 12 electron-pair geometries in 3D; compare ideal and real bond angles |
 
 ## Running tests
 

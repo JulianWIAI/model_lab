@@ -268,6 +268,76 @@ their values are unambiguous.
 
 ---
 
+## Phase 4 benches
+
+### Logistic growth (`biology/ecology/logistic`)
+
+| Value | Source | Status | Notes |
+|---|---|---|---|
+| N(t) = K/(1+((K−N₀)/N₀)·e^(−rt)) | Verhulst (1845) Nouv. Mém. Acad. Roy. Belg. 18, 1–42 | secondary | Not checked against primary source; textbook-universal |
+| Max growth at N = K/2, (dN/dt)_max = rK/4 | Standard calculus result | — | Exact; no uncertain values |
+
+### Predator–prey (`biology/ecology/predator-prey`)
+
+| Value | Source | Status | Notes |
+|---|---|---|---|
+| Lotka–Volterra ODEs | Lotka (1925) Elements of Physical Biology; Volterra (1926) Mem. Accad. Naz. Lincei | secondary | No uncertain constants; α, β, δ, γ are free parameters |
+| Conserved quantity V = δx − γ·ln x + β·y − α·ln y | Standard result (Volterra 1926) | secondary | No uncertain values; tested to ±0.01 over 1000 steps |
+| Equilibrium (γ/δ, α/β) | Standard result | — | Exact; tested to ±1e-10 |
+
+### SIR epidemic model (`biology/ecology/sir`)
+
+| Value | Source | Status | Notes |
+|---|---|---|---|
+| SIR ODE system | Kermack & McKendrick (1927) Proc. Roy. Soc. A 115, 700–721 | secondary | No uncertain constants; β and γ are free parameters |
+| Final-size relation r∞ = 1 − e^(−R₀·r∞) | Kermack & McKendrick (1927) | secondary | Solved numerically with brent; R₀=2→r∞≈0.797, R₀=3→r∞≈0.940 tested ±0.002 |
+| Herd-immunity threshold h* = 1 − 1/R₀ | Standard result | — | Exact; tested to ±1e-10 |
+
+### Truncation selection (`biology/evolution/selection`)
+
+| Value | Source | Status | Notes |
+|---|---|---|---|
+| Breeder's equation R = h²·S | Lush (1937) Animal Breeding Plans; Lynch & Walsh (1998) | secondary | No uncertain constants; h² and σ are free parameters |
+| Selection intensity i = φ(t)/p | Standard quantitative genetics | secondary | Derived from truncation selection on a normal phenotype distribution |
+| Φ⁻¹ rational approximation | Abramowitz & Stegun (1964) §26.2.17 | secondary | |err| < 4.5×10⁻⁴; not checked against primary source |
+| i(p=0.2) ≈ 1.400, i(p=0.5) ≈ 0.798, i(p=0.1) ≈ 1.755 | Standard tables | secondary | Tested ±0.001 |
+
+### Nernst cell (`chemistry/electrochemistry/nernst-cell`)
+
+| Value | Source | Status | Notes |
+|---|---|---|---|
+| Nernst equation E = E° − (RT/nF)·ln Q | Nernst (1889); standard electrochemistry | secondary | No uncertain constants (uses R, F from constants.js) |
+| Cu²⁺/Cu: E° = +0.3419 V | Bard, Parsons & Jordan (1985) Standard Potentials in Aqueous Solution. IUPAC | secondary | NIST WebBook fetch attempted 2026-10-15 — CAS page returned "not found". **Not fetched from primary source.** |
+| Zn²⁺/Zn: E° = −0.7618 V | Bard, Parsons & Jordan (1985) | secondary | NIST WebBook fetch failed (same as Cu²⁺). **Not fetched from primary source.** |
+| E°_cell(Daniell) = 1.1037 V | Derived: 0.3419 − (−0.7618) | — | Computed from above secondary values |
+
+### Hess's law (`chemistry/thermodynamics/hess`)
+
+| Value | Source | Status | Notes |
+|---|---|---|---|
+| Hess's law formula | Hess (1840) Ann. Phys. 50, 385 | secondary | Not checked against primary source; textbook-universal |
+| ΔHf°(CH₄, g) = −74.87 kJ/mol | CODATA/JANAF | secondary | NIST WebBook fetch attempted 2026-10-15 — returned link stubs only, no numerical data. **Not fetched from primary source.** |
+| ΔHf°(O₂, g) = 0 kJ/mol | By definition (reference state) | — | Exact |
+| ΔHf°(CO₂, g) = −393.51 kJ/mol | CODATA/JANAF | secondary | NIST WebBook fetch failed (same as CH₄). **Not fetched from primary source.** |
+| ΔHf°(H₂O, l) = −285.83 kJ/mol | CODATA/JANAF | secondary | NIST WebBook fetch failed. **Not fetched from primary source.** |
+| ΔHf°(C₂H₅OH, l) = −277.69 kJ/mol | CODATA/JANAF | secondary | NIST WebBook fetch failed. **Not fetched from primary source.** |
+| ΔH°(CH₄ combustion) ≈ −890.30 kJ/mol | Derived from above ΔHf° | — | Tested ±2 kJ/mol |
+| ΔH°(C₂H₅OH combustion) ≈ −1366.82 kJ/mol | Derived from above ΔHf° | — | Tested ±5 kJ/mol |
+
+### VSEPR geometries (`chemistry/bonding/vsepr`)
+
+| Value | Source | Status | Notes |
+|---|---|---|---|
+| VSEPR electron-pair repulsion model | Gillespie & Nyholm (1957) Q. Rev. Chem. Soc. 11, 339 | secondary | Not checked against primary source |
+| H₂O bond angle = 104.5° | NIST CCCBDB | secondary | Not checked against primary source during implementation |
+| NH₃ bond angle = 107° | NIST CCCBDB | secondary | Not checked against primary source during implementation |
+| SO₂ bond angle ≈ 119° | NIST CCCBDB | secondary | Not checked against primary source |
+| SF₄ bond angles ≈ 173°/101° | NIST CCCBDB | secondary | Not checked against primary source |
+| ClF₃ bond angle ≈ 87° | NIST CCCBDB | secondary | Not checked against primary source |
+| Tetrahedral dot product = −1/3 | Exact geometry result | — | All 4 ligand pairs tested ±1e-6 |
+
+---
+
 ## Open verification items
 
 The following items were noted as uncertain during implementation and have not been resolved:
@@ -282,3 +352,10 @@ The following items were noted as uncertain during implementation and have not b
 8. **Mammalian muscle ion concentrations** — cited as Hille (2001) but not verified against that source.
 9. **VdW a, b for CO₂** — derived from critical constants, may differ from directly tabulated values.
 10. **Ideal gas reduced units** — k_B = 1, m = 1; displayed temperature is in k_B · K, not kelvin.
+11. **Nernst cell E°(Cu²⁺/Cu) = +0.3419 V** — Bard et al. (1985) secondary value; NIST WebBook CAS pages returned "not found" (2026-10-15). Verify against IUPAC tables or a current electrochemistry reference.
+12. **Nernst cell E°(Zn²⁺/Zn) = −0.7618 V** — same secondary source as above; same verification needed.
+13. **ΔHf°(CH₄) = −74.87 kJ/mol** — CODATA/JANAF secondary value; NIST WebBook returned only navigation stubs (2026-10-15). Verify against current NIST Chemistry WebBook or JANAF Tables.
+14. **ΔHf°(CO₂) = −393.51 kJ/mol** — same secondary source; same verification needed.
+15. **ΔHf°(H₂O, l) = −285.83 kJ/mol** — same secondary source; same verification needed.
+16. **ΔHf°(C₂H₅OH, l) = −277.69 kJ/mol** — same secondary source; same verification needed.
+17. **VSEPR real angles (H₂O 104.5°, NH₃ 107°, SO₂ 119°, SF₄ 173°/101°, ClF₃ 87°)** — attributed to NIST CCCBDB but not fetched during implementation. Verify against NIST CCCBDB or primary microwave spectroscopy papers.

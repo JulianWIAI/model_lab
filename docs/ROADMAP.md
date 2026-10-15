@@ -1,5 +1,22 @@
 # Roadmap
 
+## Phase 4 benches (complete)
+
+| Bench | Path | Status |
+|---|---|---|
+| Logistic growth | biology/ecology/logistic | ✓ done |
+| Predator–prey (Lotka–Volterra) | biology/ecology/predator-prey | ✓ done |
+| SIR epidemic model | biology/ecology/sir | ✓ done |
+| Truncation selection | biology/evolution/selection | ✓ done |
+| Nernst cell (Daniell cell) | chemistry/electrochemistry/nernst-cell | ✓ done |
+| Hess's law | chemistry/thermodynamics/hess | ✓ done |
+| VSEPR geometries | chemistry/bonding/vsepr | ✓ done |
+
+New catalog fields added in Phase 4: Biology → Ecology, Biology → Evolution,
+Chemistry → Electrochemistry, Chemistry → Bonding.
+
+---
+
 ## Phase 3 benches (complete)
 
 | Bench | Path | Status |
