@@ -79,6 +79,9 @@ export class BenchLayout {
     this.readoutSlot.replaceChildren(panel.element);
   }
 
+  /** Alias used by Phase 6 benches. */
+  addReadout(panel) { this.setReadouts(panel); }
+
   setFormula(text) {
     this.formulaEl.textContent = text;
   }

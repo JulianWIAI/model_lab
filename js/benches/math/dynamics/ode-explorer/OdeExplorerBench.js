@@ -133,5 +133,5 @@ export class OdeExplorerBench extends Bench {
     this.odeView.draw(this.model);
   }
 
-  onFrame() { /* static display, no animation needed */ }
+  draw() { this._update(); }
 }

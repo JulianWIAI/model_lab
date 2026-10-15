@@ -135,5 +135,5 @@ export class RescorlaWagnerBench extends Bench {
     this.rwView.draw(this.model, this._scenario, this._nTrials);
   }
 
-  onFrame() {}
+  draw() { this._update(); }
 }

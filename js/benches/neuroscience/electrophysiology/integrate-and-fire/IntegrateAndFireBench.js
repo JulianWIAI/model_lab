@@ -116,5 +116,5 @@ export class IntegrateAndFireBench extends Bench {
     this.iafView.draw(m);
   }
 
-  onFrame() {}
+  draw() { this._update(); }
 }

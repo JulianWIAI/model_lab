@@ -137,5 +137,5 @@ export class OrbitsBench extends Bench {
     this.orbitsView.draw(this.model, this._energyData);
   }
 
-  onFrame() {}
+  draw() { this._update(); }
 }

@@ -120,5 +120,5 @@ export class OscillatorsBench extends Bench {
     this.oscView.draw(m);
   }
 
-  onFrame() {}
+  draw() { this._update(); }
 }

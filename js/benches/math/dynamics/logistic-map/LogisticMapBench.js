@@ -104,5 +104,5 @@ export class LogisticMapBench extends Bench {
     this.mapView.draw(m);
   }
 
-  onFrame() {}
+  draw() { this._update(); }
 }
