@@ -104,12 +104,8 @@ export class IntegrateAndFireModel {
         // V(t+dt) = V_∞ + (V(t) − V_∞)·e^(−dt/τ_m)
         V = Vinf + (V - Vinf) * Math.exp(-dt / tauM);
 
-        // Threshold crossing: linear interpolation for spike time
+        // Threshold crossing: record spike at current time step
         if (V >= Vth) {
-          // Interpolate: V crossed Vth between t-dt and t
-          const Vprev = Vinf + (Vs[i] - Vinf) * Math.exp(-dt / tauM);
-          // More precisely, Vprev = Vs[i] sub-threshold solution at start of this step
-          // Use simple threshold crossing time
           spikeTimes.push(t);
           V = Vreset;
           tSinceSpike = 0;

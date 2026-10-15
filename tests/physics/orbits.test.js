@@ -90,9 +90,15 @@ test('orbits: kepler II equal areas (angular momentum conservation, Verlet)', ()
     `Angular momentum relative error = ${angMomErrors[0]}, expected < 1e-6`);
 });
 
-test('orbits: unbound flag for e >= 1', () => {
-  // e≥1 is unbound; model should expose this via energy computation
+test('orbits: e=0.99 (near-parabolic) has finite period and large perihelion speed', () => {
+  // e=0.99 is still a bound orbit (e<1); period = 2π√(a³/GM), independent of e
   const m = new OrbitModel({ a: AU, e: 0.99 });
-  // Just verify the period formula still returns a finite positive value
-  assert.ok(m.period > 0 && isFinite(m.period), 'period should be finite for e=0.99');
+  assert.ok(m.period > 0 && isFinite(m.period), `period should be finite for e=0.99, got ${m.period}`);
+  // Perihelion speed >> circular: v_p = √(GM·(1+e)/(a(1−e))) = √(GM·1.99/(0.01·AU))
+  const expected = Math.sqrt(GM_SUN * 1.99 / (0.01 * AU));
+  assert.ok(Math.abs(m.vPerihelion - expected) < 1, `v_p = ${m.vPerihelion}, expected ${expected}`);
+  // Verify period matches Kepler III (same as circular orbit with same a)
+  const mCirc = new OrbitModel({ a: AU, e: 0 });
+  assert.ok(Math.abs(m.period - mCirc.period) / mCirc.period < 1e-10,
+    'Period at e=0.99 should equal period at e=0 (same a)');
 });

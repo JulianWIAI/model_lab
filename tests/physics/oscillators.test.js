@@ -108,7 +108,7 @@ test('oscillators: critical x(1/ω₀) = 2/e for ω₀=1, γ=1', () => {
     `x(1) = ${x[idx]}, expected 2/e = ${expected}`);
 });
 
-test('oscillators: RK4 steady-state agrees with closed form ±1e-8 at ω=0.5ω₀', () => {
+test('oscillators: RK4 steady-state agrees with closed form ±1e-4 at ω=0.5ω₀', () => {
   // Run for 50 cycles at ω=0.5, ω₀=1, γ=0.1; last cycle amplitude vs formula
   // dt = 2π/(ω·200) gives 200 steps/cycle
   const omega0 = 1, gamma = 0.1, F0 = 1, omega = 0.5;

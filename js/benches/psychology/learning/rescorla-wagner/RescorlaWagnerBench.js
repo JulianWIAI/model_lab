@@ -118,7 +118,7 @@ export class RescorlaWagnerBench extends Bench {
 
     this._readout = new ReadoutPanel([
       { id: 'VA',     label: 'V_A (final)' },
-      { id: 'VB',     label: 'V_B (final)' },
+      { id: 'VB',     label: 'V_B / V_X (final)' },
       { id: 'domain', label: 'Domain (αβ)' },
     ]);
     this.layout.addReadout(this._readout);
@@ -128,6 +128,7 @@ export class RescorlaWagnerBench extends Bench {
   _update() {
     const { VA, VB } = this.model.simulate(this._scenario, this._nTrials);
     this._readout.set('VA', VA[VA.length - 1].toFixed(4));
+    // VB tracks V_X in conditioned-inhibition; label notes both roles
     this._readout.set('VB', VB[VB.length - 1].toFixed(4));
     const ab = this.model.alphaA * this.model.beta;
     this._readout.set('domain', ab < 1 ? `${ab.toFixed(2)} (converges)` : `${ab.toFixed(2)} OSCILLATES`);

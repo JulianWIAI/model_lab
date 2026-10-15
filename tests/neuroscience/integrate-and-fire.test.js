@@ -59,7 +59,7 @@ test('iaf: 63.2% of deflection at t=τ_m ±1e-10', () => {
     `63.2% fraction = ${frac.toFixed(8)}, expected 1-1/e = ${expected.toFixed(8)}`);
 });
 
-test('iaf: simulation matches closed form ISI ±1e-5 relative at dt=0.001 ms', () => {
+test('iaf: simulation matches closed form ISI ±1e-4 relative at dt=0.001 ms', () => {
   const m = new IntegrateAndFireModel({ I: 2, tRef: 2 });
   const expectedISI = m.ISI; // 2 + 10·ln4
   const tEnd = expectedISI * 5; // run for 5 spikes
@@ -72,7 +72,7 @@ test('iaf: simulation matches closed form ISI ±1e-5 relative at dt=0.001 ms', (
     `Relative ISI error = ${relErr.toExponential(2)}, expected < 1e-4 (dt=0.001ms)`);
 });
 
-test('iaf: dt-halving convergence ±1e-5 relative (dt=0.0005 ms)', () => {
+test('iaf: dt-halving convergence ±1e-4 relative (dt=0.0005 ms)', () => {
   const m = new IntegrateAndFireModel({ I: 2, tRef: 2 });
   const expectedISI = m.ISI;
   const tEnd = expectedISI * 5;
