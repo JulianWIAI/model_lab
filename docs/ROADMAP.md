@@ -166,7 +166,7 @@ Source statuses:
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| central-limit | sim | intro | SE=σ/√n; 95% CI coverage verified by seeded simulation (tolerance from sample size, not hand-tuned) | algebraic (CLT) | anchor derived, test planned |
+| central-limit ✓ | sim | intro | SE=σ/√n; Uniform/Bernoulli/Exp/χ²(3) observedSD ≈ SE ±4×SE_SD (analytically derived tol); Erlang exact: P(X̄<0.8,n=5)=0.371163 ±0.003; Cauchy IQR>1 (not 2/√30≈0.365, CLT fails); skewness test for Exp n=30 | algebraic (CLT) | checked by independent test |
 | markov-chains ‡ | sim | graduate | π₁=p₂₁/(p₁₂+p₂₁) exact; spectral gap=1−\|λ₂\| (Jacobi symmetric eigensolver); t_mix(ε)≤t_rel·ln(1/(ε·π_min)) for reversible chains only | Algebraic; Levin, Peres & Wilmer 2009 | cited, not fetched |
 | bayes | sim | intro | Posterior Beta(α+k, β+n−k) exact conjugate update | algebraic | anchor derived, test planned |
 | information-theory | sim | university | H=−Σp_i·log₂p_i; H_max=log₂n uniform (exact); C=B·log₂(1+SNR) | Shannon 1948, *Bell Syst. Tech. J.* 27:379 | cited, not fetched |
@@ -382,7 +382,7 @@ Graduate: 2 original (options-pricing, butler-volmer) + 6 new ★ + 9 elevated �
 | **5** | supply-demand ✓ | Economics | intro |
 | **5** | signal-detection ✓ | Psychology | intro |
 | **5** | weber-fechner ✓ | Psychology | intro |
-| 5 | central-limit | Math | intro |
+| **5** | central-limit ✓ | Math | intro |
 | **5** | compound-growth ✓ | Economics | intro |
 | **[infra]** | LinAlg.js | — | — |
 | **6** | orbits | Physics | intro |

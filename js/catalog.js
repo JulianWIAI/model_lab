@@ -555,6 +555,25 @@ export const catalog = [
     name: 'Math',
     fields: [
       {
+        id: 'probability',
+        name: 'Probability & Statistics',
+        benches: [
+          {
+            id: 'central-limit',
+            navLabel: 'Central limit',
+            level: 'intro',
+            keywords: [
+              'central limit theorem', 'CLT', 'sample mean', 'normal distribution',
+              'standard error', 'uniform', 'exponential', 'Bernoulli', 'Cauchy', 'Lindeberg',
+            ],
+            load: () =>
+              import('./benches/math/probability/central-limit/CentralLimitBench.js').then(
+                (m) => m.CentralLimitBench,
+              ),
+          },
+        ],
+      },
+      {
         id: 'analysis',
         name: 'Analysis',
         benches: [

@@ -56,6 +56,7 @@ Each bench also has two deeper layers: **Derive it** (where the equations come f
 | Economics | Supply & demand | P*=(a−c)/(b+d); shift supply/demand; CS, PS, elasticities, cost-shock incidence |
 | Psychology | Weber–Fechner & Stevens | JND=k·I; Fechner log law; Stevens power law; exact vs Fechner step count; L'Hôpital limit |
 | Psychology | Signal detection theory | d′, criterion, H, FA; ROC curve; AUC=Φ(d′/√2); A′ (Grier); erf from scratch |
+| Math | Central Limit Theorem | Uniform, Exp, Bernoulli, χ²(3), Cauchy; histogram vs N(μ,σ²/n); Erlang exact check; Cauchy CLT failure |
 
 ## Running tests
 
