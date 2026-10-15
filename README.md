@@ -54,6 +54,7 @@ Each bench also has two deeper layers: **Derive it** (where the equations come f
 | Chemistry | Radioactive decay | N(t)=N₀·e^(−λt); switch between C-14, U-238, I-131, Ra-226; continuous or stochastic (Binomial) mode |
 | Economics | Compound growth | A(t)=P·(1+r/m)^(mt); compare compounding frequencies; exact doubling time vs rule-of-72 error curve |
 | Economics | Supply & demand | P*=(a−c)/(b+d); shift supply/demand; CS, PS, elasticities, cost-shock incidence |
+| Psychology | Weber–Fechner & Stevens | JND=k·I; Fechner log law; Stevens power law; exact vs Fechner step count; L'Hôpital limit |
 
 ## Running tests
 

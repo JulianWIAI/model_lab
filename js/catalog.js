@@ -628,4 +628,29 @@ export const catalog = [
       },
     ],
   },
+  {
+    id: 'psychology',
+    name: 'Psychology',
+    fields: [
+      {
+        id: 'psychophysics',
+        name: 'Perception & Psychophysics',
+        benches: [
+          {
+            id: 'weber-fechner',
+            navLabel: 'Weber–Fechner',
+            level: 'intro',
+            keywords: [
+              'Weber', 'Fechner', 'Stevens', 'psychophysics', 'JND',
+              'just-noticeable difference', 'power law', 'logarithmic', 'sensation',
+            ],
+            load: () =>
+              import('./benches/psychology/psychophysics/weber-fechner/WeberFechnerBench.js').then(
+                (m) => m.WeberFechnerBench,
+              ),
+          },
+        ],
+      },
+    ],
+  },
 ];

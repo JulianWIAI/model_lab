@@ -239,7 +239,7 @@ Source statuses:
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
 | signal-detection | sim | intro | d'=z(H)−z(FA); normal CDF implemented via erf series (not constants from memory); unbiased d'=1: H=Φ(0.5)=0.691, FA=Φ(−0.5)=0.309; test Φ(0)=0.5, Φ(1)=0.8413, Φ(1.96)=0.9750 | algebraic (unit normals) | anchor derived, test planned |
-| weber-fechner | sim | intro | Weber: ΔI/I=k_W (constant); Fechner: S=k_F·ln(I/I₀); Stevens: S=k·I^n (brightness n≈0.33); show all three and where Fechner fails | Weber 1834; Fechner 1860; Stevens 1957, *Psychol. Rev.* 64:153 | cited, not fetched |
+| weber-fechner ✓ | sim | intro | JND=k_W·I; S_F=(1/k_W)·ln(I/I₀); S_S=k_S·I^n; JND-step exact vs Fechner: ratio=k_W/ln(1+k_W)≥1 (Fechner UNDERcounts); (I^n−1)/n→ln(I) as n→0 (L'Hôpital); modality table UNVERIFIED | Weber 1834; Fechner 1860; Stevens 1957 | checked by independent test |
 | psychometric-function | sim | university | Weibull P(x)=1−exp(−(x/α)^β); 2AFC: P=Φ(d'/√2) | algebraic; Green & Swets 1966 | cited, not fetched |
 
 #### Learning & Decision
@@ -381,7 +381,7 @@ Graduate: 2 original (options-pricing, butler-volmer) + 6 new ★ + 9 elevated �
 | **5** | radioactive-decay ✓ | Chemistry | intro |
 | **5** | supply-demand ✓ | Economics | intro |
 | 5 | signal-detection | Psychology | intro |
-| 5 | weber-fechner | Psychology | intro |
+| **5** | weber-fechner ✓ | Psychology | intro |
 | 5 | central-limit | Math | intro |
 | **5** | compound-growth ✓ | Economics | intro |
 | **[infra]** | LinAlg.js | — | — |
