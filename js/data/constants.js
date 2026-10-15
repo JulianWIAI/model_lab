@@ -63,3 +63,33 @@ export const CONSTANTS = Object.freeze({
   /** Rydberg constant.  R_∞ = 1.097 373 156 816 0 × 10⁷ m⁻¹ (NIST CODATA 2018). */
   Rinf: { value: 1.097_373_156_816_0e7, unit: 'm⁻¹', uncertainty: 0.000_000_000_002_1e7 },
 });
+
+// ── IAU astrodynamic constants ────────────────────────────────────────────────
+// Sources:
+//   IAU 2015 Resolution B3 — nominal solar and planetary mass parameters
+//   IAU 2012 Resolution B2 — definition of the astronomical unit
+//   IUGG — mean Earth radius
+
+/**
+ * IAU 2015 B3 nominal solar gravitational parameter [m³/s²].
+ * GM_sun = 1.327 124 400 18 × 10²⁰ m³/s². Cited, not fetched.
+ */
+export const GM_SUN = 1.32712440018e20;
+
+/**
+ * IAU 2015 B3 nominal Earth gravitational parameter [m³/s²].
+ * GM_Earth = 3.986 004 418 × 10¹⁴ m³/s². Cited, not fetched.
+ */
+export const GM_EARTH = 3.986004418e14;
+
+/**
+ * IAU 2012 B2 astronomical unit [m]. Exact by definition.
+ * 1 AU = 149 597 870 700 m.
+ */
+export const AU = 149_597_870_700;
+
+/**
+ * IUGG mean Earth radius [m]. Cited, not fetched.
+ * r_Earth = 6.371 × 10⁶ m.
+ */
+export const R_EARTH = 6.371e6;
