@@ -8,6 +8,78 @@
  */
 export class Integrators {
   /**
+   * Forward (explicit) Euler for vector ODEs.
+   *
+   * y_{n+1} = y_n + dt · f(y_n, t_n)
+   * Local truncation error O(dt²); global error O(dt) → order 1.
+   *
+   * @param {function(number[], number): number[]} f  derivative f(y, t)
+   * @param {number[]} y   current state
+   * @param {number}   t   current time
+   * @param {number}   dt  step size
+   * @returns {number[]} state at t + dt
+   */
+  static euler(f, y, t, dt) {
+    const k = f(y, t);
+    return y.map((yi, i) => yi + dt * k[i]);
+  }
+
+  /**
+   * Heun's method (explicit trapezoidal / RK2) for vector ODEs.
+   *
+   * Predictor: ỹ = y + dt·f(y,t)
+   * Corrector: y_{n+1} = y + (dt/2)·(f(y,t) + f(ỹ, t+dt))
+   * Global error O(dt²) → order 2.
+   *
+   * @param {function(number[], number): number[]} f  derivative f(y, t)
+   * @param {number[]} y   current state
+   * @param {number}   t   current time
+   * @param {number}   dt  step size
+   * @returns {number[]} state at t + dt
+   */
+  static heun(f, y, t, dt) {
+    const k1 = f(y, t);
+    const yp = y.map((yi, i) => yi + dt * k1[i]);
+    const k2 = f(yp, t + dt);
+    return y.map((yi, i) => yi + (dt / 2) * (k1[i] + k2[i]));
+  }
+
+  /**
+   * Velocity Verlet for second-order ODEs x'' = a(x, v, t).
+   *
+   * x_{n+1} = x_n + v_n·dt + ½·a_n·dt²
+   * v_{n+1} = v_n + ½·(a_n + a_{n+1})·dt
+   *
+   * Symplectic (area-preserving in phase space): energy error is bounded
+   * (does not grow secularly) for conservative forces, unlike RK4 at long times.
+   * Global position error O(dt²); energy error O(dt²) bounded.
+   *
+   * x and v may each be a scalar or a same-length Array (for 2D/3D problems).
+   *
+   * @param {function(x, v, number): *}  a   acceleration function a(x, v, t)
+   * @param {number|number[]} x   current position (scalar or array)
+   * @param {number|number[]} v   current velocity (scalar or array)
+   * @param {number}          t   current time
+   * @param {number}          dt  step size
+   * @returns {{ x: number|number[], v: number|number[] }} position and velocity at t + dt
+   */
+  static verlet(a, x, v, t, dt) {
+    const isArr = Array.isArray(x);
+    const a0 = a(x, v, t);
+    // Half-step position update
+    const xn = isArr
+      ? x.map((xi, i) => xi + v[i] * dt + 0.5 * a0[i] * dt * dt)
+      : x + v * dt + 0.5 * a0 * dt * dt;
+    // Acceleration at new position (v not yet updated — valid for x-only forces)
+    const a1 = a(xn, v, t + dt);
+    // Velocity update using average of old and new accelerations
+    const vn = isArr
+      ? v.map((vi, i) => vi + 0.5 * (a0[i] + a1[i]) * dt)
+      : v + 0.5 * (a0 + a1) * dt;
+    return { x: xn, v: vn };
+  }
+
+  /**
    * Classic 4th-order Runge–Kutta (RK4) for vector ODEs.
    *
    * Samples the derivative at the start, twice at the midpoint, and once at
