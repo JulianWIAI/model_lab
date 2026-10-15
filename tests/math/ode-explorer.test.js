@@ -82,3 +82,25 @@ test('ode-explorer: convergence slope for rk4 ≈ 4 ±0.15 on y′=−y', () => 
   assert.ok(Math.abs(slope - 4) < 0.15,
     `RK4 slope = ${slope.toFixed(3)}, expected 4.0 ±0.15`);
 });
+
+// ── backwardEuler: order-1 convergence and A-stability (MISSING) ──────────────
+
+test('ode-explorer: convergence slope for backwardEuler ≈ 1 ±0.15 on y′=−y', () => {
+  // Backward Euler is first-order: global error O(h). Same test structure as Euler/Heun/RK4.
+  const m = new OdeExplorerModel({ preset: 'decay', method: 'backwardEuler' });
+  const { slope } = m.convergence();
+  assert.ok(Math.abs(slope - 1) < 0.15,
+    `backwardEuler slope = ${slope.toFixed(3)}, expected 1.0 ±0.15`);
+});
+
+test('ode-explorer: backwardEuler is A-stable — decays at λh=3.0 where forward Euler and RK4 diverge', () => {
+  // Backward Euler stability region: all λh with Re(λ) < 0 (A-stable, the real-axis
+  // stability boundary is |1/(1+λh)|<1 for λh > 0 → always stable for λ>0 with any h>0).
+  // At λh=3.0: forward Euler diverges (|1−λh|=|1−3|=2>1) and RK4 diverges (> limit 2.7853).
+  // backwardEuler multiplier: |1/(1+3)| = 0.25 < 1 → decays.
+  const f = ([y]) => [-y];
+  let y = [1];
+  for (let i = 0; i < 100; i++) y = Integrators.backwardEuler(f, y, i * 3.0, 3.0);
+  assert.ok(Math.abs(y[0]) < 1e-10,
+    `backwardEuler at λh=3.0 should decay to 0; got ${y[0]}`);
+});
