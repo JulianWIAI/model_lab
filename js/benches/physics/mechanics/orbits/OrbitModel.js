@@ -46,6 +46,7 @@ export class OrbitModel {
    * @param {number} [opts.dt]        step size [s]; defaults to T/1000
    */
   constructor({ a = AU, e = 0, GM = GM_SUN, integrator = 'verlet', dt = null } = {}) {
+    if (e < 0 || e >= 1) throw new RangeError(`eccentricity e must be in [0, 1); got e=${e}`);
     this.a = a;
     this.e = e;
     this.GM = GM;

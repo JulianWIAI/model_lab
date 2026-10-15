@@ -90,6 +90,49 @@ test('orbits: kepler II equal areas (angular momentum conservation, Verlet)', ()
     `Angular momentum relative error = ${angMomErrors[0]}, expected < 1e-6`);
 });
 
+// ── Domain guard (e≥1) ────────────────────────────────────────────────────────
+
+test('orbits: e≥1 throws RangeError (parabolic/hyperbolic orbits not supported)', () => {
+  // e=1 (parabolic) and e>1 (hyperbolic) are unbound; the model is for Keplerian ellipses only.
+  assert.throws(() => new OrbitModel({ a: AU, e: 1 }), { name: 'RangeError' },
+    'e=1 (parabolic) should throw RangeError');
+  assert.throws(() => new OrbitModel({ a: AU, e: 1.5 }), { name: 'RangeError' },
+    'e=1.5 (hyperbolic) should throw RangeError');
+  assert.throws(() => new OrbitModel({ a: AU, e: -0.1 }), { name: 'RangeError' },
+    'e<0 (non-physical) should throw RangeError');
+  // e=0 and e=0.999 should not throw
+  assert.doesNotThrow(() => new OrbitModel({ a: AU, e: 0 }), 'e=0 (circular) should be valid');
+  assert.doesNotThrow(() => new OrbitModel({ a: AU, e: 0.999 }), 'e=0.999 should be valid');
+});
+
+// ── RK4 secular drift at dt=T/100 ────────────────────────────────────────────
+
+test('orbits: rk4 secular drift ratio ≥ 5 at dt=T/100 (same as T/500 test, coarser step)', () => {
+  // Same structure as the existing T/500 test. Coarser step makes secular drift faster.
+  const m = new OrbitModel({ a: 0.1 * AU, e: 0.5, integrator: 'rk4' });
+  m._dt = m.period / 100;
+  const { energyErrors: errs100 } = m.integrateOrbits(100);
+  const { energyErrors: errs1000 } = m.integrateOrbits(1000);
+  const ratio = errs1000[999] / errs100[99];
+  assert.ok(ratio >= 5,
+    `RK4 at T/100: energy ratio (1000/100 orbits) = ${ratio.toFixed(2)}, expected ≥ 5 (secular drift)`);
+});
+
+test('orbits: rk4 absolute energy error exceeds verlet at dt=T/100 after 1000 orbits', () => {
+  // At dt=T/100 (5× coarser than the existing T/500 tests):
+  // - Verlet bounded error scales as (dt/T)² → 25× larger than at T/500.
+  // - RK4 secular error rate scales as (dt/T)^4 per orbit → 625× larger per orbit.
+  // After 1000 orbits: RK4 accumulated secular drift >> Verlet bounded truncation.
+  const mV = new OrbitModel({ a: 0.1 * AU, e: 0.7, integrator: 'verlet' });
+  const mR = new OrbitModel({ a: 0.1 * AU, e: 0.7, integrator: 'rk4' });
+  mV._dt = mV.period / 100;
+  mR._dt = mR.period / 100;
+  const { energyErrors: eV } = mV.integrateOrbits(1000);
+  const { energyErrors: eR } = mR.integrateOrbits(1000);
+  assert.ok(eR[999] > eV[999],
+    `At dt=T/100 after 1000 orbits: RK4 err=${eR[999].toExponential(2)} > Verlet err=${eV[999].toExponential(2)}`);
+});
+
 test('orbits: e=0.99 (near-parabolic) has finite period and large perihelion speed', () => {
   // e=0.99 is still a bound orbit (e<1); period = 2π√(a³/GM), independent of e
   const m = new OrbitModel({ a: AU, e: 0.99 });
