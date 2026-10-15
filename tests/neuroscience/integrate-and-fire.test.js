@@ -83,3 +83,57 @@ test('iaf: dt-halving convergence ±1e-4 relative (dt=0.0005 ms)', () => {
   assert.ok(relErr < 1e-4,
     `Halved dt relative ISI error = ${relErr.toExponential(2)}, expected < 1e-4`);
 });
+
+// ── f→0 near rheobase (MISSING) ───────────────────────────────────────────────
+
+test('iaf: firing rate → 0 as I → I_th from above (logarithmic divergence)', () => {
+  // ISI = t_ref + τ_m·ln[(V_∞−V_reset)/(V_∞−V_th)]; as I→I_th, V_∞→V_th → ISI→∞ → f→0.
+  // V_∞−V_th = R·(I−I_th) = 10·(I−1.5) → 0 as I→1.5.
+  // At I=I_th+0.001: f should be < 10 Hz; at I=I_th+0.01: f should be larger.
+  // At I=I_th+0.001 (= 1.501 nA): V_∞−V_th = R·0.001 = 0.01 mV → ISI = 2+10·ln(1501) ≈ 75 ms → f ≈ 13 Hz
+  // At I=I_th+0.0001: ISI ≈ 121 ms → f ≈ 8 Hz < 10 Hz.  Use latter for the < 10 bound.
+  const mVeryLow = new IntegrateAndFireModel({ I: 1.50001 }); // 0.00001 above rheobase
+  const mLow = new IntegrateAndFireModel({ I: 1.501 }); // 0.001 above rheobase
+  const mMid = new IntegrateAndFireModel({ I: 1.51 });  // 0.01 above rheobase
+  // Very close to rheobase: f < 10 Hz (logarithmically diverging ISI)
+  assert.ok(mVeryLow.firingRate > 0, `f(I_th+1e-5) should be > 0, got ${mVeryLow.firingRate}`);
+  assert.ok(mVeryLow.firingRate < 10, `f very near rheobase = ${mVeryLow.firingRate.toFixed(2)}, expected < 10 Hz`);
+  // Rate increases with I (f is monotone in I above rheobase)
+  assert.ok(mMid.firingRate > mLow.firingRate,
+    `f should increase with I: f(1.51)=${mMid.firingRate.toFixed(2)}, f(1.501)=${mLow.firingRate.toFixed(2)}`);
+});
+
+// ── Large-I asymptote (MISSING) ───────────────────────────────────────────────
+
+test('iaf: ISI formula verified at large I=10 nA ±1e-10', () => {
+  // At I=10 nA: V_∞ = −65 + 10·10 = 35 mV
+  // V_∞−V_reset = 35−(−65) = 100 mV;  V_∞−V_th = 35−(−50) = 85 mV
+  // ISI = 2 + 10·ln(100/85) = 2 + 10·ln(20/17)
+  const m = new IntegrateAndFireModel({ I: 10 });
+  const expectedISI = 2 + 10 * Math.log(100 / 85);
+  assert.ok(Math.abs(m.ISI - expectedISI) < 1e-10,
+    `ISI(I=10) = ${m.ISI.toFixed(6)}, expected 2+10·ln(100/85) = ${expectedISI.toFixed(6)}`);
+  // f = 1000/ISI
+  const expectedF = 1000 / expectedISI;
+  assert.ok(Math.abs(m.firingRate - expectedF) < 1e-6,
+    `f(I=10) = ${m.firingRate.toFixed(4)}, expected ${expectedF.toFixed(4)}`);
+});
+
+// ── dt-halving ratio (strengthens existing test) ──────────────────────────────
+
+test('iaf: dt-halving error ratio ≈ 2 (threshold-crossing error ∝ dt)', () => {
+  // Exact exponential update: the only integration error comes from discrete threshold crossing.
+  // Spike recorded at end of step where V first crosses V_th → error ≤ dt.
+  // Halving dt halves the spike-time quantisation error → ratio ≈ 2.
+  const m = new IntegrateAndFireModel({ I: 2, tRef: 2 });
+  const expectedISI = m.ISI;
+  const tEnd = expectedISI * 3;
+  const { spikeTimes: st1 } = m.simulate(tEnd, 0.001);
+  const { spikeTimes: st2 } = m.simulate(tEnd, 0.0005);
+  const err1 = Math.abs((st1[1] - st1[0]) - expectedISI);
+  const err2 = Math.abs((st2[1] - st2[0]) - expectedISI);
+  // Ratio should be ≈ 2 (dt-proportional error); accept [1.5, 2.5] for rounding effects
+  const ratio = err1 / err2;
+  assert.ok(ratio > 1.5 && ratio < 2.5,
+    `dt-halving ratio = ${ratio.toFixed(2)}, expected ≈ 2; err(0.001)=${err1.toExponential(2)}, err(0.0005)=${err2.toExponential(2)}`);
+});
