@@ -71,6 +71,13 @@ Each bench also has two deeper layers: **Derive it** (where the equations come f
 | Psychology | Prisoner's dilemma | Grim trigger δ*=(T-R)/(T-P); PV cooperation vs defection; TFT threshold; isPD validation |
 | Math | Bayes | Beta-Binomial conjugate; Lanczos lnΓ; regularized incomplete beta (Lentz CF); credible interval |
 | Math | Information theory | Shannon entropy (bits); KL divergence; Shannon-Hartley C=B·log₂(1+SNR); binary entropy H₂(p) |
+| Physics | Particle in a box | E_n=n²π²ℏ²/(2mL²); probability density; photon wavelength; normalization integral; CDF via Simpson |
+| Physics | Carnot cycle | η=1−T_c/T_h; COP heat pump/refrigerator; Q_h, Q_c, W; T-S rectangle area via shoelace |
+| Math | Markov chains | π=[q,p]/(p+q); λ₂=1−p−q; exact TV(k)=|λ₂|^k·max(π₀,π₁); t_mix(ε); 3-state preset |
+| Psychology | Drift-diffusion | P(upper)=1/(1+e^{-2μa/σ²}); E[T]=(a/μ)tanh(μa/σ²)+t₀; μ=0 limit a²/σ²; SDE simulation |
+| Math | Phase plane | eigen2x2; 9-way classification (stable/unstable node/spiral/centre, saddle, star); nonlinear r(t) |
+| Biology | Competitive exclusion | L-V 2-species; N*=(K₁−α₁₂K₂)/(1−α₁₂α₂₁); bistable/coexistence/exclusion; Jacobian eigenvalues |
+| Biology | Pharmacokinetics | IV C₀e^{-ke·t}; oral Bateman; ka=ke limit; flip-flop symmetry; R=2+√2 at t½=24h, τ=12h |
 
 ## Running tests
 

@@ -402,13 +402,13 @@ Graduate: 2 original (options-pricing, butler-volmer) + 6 new ★ + 9 elevated �
 | 7 | information-theory ✓ | Math | university |
 | **[infra]** | LinAlg.js ✓ | — | — |
 | **[infra]** | Random.gaussian() | — | — |
-| **8** | particle-in-box | Physics | intro |
-| 8 | carnot | Physics | intro |
-| 8 | markov-chains | Math | graduate † |
-| 8 | drift-diffusion | Psychology | graduate † |
-| 8 | phase-plane | Math | graduate † |
-| 8 | competitive-exclusion | Biology | university |
-| 8 | pharmacokinetics | Biology | university |
+| **8** | particle-in-box ✓ | Physics | intro |
+| 8 | carnot ✓ | Physics | intro |
+| 8 | markov-chains ✓ | Math | graduate † |
+| 8 | drift-diffusion ✓ | Psychology | graduate † |
+| 8 | phase-plane ✓ | Math | graduate † |
+| 8 | competitive-exclusion ✓ | Biology | university |
+| 8 | pharmacokinetics ✓ | Biology | university |
 | **9** | entropy-mixing | Physics | intro |
 | 9 | stdp | Neuroscience | university |
 | 9 | cable-equation | Neuroscience | university |

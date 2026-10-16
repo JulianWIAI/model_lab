@@ -416,3 +416,46 @@ The following items were noted as uncertain during implementation and have not b
 - Shannon (1948) "A Mathematical Theory of Communication", Bell Syst. Tech. J. 27:379.
 - All entropy/KL/Shannon-Hartley formulas are the standard definitions.
 - KL values verified in anchors-phase7.mjs.
+
+## Phase 8
+
+### Particle in a box
+- E_n = n²π²ℏ²/(2·m_e·L²): algebraically exact from Schrödinger equation with infinite-well boundary conditions.
+- Constants: ℏ = 6.62607015e-34/(2π), m_e = 9.1093837015e-31 kg, eV = 1.602176634e-19 J (CODATA 2018 exact values).
+- Griffiths, D.J. (2005) *Introduction to Quantum Mechanics*, 2nd ed. — cited, not fetched.
+
+### Carnot cycle
+- η = 1 − T_c/T_h: algebraically exact from second law.
+- T_c_max = T_h·(1 − η_min) — derived. All formulas in anchors-phase8.mjs; no constants from memory.
+- All numerical anchors verified in tools/anchors-phase8.mjs.
+
+### Markov chains
+- π = [q,p]/(p+q): solution of πP=π (stationary equation). Algebraically exact.
+- λ₂ = 1−p−q: eigenvalue of 2×2 transition matrix, closed form.
+- Exact TV(k) = |λ₂|^k·max(π₀,π₁): exact formula for 2-state chains (not an LPW bound).
+- Levin, D.A., Peres, Y., Wilmer, E.L. (2009) *Markov Chains and Mixing Times* — cited, not fetched.
+
+### Drift-diffusion
+- P(upper boundary) = 1/(1+e^{-2μa/σ²}): solution to Fokker-Planck boundary problem.
+- E[T] = (a/μ)·tanh(μa/σ²): exact mean first-passage time.
+- μ=0 limit: L'Hôpital → E[T] = a²/σ². Verified in anchors-phase8.mjs.
+- Ratcliff, R. (1978) "A theory of memory retrieval", *Psychological Review*, 85(2), 59–108 — cited, not fetched.
+
+### Phase plane
+- eigen2x2: closed-form eigenvalues via characteristic polynomial; disc = τ²−4Δ. Algebraically exact.
+- Nonlinear radial exact solution r(t) = r₀/√(1−2μr₀²t): from dr/dt = μr³ → integrate → closed form.
+- Strogatz, S.H. (2001) *Nonlinear Dynamics and Chaos*, 2nd ed. — cited, not fetched.
+
+### Competitive exclusion
+- N₁* = (K₁−α₁₂K₂)/(1−α₁₂α₂₁), N₂* symmetric: algebraically exact from nullcline intersection.
+- Jacobian eigenvalues at coexistence (K=100, α=0.5): τ=−4/3, Δ=1/3, λ=−1/3 and −1. Verified in anchors-phase8.mjs.
+- Gause, G.F. (1934) *The Struggle for Existence* — cited, not fetched.
+
+### Pharmacokinetics
+- IV: C(t) = C₀·e^{-ke·t}, AUC = C₀/ke, t½ = ln2/ke. Algebraically exact.
+- Oral Bateman: A·(e^{-ke·t}−e^{-ka·t}), A = ka·F·D/(Vd·(ka−ke)). Algebraically exact.
+- ka=ke limit: L'Hôpital → F·D·ke·t·e^{-ke·t}/Vd. Verified in anchors-phase8.mjs.
+- Flip-flop symmetry: ke·C(t;ka,ke) = ka·C(t;ke,ka). Algebraic identity.
+- Accumulation ratio R = 2+√2 at t½=24h, τ=12h: R=1/(1−e^{-ke·12}), ke=ln2/24 → verified exact.
+- Rowland, M. & Tozer, T.N. (1995) *Clinical Pharmacokinetics*, 3rd ed. — cited, not fetched.
+- Bateman, H. (1910) Proc. Camb. Phil. Soc. 15:423–427 — **attribution unverified** — cited, not fetched.
