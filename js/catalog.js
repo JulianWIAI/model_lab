@@ -143,6 +143,19 @@ export const catalog = [
         name: 'Thermodynamics',
         benches: [
           {
+            id: 'carnot',
+            navLabel: 'Carnot cycle',
+            level: 'intro',
+            keywords: [
+              'Carnot', 'heat engine', 'efficiency', 'entropy', 'T-S diagram',
+              'heat pump', 'refrigerator', 'second law', 'thermodynamics', 'Kelvin',
+            ],
+            load: () =>
+              import('./benches/physics/thermodynamics/carnot/CarnotBench.js').then(
+                (m) => m.CarnotBench,
+              ),
+          },
+          {
             id: 'ideal-gas',
             navLabel: 'Ideal gas',
             level: 'university',
