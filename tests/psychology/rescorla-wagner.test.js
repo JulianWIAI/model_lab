@@ -79,6 +79,40 @@ test('rw: conditioned inhibition ±1e-10', () => {
     `V_X conditioned inhibition = ${VB[VB.length - 1]}, expected -1`);
 });
 
+// ── Blocking phase-1 length stated ───────────────────────────────────────────
+
+test('rw: blocking phase-1 = 50 A+ trials — VA[50] = 1−(0.75)^50 ≈ 1−5.55e-7', () => {
+  // Model hardcodes phase-1 = min(50, nTrials) single-cue A+ trials before compound AB+.
+  // After 50 A+ trials with αβ=0.25: VA[50] = 1−(0.75)^50 (closed-form acquisition formula).
+  // VB[50] = 0 since B is not presented during phase-1.
+  const m = new RescorlaWagnerModel({ alphaA: 0.5, alphaB: 0.5, beta: 0.5, lambda: 1 });
+  const { VA, VB } = m.simulate('blocking', 50); // exactly 50 trials = phase-1 only
+  const expectedVA50 = 1 - (0.75) ** 50; // ≈ 1 − 5.55e-7
+  assert.ok(Math.abs(VA[50] - expectedVA50) < 1e-10,
+    `VA[50] = ${VA[50].toFixed(12)}, expected 1−0.75^50 = ${expectedVA50.toFixed(12)}`);
+  assert.ok(Math.abs(VB[50]) < 1e-15,
+    `VB[50] = ${VB[50]}, expected 0 (B not presented in phase-1)`);
+});
+
+// ── Conditioned inhibition ≥300 pairs ─────────────────────────────────────────
+
+test('rw: conditioned inhibition — 300 pairs (600 trials) needed for 1e-10 convergence; not converged at 50 pairs', () => {
+  // Alternating A+/AX− pairs. Slowest eigenvalue (1−αβ)=0.75 per pair.
+  // Residual after n pairs ≈ (0.75)^n: at 50 pairs ≈ 5.6e-7 >> 1e-10; at 300 pairs ≈ 1.6e-38 ≈ 0.
+  const m = new RescorlaWagnerModel({ alphaA: 0.5, alphaB: 0.5, beta: 0.5, lambda: 1 });
+  // After 50 pairs (100 trials): residual > 1e-10 — 300 pairs are needed
+  const { VA: VA100, VB: VB100 } = m.simulate('conditioned-inhibition', 100);
+  const residual50pairs = Math.abs(VA100[100] - 1) + Math.abs(VB100[100] + 1);
+  assert.ok(residual50pairs > 1e-10,
+    `At 50 pairs: residual = ${residual50pairs.toExponential(2)}, expected > 1e-10 (not yet converged)`);
+  // After 300 pairs (600 trials): within 1e-10 of asymptote VA=1, VX=−1
+  const { VA: VA600, VB: VB600 } = m.simulate('conditioned-inhibition', 600);
+  assert.ok(Math.abs(VA600[600] - 1) < 1e-10,
+    `At 300 pairs: VA = ${VA600[600].toFixed(12)}, expected 1 ±1e-10`);
+  assert.ok(Math.abs(VB600[600] + 1) < 1e-10,
+    `At 300 pairs: VX = ${VB600[600].toFixed(12)}, expected -1 ±1e-10`);
+});
+
 // ── Domain boundaries ─────────────────────────────────────────────────────────
 
 test('rw: boundary ab=0 no learning', () => {
