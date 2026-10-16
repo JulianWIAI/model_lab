@@ -23,6 +23,11 @@
   --third: #7A3FB0;
   --good: #1E7A4C;
 
+  /* Canvas aliases (views reference these; must map to a defined token) */
+  --surface: var(--panel);   /* canvas background */
+  --text: var(--ink);        /* canvas text labels */
+  --on-surface: var(--ink);  /* text rendered on the surface */
+
   /* Quark colour charges */
   --qr: #D0333F;
   --qg: #1F8A4C;
