@@ -194,6 +194,19 @@ export const catalog = [
                 (m) => m.VanDerWaalsBench,
               ),
           },
+          {
+            id: 'entropy-mixing',
+            navLabel: 'Entropy of mixing',
+            level: 'intro',
+            keywords: [
+              'entropy', 'mixing', 'ideal', 'mole fraction', 'Gibbs', 'thermodynamics',
+              'statistical mechanics', 'Boltzmann', 'gas constant', 'Gibbs paradox',
+            ],
+            load: () =>
+              import('./benches/physics/thermodynamics/entropy-mixing/EntropyMixingBench.js').then(
+                (m) => m.EntropyMixingBench,
+              ),
+          },
         ],
       },
     ],
