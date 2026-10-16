@@ -29,10 +29,10 @@ describe('SynapseKineticsModel', () => {
     assertClose(ratio, 2 / Math.E, 1e-10, 'h(2τ)/h(τ)');
   });
 
-  it('halfDecayTime() ≈ 3.1462·τ ±1e-3·τ', () => {
-    const t = m.halfDecayTime();
+  it('timeToEFraction() ≈ 3.1462·τ ±1e-3·τ', () => {
+    const t = m.timeToEFraction();
     // |t - 3.1462*tau| < 0.001*tau
-    assertClose(t / tau, 3.1461932206205834, 0.001, 'halfDecayTime/τ');
+    assertClose(t / tau, 3.1461932206205834, 0.001, 'timeToEFraction/τ');
   });
 
   it('integral() = A·τ ±1e-10', () => {

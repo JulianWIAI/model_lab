@@ -57,11 +57,13 @@ export class SynapseKineticsModel {
 
   /**
    * Time at which h falls to hPeak/e = A·e^{-2}.
+   * Meaning: the time t at which h(t) = A·e^{-1}/e = A·e^{-2},
+   * i.e. h has fallen to 1/e of its peak value h(τ)=A·e^{-1}.
    * Solves x·e^{-x} = e^{-2} for x = t/τ on [2, 10].
    * x ≈ 3.1462, so t = x·τ.
    * @returns {number}  in ms
    */
-  halfDecayTime() {
+  timeToEFraction() {
     const target = Math.exp(-2);
     const x = RootFinding.brent(
       x => x * Math.exp(-x) - target,

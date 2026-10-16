@@ -86,7 +86,7 @@ export class SynapseKineticsBench extends Bench {
     const m = this.model;
     this.readouts.set('hpeak',     m.hPeak.toFixed(4));
     this.readouts.set('tpeak',     `${m.tPeak.toFixed(2)} ms`);
-    this.readouts.set('halfdecay', `${m.halfDecayTime().toFixed(2)} ms`);
+    this.readouts.set('halfdecay', `${m.timeToEFraction().toFixed(2)} ms`);
     this.readouts.set('integral',  (m.A * m.tau).toFixed(3));
   }
 }

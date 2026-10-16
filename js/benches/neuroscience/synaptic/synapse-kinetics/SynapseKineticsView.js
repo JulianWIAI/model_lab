@@ -53,7 +53,7 @@ export class SynapseKineticsView {
     c.setLineDash([]);
 
     // Mark half-decay time
-    const tHalf = model.halfDecayTime();
+    const tHalf = model.timeToEFraction();
     if (tHalf < tMax) {
       c.strokeStyle = theme.color('--muted');
       c.setLineDash([2, 4]);
@@ -70,7 +70,7 @@ export class SynapseKineticsView {
     c.fillStyle = theme.color('--text');
     c.textAlign = 'left';
     c.textBaseline = 'top';
-    c.fillText(`τ=${model.tau.toFixed(1)}ms  peak=Ae⁻¹  t½=${model.halfDecayTime().toFixed(1)}ms`, ax.box.left + 4, ax.box.top + 4);
+    c.fillText(`τ=${model.tau.toFixed(1)}ms  peak=Ae⁻¹  t½=${model.timeToEFraction().toFixed(1)}ms`, ax.box.left + 4, ax.box.top + 4);
     c.restore();
   }
 }
