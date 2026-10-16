@@ -94,6 +94,32 @@ export const catalog = [
         ],
       },
       {
+        id: 'waves',
+        name: 'Waves & Optics',
+        benches: [
+          {
+            id: 'wave-interference',
+            navLabel: 'Wave interference',
+            level: 'university',
+            keywords: ['double slit', 'Young', 'interference', 'fringe', 'wavelength', 'paraxial', 'intensity'],
+            load: () =>
+              import('./benches/physics/waves/wave-interference/WaveInterferenceBench.js').then(
+                (m) => m.WaveInterferenceBench,
+              ),
+          },
+          {
+            id: 'standing-waves',
+            navLabel: 'Standing waves',
+            level: 'university',
+            keywords: ['standing wave', 'harmonic', 'fundamental', 'node', 'antinode', 'string', 'pipe', 'resonance'],
+            load: () =>
+              import('./benches/physics/waves/standing-waves/StandingWavesBench.js').then(
+                (m) => m.StandingWavesBench,
+              ),
+          },
+        ],
+      },
+      {
         id: 'thermodynamics',
         name: 'Thermodynamics',
         benches: [
@@ -546,6 +572,22 @@ export const catalog = [
     name: 'Neuroscience',
     fields: [
       {
+        id: 'synaptic',
+        name: 'Synaptic Physiology',
+        benches: [
+          {
+            id: 'synapse-kinetics',
+            navLabel: 'Synapse kinetics',
+            level: 'university',
+            keywords: ['synapse', 'AMPA', 'alpha function', 'synaptic current', 'time constant', 'kinetics'],
+            load: () =>
+              import('./benches/neuroscience/synaptic/synapse-kinetics/SynapseKineticsBench.js').then(
+                (m) => m.SynapseKineticsBench,
+              ),
+          },
+        ],
+      },
+      {
         id: 'electrophysiology',
         name: 'Electrophysiology',
         benches: [
@@ -594,6 +636,22 @@ export const catalog = [
     name: 'Math',
     fields: [
       {
+        id: 'linear-algebra',
+        name: 'Linear Algebra',
+        benches: [
+          {
+            id: 'eigenvectors',
+            navLabel: 'Eigenvectors',
+            level: 'university',
+            keywords: ['eigenvalue', 'eigenvector', 'Jacobi', 'symmetric', 'power iteration', 'spectral decomposition'],
+            load: () =>
+              import('./benches/math/linear-algebra/eigenvectors/EigenvectorsBench.js').then(
+                (m) => m.EigenvectorsBench,
+              ),
+          },
+        ],
+      },
+      {
         id: 'dynamics',
         name: 'Dynamical Systems',
         benches: [
@@ -640,6 +698,26 @@ export const catalog = [
             load: () =>
               import('./benches/math/probability/central-limit/CentralLimitBench.js').then(
                 (m) => m.CentralLimitBench,
+              ),
+          },
+          {
+            id: 'bayes',
+            navLabel: 'Bayes',
+            level: 'university',
+            keywords: ['Bayes', 'Beta distribution', 'conjugate prior', 'posterior', 'credible interval', 'Laplace'],
+            load: () =>
+              import('./benches/math/probability/bayes/BayesBench.js').then(
+                (m) => m.BayesBench,
+              ),
+          },
+          {
+            id: 'information-theory',
+            navLabel: 'Information theory',
+            level: 'university',
+            keywords: ['Shannon', 'entropy', 'KL divergence', 'bits', 'channel capacity', 'binary entropy'],
+            load: () =>
+              import('./benches/math/probability/information-theory/InformationTheoryBench.js').then(
+                (m) => m.InformationTheoryBench,
               ),
           },
         ],
@@ -703,6 +781,22 @@ export const catalog = [
         ],
       },
       {
+        id: 'game-theory',
+        name: 'Game Theory',
+        benches: [
+          {
+            id: 'nash-equilibria',
+            navLabel: 'Nash equilibria',
+            level: 'university',
+            keywords: ['Nash equilibrium', 'game theory', '2×2 game', 'mixed strategy', 'best response'],
+            load: () =>
+              import('./benches/economics/game-theory/nash-equilibria/NashEquilibriaBench.js').then(
+                (m) => m.NashEquilibriaBench,
+              ),
+          },
+        ],
+      },
+      {
         id: 'taxation',
         name: 'Public economics',
         benches: [
@@ -758,6 +852,16 @@ export const catalog = [
         id: 'learning',
         name: 'Learning & Decision',
         benches: [
+          {
+            id: 'prisoner-dilemma',
+            navLabel: "Prisoner's dilemma",
+            level: 'university',
+            keywords: ["prisoner's dilemma", 'cooperation', 'defection', 'grim trigger', 'TFT', 'discount factor'],
+            load: () =>
+              import('./benches/psychology/learning/prisoner-dilemma/PrisonerDilemma_Bench.js').then(
+                (m) => m.PrisonerDilemma_Bench,
+              ),
+          },
           {
             id: 'rescorla-wagner',
             navLabel: 'Rescorla–Wagner',
