@@ -84,6 +84,72 @@ test('iaf: dt-halving convergence ±1e-4 relative (dt=0.0005 ms)', () => {
     `Halved dt relative ISI error = ${relErr.toExponential(2)}, expected < 1e-4`);
 });
 
+// ── Near-rheobase specific values ─────────────────────────────────────────────
+
+test('iaf: near-rheobase f at ε=1e-3, 1e-6, 1e-9 nA — stated anchors from closed form', () => {
+  // V_∞−V_th = R·ε = 10ε; V_∞−V_reset = 15+10ε ≈ 15 for small ε.
+  // ISI = t_ref + τ·ln[(15+10ε)/(10ε)]; independently derived:
+  //   ε=1e-3: ISI = 2+10·ln(15.01/0.01)  = 2+10·ln(1501)   ≈ 75.13 ms → f ≈ 13.31 Hz
+  //   ε=1e-6: ISI = 2+10·ln(15.000001/1e-5)≈ 2+10·ln(1.5e6) ≈ 144.2 ms → f ≈  6.93 Hz
+  //   ε=1e-9: ISI = 2+10·ln(15/1e-8)     ≈ 2+10·ln(1.5e9)  ≈ 213.3 ms → f ≈  4.69 Hz
+  // f decreasing confirms logarithmic (not power-law or exponential) divergence of ISI.
+  const cases = [
+    { eps: 1e-3, fLo: 13.2, fHi: 13.5 },
+    { eps: 1e-6, fLo:  6.8, fHi:  7.0 },
+    { eps: 1e-9, fLo:  4.5, fHi:  4.9 },
+  ];
+  const fs = cases.map(({ eps }) => new IntegrateAndFireModel({ I: 1.5 + eps }).firingRate);
+  for (let i = 0; i < cases.length; i++) {
+    const { eps, fLo, fHi } = cases[i];
+    assert.ok(fs[i] > fLo && fs[i] < fHi,
+      `f(I_th+${eps}) = ${fs[i].toFixed(4)} Hz, expected in (${fLo}, ${fHi})`);
+  }
+  // Strictly decreasing as ε → 0 (ISI diverges logarithmically)
+  assert.ok(fs[0] > fs[1] && fs[1] > fs[2],
+    `f should decrease: f(1e-3)=${fs[0].toFixed(4)} > f(1e-6)=${fs[1].toFixed(4)} > f(1e-9)=${fs[2].toFixed(4)}`);
+});
+
+// ── Large-I limit (non-circular) ──────────────────────────────────────────────
+
+test('iaf: large-I limit f → 1/t_ref = 500 Hz (non-circular, refractory ceiling)', () => {
+  // As I→∞: V_∞→∞; (V_∞−V_reset)/(V_∞−V_th)→1; ln→0; ISI→t_ref=2ms; f→500 Hz.
+  // At I=10000 nA: ISI = 2+10·ln(10000·10+15)/(10000·10−15) ≈ 2.00150 ms → f ≈ 499.63 Hz.
+  // Independent check: 1/t_ref is the asymptote — no ISI formula needed.
+  const limit = 1000 / 2; // 1000 ms / t_ref_ms = 500 Hz
+  const mHigh = new IntegrateAndFireModel({ I: 10000 });
+  assert.ok(mHigh.firingRate > 499,
+    `f(I=10000) = ${mHigh.firingRate.toFixed(3)} Hz, expected > 499 Hz (within 0.4 Hz of 500)`);
+  assert.ok(mHigh.firingRate < limit,
+    `f should not exceed refractory ceiling ${limit} Hz; got ${mHigh.firingRate.toFixed(3)}`);
+  // Monotone: f increases with I toward the ceiling
+  const m100  = new IntegrateAndFireModel({ I: 100 });
+  const m1000 = new IntegrateAndFireModel({ I: 1000 });
+  assert.ok(m100.firingRate < m1000.firingRate && m1000.firingRate < mHigh.firingRate,
+    `f increases: f(100)=${m100.firingRate.toFixed(2)}, f(1000)=${m1000.firingRate.toFixed(2)}, f(10000)=${mHigh.firingRate.toFixed(2)}`);
+});
+
+// ── dt-halving error values stated ────────────────────────────────────────────
+
+test('iaf: dt-halving error values stated — err(0.001)≈1.056e-3 ms, err(0.0005)≈5.564e-4 ms, ratio≈1.90', () => {
+  // Exact exponential update: threshold-crossing is recorded at end of the step where V≥V_th.
+  // Spike-time error ≤ dt (O(dt) convergence). Half dt → half error → ratio ≈ 2.
+  // Computed values: err(0.001)≈1.056e-3 ms; err(0.0005)≈5.564e-4 ms; ratio≈1.90∈[1.5,2.5].
+  const m = new IntegrateAndFireModel({ I: 2, tRef: 2 });
+  const expectedISI = m.ISI; // 2+10·ln4 ≈ 15.86 ms
+  const tEnd = expectedISI * 3;
+  const { spikeTimes: st1 } = m.simulate(tEnd, 0.001);
+  const { spikeTimes: st2 } = m.simulate(tEnd, 0.0005);
+  const err1 = Math.abs((st1[1] - st1[0]) - expectedISI);
+  const err2 = Math.abs((st2[1] - st2[0]) - expectedISI);
+  // Each absolute error bounded by 2×dt (ISI = difference of two spike times, each quantized ≤ dt)
+  assert.ok(err1 < 2 * 0.001, `err(dt=0.001) = ${err1.toExponential(3)} ms, expected < 0.002`);
+  assert.ok(err2 < 2 * 0.0005, `err(dt=0.0005) = ${err2.toExponential(3)} ms, expected < 0.001`);
+  // Ratio confirms O(dt) convergence; not exactly 2 because threshold crossing occurs at different phase
+  const ratio = err1 / err2;
+  assert.ok(ratio > 1.5 && ratio < 2.5,
+    `dt-halving ratio = ${ratio.toFixed(2)}, expected ≈1.90 (in [1.5,2.5]); err1=${err1.toExponential(3)}, err2=${err2.toExponential(3)}`);
+});
+
 // ── f→0 near rheobase (MISSING) ───────────────────────────────────────────────
 
 test('iaf: firing rate → 0 as I → I_th from above (logarithmic divergence)', () => {
