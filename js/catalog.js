@@ -610,6 +610,22 @@ export const catalog = [
           },
         ],
       },
+      {
+        id: 'pharmacology',
+        name: 'Pharmacology',
+        benches: [
+          {
+            id: 'pharmacokinetics',
+            navLabel: 'Pharmacokinetics',
+            level: 'university',
+            keywords: ['pharmacokinetics', 'PK', 'Bateman', 'half-life', 'AUC', 'oral bioavailability', 'first-pass', 'elimination', 'absorption', 'one-compartment', 'drug'],
+            load: () =>
+              import('./benches/biology/pharmacology/pharmacokinetics/PharmacokineticssBench.js').then(
+                (m) => m.PharmacokineticssBench,
+              ),
+          },
+        ],
+      },
     ],
   },
   {
