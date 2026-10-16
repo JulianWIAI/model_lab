@@ -198,6 +198,117 @@ test('logistic-map: lyapunov r=4 = ln2, tolerance from Var(ln|f′|)=π²/12', (
 
 // ── Period-3 has 3 distinct cycle points (strengthens single-start test above) ─
 
+// ── Sensitivity from δ₀=1e-10 — growth rate ≈ ln2 ───────────────────────────
+
+test('logistic-map: sensitivity at r=4 from δ₀=1e-10 — growth rate ≈ ln2 ±10%', () => {
+  // λ(r=4)=ln2 → |δ_n| ≈ δ₀·e^(λn). Starting from δ₀=1e-10:
+  //   |δ|≥0.1 after n* ≈ ln(0.1/1e-10)/ln2 = 9·ln10/ln2 ≈ 29.9 steps (observed ≈ 31).
+  // Estimated λ̂ = ln(0.1/δ₀)/n* should satisfy |λ̂−ln2| < 10%·ln2.
+  let x1 = 0.4, x2 = 0.4 + 1e-10;
+  let n = 0;
+  while (Math.abs(x1 - x2) < 0.1 && n < 200) {
+    x1 = 4 * x1 * (1 - x1);
+    x2 = 4 * x2 * (1 - x2);
+    n++;
+  }
+  const estLambda = Math.log(0.1 / 1e-10) / n;
+  const tol = 0.1 * Math.LN2;
+  assert.ok(Math.abs(estLambda - Math.LN2) < tol,
+    `Growth rate from δ₀=1e-10: |δ|≥0.1 after ${n} steps, λ̂=${estLambda.toFixed(4)}, ln2=${Math.LN2.toFixed(4)}, tol=±${tol.toFixed(4)}`);
+});
+
+// ── Feigenbaum 4-iterate ratio ±0.01 (R1–R4 stated) ──────────────────────────
+
+test('logistic-map: feigenbaum 4-iterate ratio ≈ δ=4.6692 ±0.01 (R1≈3.2361, R2≈3.4986, R3≈3.5546, R4≈3.5667)', () => {
+  // Superstable parameters: R1=1+√5≈3.2361, R2≈3.4986, R3≈3.5546, R4≈3.5667 (periods 2,4,8,16).
+  // 4-iterate Feigenbaum ratio (R3−R2)/(R4−R3) ≈ 4.6630, within ±0.01 of δ=4.6692.
+  const R1 = LogisticMapModel.superstableR(1, 3.0, 3.4);   // ≈ 3.2361
+  const R2 = LogisticMapModel.superstableR(2, 3.4, 3.55);  // ≈ 3.4986
+  const R3 = LogisticMapModel.superstableR(3, 3.5, 3.57);  // ≈ 3.5546
+  const R4 = LogisticMapModel.superstableR(4, 3.555, 3.568); // ≈ 3.5667
+  const ratio = (R3 - R2) / (R4 - R3);
+  assert.ok(Math.abs(ratio - 4.6692) < 0.01,
+    `Feigenbaum 4-iterate: R1=${R1.toFixed(4)}, R2=${R2.toFixed(4)}, R3=${R3.toFixed(4)}, R4=${R4.toFixed(4)}, ratio=${ratio.toFixed(4)}, expected δ≈4.6692 ±0.01`);
+});
+
+// ── Lyapunov batch-means (accounts for negative autocorrelation) ──────────────
+
+test('logistic-map: lyapunov r=4 — batch-means SE tighter than iid (negative autocorrelation)', () => {
+  // ln|f'(x)| at r=4 has NEGATIVE autocorrelation: x near ½ gives small |f'|=0, then next
+  // iterate lands near 0 or 1 giving |f'|≈4. Batch-means SE << iid SE=√(π²/12N).
+  const N = 200000, B = 100, batchSize = N / B;
+  let x = 0.3;
+  for (let i = 0; i < 2000; i++) x = 4 * x * (1 - x); // burn-in
+  const batchMeans = [];
+  for (let b = 0; b < B; b++) {
+    let sum = 0;
+    for (let i = 0; i < batchSize; i++) {
+      x = 4 * x * (1 - x);
+      sum += Math.log(Math.abs(4 * (1 - 2 * x)));
+    }
+    batchMeans.push(sum / batchSize);
+  }
+  const overall = batchMeans.reduce((a, v) => a + v, 0) / B;
+  const batchVar = batchMeans.reduce((a, v) => a + (v - overall) ** 2, 0) / (B - 1);
+  const batchSE = Math.sqrt(batchVar / B);
+  const iidSE = Math.sqrt(Math.PI ** 2 / (12 * N));
+  // Negative autocorrelation → batch SE ≪ iid SE
+  assert.ok(batchSE < iidSE,
+    `Batch SE=${batchSE.toExponential(3)} should be < iid SE=${iidSE.toExponential(3)}`);
+  // Mean within 4×batch SE of ln2 (stronger assertion than the iid-tolerance tests)
+  assert.ok(Math.abs(overall - Math.LN2) < 4 * batchSE,
+    `λ=${overall.toFixed(6)}, ln2=${Math.LN2.toFixed(6)}, 4×batchSE=${(4 * batchSE).toFixed(6)}`);
+});
+
+// ── Invariant density batch-means (accounts for negative autocorrelation) ─────
+
+test('logistic-map: invariant density at r=4 — batch-means SE (accounts for autocorrelation)', () => {
+  // P(x∈[0.25,0.75])=1/3 exactly (arcsin formula). Sequence is negatively autocorrelated;
+  // batch-means SE correctly captures this without inflating the tolerance.
+  const N = 200000, B = 100, batchSize = N / B;
+  let x = 0.3;
+  for (let i = 0; i < 2000; i++) x = 4 * x * (1 - x);
+  const batchMeans = [];
+  for (let b = 0; b < B; b++) {
+    let count = 0;
+    for (let i = 0; i < batchSize; i++) {
+      x = 4 * x * (1 - x);
+      if (x >= 0.25 && x <= 0.75) count++;
+    }
+    batchMeans.push(count / batchSize);
+  }
+  const overall = batchMeans.reduce((a, v) => a + v, 0) / B;
+  const batchVar = batchMeans.reduce((a, v) => a + (v - overall) ** 2, 0) / (B - 1);
+  const batchSE = Math.sqrt(batchVar / B);
+  assert.ok(Math.abs(overall - 1 / 3) < 4 * batchSE,
+    `Fraction in [0.25,0.75] = ${overall.toFixed(4)}, expected 1/3, 4×batchSE = ${(4 * batchSE).toFixed(6)}`);
+});
+
+// ── Stability at r=3.5 — unstable fixed point repeller ───────────────────────
+
+test('logistic-map: fixed point at r=3.5 — |f′(x*)|=1.5 (exact), perturbation grows as 1.5^n ±1%', () => {
+  // x* = 1−1/r = 5/7; f'(x*) = r·(1−2x*) = 3.5·(1−10/7) = −3/2 → |f'(x*)|=1.5 exactly.
+  // λ_fixed = ln(1.5) ≈ 0.405 (unstable repeller; orbits diverge at 1.5× per step).
+  // Linearised: |δ_20| = 1.5^20·|δ_0| ≈ 3325.26·1e-12 ≈ 3.3e-9 — still in linear regime.
+  const r = 3.5;
+  const xStar = 1 - 1 / r; // = 5/7 exactly
+  const deriv = Math.abs(r * (1 - 2 * xStar));
+  assert.ok(Math.abs(deriv - 1.5) < 1e-10,
+    `|f'(x*)| at r=3.5 = ${deriv}, expected 1.5`);
+  const nSteps = 20;
+  const delta0 = 1e-12;
+  let x1 = xStar, x2 = xStar + delta0;
+  for (let i = 0; i < nSteps; i++) {
+    x1 = r * x1 * (1 - x1);
+    x2 = r * x2 * (1 - x2);
+  }
+  const actualGrowth = Math.abs(x2 - x1) / delta0;
+  const expectedGrowth = 1.5 ** nSteps; // ≈ 3325.26
+  const relErr = Math.abs(actualGrowth / expectedGrowth - 1);
+  assert.ok(relErr < 0.01,
+    `Growth after ${nSteps} steps: actual=${actualGrowth.toExponential(3)}, expected 1.5^${nSteps}=${expectedGrowth.toFixed(1)}, relErr=${relErr.toExponential(2)}`);
+});
+
 test('logistic-map: period-3 at r=3.83 has 3 distinct cycle points (two starts agree)', () => {
   // r=3.83 is inside the period-3 window (1+2√2 ≈ 3.828 to ≈ 3.857).
   // Two different starting points should converge to the same 3-cycle.
