@@ -315,8 +315,10 @@ async function testBench(page, baseUrl, subjectId, benchId, navLabel) {
         await page.screenshot({ path: thumbPath, clip: { x: 0, y: 0, width: Math.min(width, 1280), height: Math.min(width === 400 ? 700 : 800, 800) } });
 
         const consoleErr = consoleErrors.length > 0;
-        const isFail = pixelInfo.solid || pixelInfo.blank || consoleErr ||
-                       hasDashes || pixelInfo.surfaceMismatch;
+        // SOLID (>90% one colour) is reported but NOT a fail condition on its own:
+        // a sparse chart on a white background is legitimately 95%+ surface colour.
+        // SURFACE_MISMATCH catches the CSS-token class of bug; BLANK catches empty canvas.
+        const isFail = pixelInfo.surfaceMismatch || pixelInfo.blank || consoleErr || hasDashes;
 
         result.screenshots.push({
           theme, width,
@@ -332,7 +334,8 @@ async function testBench(page, baseUrl, subjectId, benchId, navLabel) {
           fail: isFail,
         });
 
-        if (pixelInfo.solid)          result.failureTypes.push(`SOLID@${theme}/${width}`);
+        // SOLID is informational only — not a failure; removed from failureTypes
+        // if (pixelInfo.solid)       result.failureTypes.push(`SOLID@${theme}/${width}`);
         if (pixelInfo.blank)          result.failureTypes.push(`BLANK@${theme}/${width}`);
         if (pixelInfo.surfaceMismatch) result.failureTypes.push(`SURFACE_MISMATCH@${theme}/${width}`);
         if (hasDashes)                result.failureTypes.push(`DASHES@${theme}/${width}`);
