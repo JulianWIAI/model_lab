@@ -720,6 +720,19 @@ export const catalog = [
         name: 'Probability & Statistics',
         benches: [
           {
+            id: 'markov-chains',
+            navLabel: 'Markov chains',
+            level: 'university',
+            keywords: [
+              'Markov chain', 'transition matrix', 'stationary distribution',
+              'mixing time', 'spectral gap', 'eigenvalue', 'stochastic process',
+            ],
+            load: () =>
+              import('./benches/math/probability/markov-chains/MarkovBench.js').then(
+                (m) => m.MarkovBench,
+              ),
+          },
+          {
             id: 'central-limit',
             navLabel: 'Central limit',
             level: 'intro',
