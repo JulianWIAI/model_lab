@@ -7,3 +7,6 @@ desktop.ini
 .idea/
 .vscode/
 *.swp
+
+# Claude Code local settings (machine-specific permissions)
+.claude/settings.local.json
