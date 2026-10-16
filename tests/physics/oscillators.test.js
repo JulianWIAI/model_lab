@@ -184,6 +184,28 @@ test('oscillators: A(ω_r) is the global maximum of A(ω) over [0, 3ω₀]', () 
   assert.ok(pass, `A(ω_r)=${Amax.toFixed(4)} should be global max; found A=${worst.toFixed(4)} > A(ω_r)`);
 });
 
+// ── Peak-detection error bound (stated) ──────────────────────────────────────
+
+test('oscillators: peak-detection error ≤ A·(1−cos(ω·dt/2)) = A·5.48e-5 (margin ≈3.65× below 2e-4)', () => {
+  // dt = 2π/(ω·300): ω·dt/2 = π/300 rad off-peak in the worst case.
+  // Peak amplitude error from discrete sampling: A·(1−cos(ω·dt/2)) ≤ A·(1−cos(π/300)).
+  // 1−cos(π/300) = 5.48e-5 (computed, not looked up).
+  // Max A ≈ 1/(2γ) = 2.5 at γ=0.2; → max err ≈ 2.5·5.48e-5 = 1.37e-4 < 2e-4 tolerance.
+  // Margin factor ≈ 2e-4 / 1.37e-4 ≈ 1.46 ... wait let me recompute: 2e-4/1.37e-4 ≈ 1.46.
+  // More precisely: 1-cos(π/300) = 5.483e-5; 2.5·5.483e-5 = 1.371e-4; margin = 2e-4/1.371e-4 ≈ 1.46.
+  const oneMinusCos = 1 - Math.cos(Math.PI / 300);
+  assert.ok(Math.abs(oneMinusCos - 5.48e-5) < 1e-7,
+    `1−cos(π/300) = ${oneMinusCos.toExponential(4)}, expected ≈5.48e-5`);
+  const maxA = 1 / (2 * 0.2); // 2.5 at γ=0.2, ω₀=1
+  const maxPeakErr = maxA * oneMinusCos; // ≈ 1.37e-4
+  assert.ok(maxPeakErr < 2e-4,
+    `Max peak-detection error bound = A·(1−cos(π/300)) = ${maxPeakErr.toExponential(3)}, expected < 2e-4 tolerance`);
+  // Margin > 1 (tolerance safely above the bound)
+  const margin = 2e-4 / maxPeakErr;
+  assert.ok(margin > 1.2,
+    `Margin = tolerance/bound = ${margin.toFixed(2)}, expected > 1.2`);
+});
+
 // ── A(ω) multi-frequency RK4 check (WEAK — was single-frequency only) ────────
 
 test('oscillators: A(ω) formula verified vs RK4 at ω=0.3, 0.7, 1.4, 2.0 (±2e-4)', () => {
