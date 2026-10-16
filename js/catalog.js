@@ -554,6 +554,16 @@ export const catalog = [
             keywords: ['SIR', 'epidemic', 'R0', 'herd immunity', 'Kermack-McKendrick', 'infectious disease', 'final size'],
             load: () => import('./benches/biology/ecology/sir/SIRBench.js').then((m) => m.SIRBench),
           },
+          {
+            id: 'age-structure',
+            navLabel: 'Age structure',
+            level: 'university',
+            keywords: ['Leslie matrix', 'age structure', 'Perron-Frobenius', 'eigenvalue', 'stable age distribution', 'net reproductive rate', 'Euler-Lotka', 'demography'],
+            load: () =>
+              import('./benches/biology/ecology/age-structure/AgeStructureBench.js').then(
+                (m) => m.AgeStructureBench,
+              ),
+          },
         ],
       },
       {
