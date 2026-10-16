@@ -9,11 +9,14 @@
  *   where A = ka·F·D/(Vd·(ka−ke))
  *   t_max = ln(ka/ke)/(ka−ke)
  *
- * ka = ke LIMIT (L'Hôpital, implemented with expm1 for numerical stability):
+ * ka = ke LIMIT (L'Hôpital):
  *   As ka→ke: C(t) → F·D·ke·t·e^{-ke·t}/Vd
- *   Implemented: when |ka−ke| < ε, use limit form via
- *   (e^{-ke·t} − e^{-ka·t}) = e^{-ke·t}·(1 − e^{-(ka-ke)·t}) ≈ e^{-ke·t}·(ka-ke)·t
- *   → A·(ka-ke)·t → (ka·F·D/Vd)·t·e^{-ke·t}
+ *   Implemented: when |ka−ke| < ε, use limit form directly.
+ *
+ * Normal oral form uses expm1 for numerical stability at small t:
+ *   e^{-ke·t} − e^{-ka·t} = e^{-ke·t}·(1 − e^{-(ka-ke)·t})
+ *                          = e^{-ke·t}·(−expm1(−(ka-ke)·t))
+ *   expm1 avoids catastrophic cancellation when (ka-ke)·t ≪ 1.
  *
  * Flip-flop symmetry: ke·C(t; ka, ke) = ka·C(t; ke, ka)  [algebraic identity]
  *
@@ -64,7 +67,7 @@ export class PharmacokineticsModel {
 
   /**
    * Plasma concentration at time t [mg/L].
-   * Uses expm1-based form for numerical stability when |ka-ke| is tiny.
+   * Oral route uses expm1 form for numerical stability at small t.
    * @param {number} t  hours (t ≥ 0)
    */
   C(t) {
@@ -76,10 +79,10 @@ export class PharmacokineticsModel {
       // Limit: C → F·D·ke·t·e^{-ke·t}/Vd
       return F * D * ke * t * Math.exp(-ke * t) / Vd;
     }
-    // Normal form: A·(e^{-ke·t} − e^{-ka·t})
-    // Use expm1 for the difference when t is small: avoids catastrophic cancellation
+    // expm1 form: A·e^{-ke·t}·(−expm1(−diff·t))
+    // Avoids catastrophic cancellation when t is small (ka-ke)·t ≪ 1
     const A = ka * F * D / (Vd * diff);
-    return A * (Math.exp(-ke * t) - Math.exp(-ka * t));
+    return A * Math.exp(-ke * t) * (-Math.expm1(-diff * t));
   }
 
   /**

@@ -76,6 +76,23 @@ test('ka=ke limit: C(t) is continuous as ka→ke ±1e-6 relative (ke=ka=0.1)', (
   assert.ok(Math.abs(m.C(tPeak) - expected) <= 1e-6 * expected, `C(1/ke)=${m.C(tPeak)}, expected=${expected}`);
 });
 
+// ── expm1 stability at small t ──────────────────────────────────────────────
+// For small t: C(t) ≈ A·diff·t − A·(ka²-ke²)·t²/2 + O(t³)
+// This series is independent of the expm1 implementation and serves as a check.
+
+test('Oral C(t=1e-6) vs Taylor series ±1e-14 relative (expm1 stability)', () => {
+  const ke = 0.1, ka = 1.0, D = 100, Vd = 10, F = 1;
+  const m = new PharmacokineticsModel({ ke, ka, D, Vd, F, iv: false });
+  const t  = 1e-6;
+  const diff = ka - ke;                      // 0.9
+  const A    = ka * F * D / (Vd * diff);     // 100/9 ≈ 11.111
+  // Series: A·(diff·t − (ka²−ke²)·t²/2 + (ka³−ke³)·t³/6 − ...)
+  const series = A * (diff*t - (ka**2 - ke**2)*t**2/2 + (ka**3 - ke**3)*t**3/6);
+  const model  = m.C(t);
+  assert.ok(Math.abs(model - series) <= 1e-14 * series,
+    `C(1e-6)=${model}, series=${series}, relerr=${Math.abs(model-series)/series}`);
+});
+
 // ── Flip-flop symmetry ──────────────────────────────────────────────────────
 
 test('Flip-flop symmetry: ke·C(t;ka,ke) = ka·C(t;ke,ka) ±1e-10 relative', () => {

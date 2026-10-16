@@ -8,7 +8,8 @@
 |---|---|---|---|
 | phase-7b | af019382be50872f9ade09217ecd079bfea886bb | 614 | Baseline — last commit before Phase 8 bench work |
 | phase-8 | 904a41feae377376ba175cbeb0ca15df00fe3c02 | 692 | Phase 8 complete (+78 tests) |
-| phase-8b | (this tag) | 740 | Phase 8b fixes (+48 tests) |
+| phase-8b | 7820d47cd4e181f1593104e1b74dcd4fcbc420f6 | 740 | Phase 8b fixes (+48 tests) |
+| phase-8c | (tagged at end of this session) | 755 | Phase 8c: m_e CODATA 2022; A1–A7 + B tightening (+15 tests) |
 
 ### Smoke validity at ba9ced2
 
@@ -91,6 +92,34 @@ clear") resolved the missing background-clear calls. At HEAD, 63/63 benches pass
 | tests/physics/particle-in-box.test.js | +4 | x² relative tolerance; n=2,3 for x² and P(0<x<L/3) |
 | tests/biology/pharmacokinetics.test.js | +4 | RangeError ke, ka, Vd, F |
 
+**Phase 8c (phase-8b → phase-8c):**
+- +15 new tests (740 → 755)
+- Fixed: m_e CODATA 2022; expm1 in PharmacokineticsModel; D===0 tolerance in PhasePlaneModel;
+  stationaryN comment + convention test; outcome 'undefined'→'unknown'; t0<0 RangeError in DDM;
+  cdf(xMax>L) clamped in ParticleInBoxModel; α=0 nullclines fixed in model + view
+
+| File | New tests | What changed |
+|---|---|---|
+| tests/physics/particle-in-box.test.js | +3 | T-1 ⟨x⟩=L/2 (Simpson); T-2 cdf(L)≈1; E-5 cdf guard |
+| tests/physics/carnot.test.js | +1 | T-3 COP_ref(Tc=0)=0 |
+| tests/biology/competitive-exclusion.test.js | +6 | T-5 Jacobian r1≠r2; Q-5 outcome 'unknown'; α=0 nullclines (×4) |
+| tests/biology/pharmacokinetics.test.js | +1 | F-3 expm1 small-t vs Taylor series |
+| tests/math/markov-chains.test.js | +1 | F-1 stationaryN row-vector convention (non-symmetric P) |
+| tests/math/phase-plane.test.js | +1 | F-4 decimal determinant classifies correctly |
+| tests/psychology/drift-diffusion.test.js | +2 | E-4 t0<0 RangeError; T-4 large-μ asymptotic limits |
+
+**Also changed in phase-8c:**
+- `js/benches/physics/quantum/particle-in-box/ParticleInBoxModel.js`: ME = CODATA 2022; cdf clamp
+- `js/benches/math/dynamics/phase-plane/PhasePlaneModel.js`: classification eps-tolerance for D
+- `js/benches/math/probability/markov-chains/MarkovModel.js`: stationaryN comment aligned
+- `js/benches/biology/ecology/competitive-exclusion/CompetitiveExclusionModel.js`: outcome logic
+  fixed (invasion criterion replaces N* sign check); nullcline2() returns horizontal type; α=0 legal
+- `js/benches/biology/ecology/competitive-exclusion/CompetitiveExclusionView.js`: draw α=0 nullclines
+- `js/benches/biology/pharmacology/pharmacokinetics/PharmacokineticsModel.js`: expm1 implemented
+- `js/benches/psychology/decision-making/drift-diffusion/DriftDiffusionModel.js`: t0<0 validated
+- `tools/anchors-phase8.mjs`: ME = CODATA 2022; BGK=−ζ(1/2)/√(2π) explained; T-5 derivation
+- `docs/SOURCES.md`: m_e updated to CODATA 2022 (verified); 1.36 ppb delta documented
+
 **Also fixed in phase-8b:**
 - `tools/anchors-phase8.mjs`: corrected C0_pk = D/Vd = 10 (was hardcoded 100; fixed AUC_IV 1000→100, C(5h) 60.653→6.0653)
 - `tools/smoke.mjs`: SOLID (informational, fired 181/252 pages) → DARK_FILL (fail, fires 0 pages at HEAD)
@@ -124,7 +153,10 @@ MISSING = no test at all.
 | ⟨x²⟩_2 = L²(1/3−1/(8π²)) | particle-in-box.test.js | `<x²>_2 ±1e-12 rel` | 1e-12 rel | anchors script | PRESENT |
 | P(0<x<L/3) n=2 = 1/3+√3/(8π) | particle-in-box.test.js | `P(0<x<L/3) n=2 ±1e-6` | 1e-6 | 1/3−sin(4π/3)/(4π) derived | PRESENT |
 | P(0<x<L/3) n=3 = 1/3 | particle-in-box.test.js | `P(0<x<L/3) n=3 ±1e-6` | 1e-6 | sin(2π)=0 exactly | PRESENT |
-| m_e = 9.1093837015e-31 kg | anchors-phase8.mjs | (constant) | — | CODATA 2018 — fetch attempted, CODATA 2022 unavailable | **UNVERIFIED** |
+| T-1: ⟨x⟩ = L/2 | particle-in-box.test.js | `<x>_n = L/2 ±1e-8 for n=1,2,3 (Simpson N=10000)` | 1e-8 rel to L | Simpson integration of x·\|ψ_n\|²; symmetry exact | PRESENT |
+| T-2: cdf(L)=1 | particle-in-box.test.js | `cdf(L,n)≈1 ±1e-6 for n=1,2,3 (total probability = 1)` | 1e-6 | Full-range integral = total probability | PRESENT |
+| E-5: cdf(xMax>L) clamped | particle-in-box.test.js | `cdf(xMax>L) clamped to cdf(L)≈1 ±1e-6 (E-5 guard)` | 1e-6 | Passes xMax=2L; model clamps to L before integrating | PRESENT |
+| m_e = 9.1093837139e-31 kg | ParticleInBoxModel.js | (constant; used in all E_n tests) | — | CODATA 2022 fetched 2026-10-16 from physics.nist.gov; Δ=+1.36 ppb vs 2018 | **VERIFIED** |
 
 ### Carnot
 
@@ -132,8 +164,9 @@ MISSING = no test at all.
 |---|---|---|---|---|---|
 | η(500,300) = 0.4 | carnot.test.js | `η(T_h=500, T_c=300) = 0.4 ±1e-15` | 1e-15 abs | 1−300/500 exact | PRESENT |
 | COP_hp−COP_ref = 1 | carnot.test.js | `COP_hp − COP_ref = 1 ±1e-15` | 1e-15 abs | T_h/W−T_c/W=1 algebraic identity | PRESENT |
-| T_c,max = 585.0 K (η=0.33, T_h=873.15K) | carnot.test.js | `T_c,max ≈ 585.0 K ±0.2` | 0.2 K | T_h·(1−η)=873.15·0.67 in anchors | PRESENT |
-| Q_h/T_h = Q_c/T_c = dS | carnot.test.js | `Clausius equality ±1e-10` | 1e-10 | Clausius theorem; dS defined in model | PRESENT |
+| T_c,max = 585.0105 K (η=0.33, T_h=873.15K) | carnot.test.js | `T_c = T_h·(1−η) = 585.0105 K ±1e-10` | 1e-10 | T_h·(1−η) closed form | PRESENT |
+| Q_h/T_h = Q_c/T_c = dS | carnot.test.js | `Clausius equality ±1e-10` | 1e-10 | Both sides derived from same model dS; Q_h=Th·dS, Q_c=Tc·dS | **WEAK** (self-referential) |
+| COP_ref(Tc=0) = 0 | carnot.test.js | `COP_ref(T_c=0) = 0 ±1e-15 (T-3)` | 1e-15 | Tc/(Th-Tc)=0 exact when Tc=0 | PRESENT |
 | W = Q_h − Q_c | carnot.test.js | `W = Q_h − Q_c ±1e-10` | 1e-10 | First law algebraic | PRESENT |
 | T-S shoelace = (T_h−T_c)·ΔS | carnot.test.js | `T-S shoelace area = W ±1e-10` | 1e-10 | Rectangle area formula | PRESENT |
 | Tc<0 → RangeError | carnot.test.js | `T_c < 0 → RangeError` | exact | Absolute zero constraint | PRESENT |
@@ -150,6 +183,7 @@ MISSING = no test at all.
 | p=q=1: λ₂ = −1, tMix = ∞ | markov-chains.test.js | `p=q=1: λ₂ = -1`, `tMix = Infinity` | exact | λ₂=1−1−1 in anchors | PRESENT |
 | 3-state π = (1/4, 1/2, 1/4) | markov-chains.test.js | `3-state π = [1/4,1/2,1/4] by value` | 1e-10 | π·P check in anchors (3 entries verified) | PRESENT |
 | 3-state eigenvalues {1, 0.5, 0} | markov-chains.test.js | `eigenvalues include 1, 0.5, 0` | 1e-14 | Char poly factored in anchors | PRESENT |
+| F-1: stationaryN row-vector convention | markov-chains.test.js | `stationaryN row-vector convention: π·P=π ±1e-10 for non-symmetric P` | 1e-10 | Non-symmetric P; also asserts P·π≠π (right≠left eigenvector) | PRESENT |
 
 Note: p=q=0.6 gives λ₂ = −0.2 (negative, damped oscillation). "Periodic" was incorrect in the original report.
 
@@ -161,6 +195,8 @@ Note: p=q=0.6 gives λ₂ = −0.2 (negative, damped oscillation). "Periodic" wa
 | E[T](μ=0) = a²/σ² = 1 | drift-diffusion.test.js | `E[T](μ=0) = a²/σ² = 1 ±1e-10` | 1e-10 | L'Hôpital: tanh(z)/z→1 | PRESENT |
 | μ=1e-8 continuity ≈ 1 | drift-diffusion.test.js | `E[T] continuity: μ=1e-8 ±1e-10` | 1e-10 | z=1e-8, tanh(z)≈z, (a/μ)·z=1 | PRESENT |
 | sim P+ within 4√(p(1-p)/N) | drift-diffusion.test.js | `sim P+ within 4√(p(1-p)/N)` | 4σ (theoretical) | p from formula, not from sim | PRESENT |
+| E-4: t0 < 0 → RangeError | drift-diffusion.test.js | `t0 < 0 → RangeError` | exact | Absolute non-negativity of non-decision time | PRESENT |
+| T-4: large-μ limits | drift-diffusion.test.js | `large-μ: P+ → 1 and meanFPT → a/μ at μ=10 (a=σ=1)` | P+>1−1e-8; \|FPT−a/μ\|<1e-9 | Asymptotic: 1−P+≈exp(−20)≈2e-9; error in FPT≈2(a/μ)exp(−20)≈4e-11 | PRESENT |
 | BGK boundary correction | — | (none; dropped) | — | 0.5826·σ·√dt (cited, not fetched) | MISSING |
 
 BGK test dropped: The Broadie-Glasserman-Kou (1997) correction is a first-order bias
@@ -178,6 +214,7 @@ verifiable here. Noted in test file comment and SOURCES.md.
 | Classification labels (7 types) | phase-plane.test.js | `classification: stable node …` (×7) | exact string | Label from τ,Δ,disc logic | PRESENT |
 | eigen2x2 defective | eigen2x2.test.js | `defective repeated=true, defective=true` | exact bool | Off-diagonal non-zero check | PRESENT |
 | eigen2x2 vs jacobiEigen | eigen2x2.test.js | `cross-check vs jacobiEigen ±1e-10` | 1e-10 | Independent algorithm | PRESENT |
+| F-4: D≈0 decimal arithmetic | phase-plane.test.js | `classification: D≈0 from decimal arithmetic → Degenerate (zero eigenvalue)` | exact string | A=[[0.1,0.3],[0.3,0.9]]: 0.1×0.9−0.09≈1e-17; eps=1e-10×normA²≈1e-12 catches it | PRESENT |
 
 ### Competitive exclusion
 
@@ -188,7 +225,13 @@ verifiable here. Noted in test file comment and SOURCES.md.
 | Jacobian λ = −1/3, −1 | competitive-exclusion.test.js | `Jacobian eigenvalues -1 and -1/3 ±1e-10` | 1e-10 | τ=−4/3, Δ=1/3 in anchors | PRESENT |
 | Bistable N* = (40, 40) | competitive-exclusion.test.js | `bistable N₁* = N₂* = 40 ±1e-10` | 1e-10 | (100−150)/(−1.25) in anchors | PRESENT |
 | Bistable Jacobian λ = +0.2, −1 | competitive-exclusion.test.js | `bistable Jacobian λ = +0.2, -1 ±1e-10` | 1e-10 | τ=−0.8, det=−0.2, disc=1.44 | PRESENT |
-| (60,40) → sp1 wins | competitive-exclusion.test.js | `bistable (60,40) → sp1 wins at t=300` | N₂<1, N₁>50 | IC above stable manifold | PRESENT |
+| (60,40) → sp1 wins | competitive-exclusion.test.js | `bistable (60,40) → sp1 wins at t=300: \|N₁−100\|<1e-6 and N₂<1e-6` | \|N₁−100\|<1e-6, N₂<1e-6 | IC above stable manifold; N₂ decays at rate r₂(1−α₂₁)=−0.5 | PRESENT |
+| T-5: r1≠r2 Jacobian eigenvalues | competitive-exclusion.test.js | `r1≠r2: Jacobian eigenvalues = -1±1/√3 ±1e-10 (r1=1, r2=2, K=100, α=0.5)` | 1e-10 | τ=−2, Δ=2/3, disc=4/3 in anchors-phase8.mjs T-5 section | PRESENT |
+| Q-5: outcome 'unknown' not 'undefined' | competitive-exclusion.test.js | `outcome string is "unknown" not "undefined" for unreachable path` | exact string | Code changed: fallback returns 'unknown' | PRESENT |
+| α=0 edge: nullcline2 horizontal | competitive-exclusion.test.js | `α21=0: nullcline2 is horizontal at K2 (no Infinity)` | exact type+value | nc2.type==='horizontal', nc2.value===K2 | PRESENT |
+| α=0 edge: nullcline1 vertical | competitive-exclusion.test.js | `α12=0: nullcline1 is vertical at K1 (no Infinity)` | exact type+value | nc1.type==='vertical', nc1.value===K1 | PRESENT |
+| α=0 coexistence equilibrium | competitive-exclusion.test.js | `α12=α21=0: outcome coexistence, N1*=K1, N2*=K2 (independent species)` | 1e-10 | den=1; N1*=(K1−0)/1=K1 exactly | PRESENT |
+| α21=0 trajectory convergence | competitive-exclusion.test.js | `α21=0: trajectory → N2 converges to K2, independent of N1 ±1%` | <1% of K2 | sp2 uncoupled: logistic growth to K2 | PRESENT |
 
 ### Pharmacokinetics
 
@@ -201,6 +244,8 @@ verifiable here. Noted in test file comment and SOURCES.md.
 | R(t½=24h, τ=12h) = 2+√2 | pharmacokinetics.test.js | `R = 2+√2 ±1e-6` | 1e-6 abs | 1/(1−2^{−0.5}) in anchors | PRESENT |
 | Flip-flop: ke·C(t;ka,ke) = ka·C(t;ke,ka) | pharmacokinetics.test.js | `Flip-flop symmetry ±1e-10 rel` | 1e-10 rel | Algebraic substitution in anchors | PRESENT |
 
+| F-3: expm1 small-t stability | pharmacokinetics.test.js | `Oral C(t=1e-6) vs Taylor series ±1e-14 relative (expm1 stability)` | 1e-14 rel | Series A·(diff·t−(ka²−ke²)t²/2+…) independent of expm1; confirms cancellation fix | PRESENT |
+
 Note on original errors: The original review had AUC_IV = 1000 mg·h/L and C(5h) = 60.653 mg/L
 because `anchors-phase8.mjs` hardcoded `C0_pk = 100` instead of `D_pk / Vd = 10`.
 Both corrected in this phase.
@@ -209,118 +254,122 @@ Both corrected in this phase.
 
 ## Section 3: Remaining gaps
 
-All phase-8b tasks (C.1–C.8) are now closed. Gaps identified by the independent review agent
-(section 4) that remain open for Phase 9:
+All phase-8b tasks (C.1–C.8) are now closed. All gaps identified by the independent review
+agent (section 4) and listed here have been resolved in Phase 8c:
 
-| ID | File | Severity | Description |
-|---|---|---|---|
-| F-1 | MarkovModel.js:112–126 | **HIGH** | `stationaryN` comment says "power iteration on Pᵀ" but code does v·P; inconsistent convention vs 2-state `powerIterate`. Numerically correct for ergodic row-stochastic matrices but misleading. |
-| F-2 | CompetitiveExclusionModel.js:126 | MED | `nullcline2()` divides by a21 without a zero-guard; a21=0 is accepted by constructor → Infinity intercept/slope. |
-| F-3 | PharmacokineticsModel.js:80–82 | MED | Docstring promises an expm1-based cancellation fix for the Bateman function at small t; actual code uses plain subtraction. Comment creates false assurance. |
-| F-4 | PhasePlaneModel.js:52 | MED | `D === 0` branch uses strict float equality; a near-singular matrix will misclassify. Should compare `Math.abs(D) < eps`. |
-| T-1 | particle-in-box | MED | ⟨x⟩_n = L/2 (by symmetry) never numerically verified. |
-| T-2 | particle-in-box | MED | `cdf(L, n) ≈ 1` never tested (full-range normalization via model's own CDF). |
-| T-3 | carnot | MED | `copRefrigerator(Tc=0) = 0` never tested. |
-| T-4 | drift-diffusion | MED | Large-μ limit: P+ → 1 and meanFPT → a/μ untested. |
-| T-5 | competitive-exclusion | MED | r1 ≠ r2 never exercised; Jacobian with asymmetric growth rates untested. |
-| Q-5 | CompetitiveExclusionModel.js:72 | LOW | `outcome` returns string `'undefined'`; callers checking `!m.outcome` get wrong result. Rename to `'unknown'`. |
+| ID | File | Severity | Description | **Disposition** |
+|---|---|---|---|---|
+| F-1 | MarkovModel.js:112–126 | **HIGH** | `stationaryN` comment said "power iteration on Pᵀ" but code does v·P. | **RESOLVED (8c)**: comment aligned to "row-vector left-multiplication: v ← v·P"; new test verifies left-eigenvector output for non-symmetric P and confirms right eigenvector ≠ left eigenvector. |
+| F-2 | CompetitiveExclusionModel.js:126 | MED | `nullcline2()` divided by a21 → Infinity when a21=0. | **RESOLVED (8c)**: `nullcline2()` now returns `{type:'horizontal', value:K2}` when a21=0; `nullcline1()` returns `{type:'vertical', value:K1}` when a12=0; view updated; 4 new tests. |
+| F-3 | PharmacokineticsModel.js:80–82 | MED | Docstring promised expm1 cancellation fix; code used plain subtraction. | **RESOLVED (8c)**: expm1 form implemented: `exp(-ke·t)·(−expm1(-(ka−ke)·t))`; new test at t=1e-6 vs Taylor series ±1e-14 rel confirms stability. |
+| F-4 | PhasePlaneModel.js:52 | MED | `D === 0` used strict float equality; near-singular matrices misclassified. | **RESOLVED (8c)**: replaced with `\|D\| < eps·max(1, normA²)` where eps=1e-10; new test: A=[[0.1,0.3],[0.3,0.9]] correctly classified as "Degenerate (zero eigenvalue)". |
+| T-1 | particle-in-box | MED | ⟨x⟩_n = L/2 never numerically verified. | **RESOLVED (8c)**: Simpson integration of x·\|ψ_n\|² for n=1,2,3; tolerance 1e-8 rel to L. |
+| T-2 | particle-in-box | MED | `cdf(L, n) ≈ 1` never tested. | **RESOLVED (8c)**: `cdf(L,n)≈1 ±1e-6` for n=1,2,3. |
+| T-3 | carnot | MED | `copRefrigerator(Tc=0) = 0` never tested. | **RESOLVED (8c)**: test added; Tc/(Th−Tc)=0 exact when Tc=0. |
+| T-4 | drift-diffusion | MED | Large-μ limits P+→1, meanFPT→a/μ untested. | **RESOLVED (8c)**: test at μ=10; P+>1−1e-8, \|FPT−a/μ\|<1e-9 (derived from exp(−20) asymptotic). |
+| T-5 | competitive-exclusion | MED | r1≠r2 Jacobian untested. | **RESOLVED (8c)**: r1=1, r2=2; K=100, α=0.5; eigenvalues −1±1/√3 ±1e-10; derivation in anchors-phase8.mjs. |
+| Q-5 | CompetitiveExclusionModel.js:72 | LOW | `outcome` returned string `'undefined'`. | **RESOLVED (8c)**: changed to `'unknown'`; test asserts `notStrictEqual(outcome,'undefined')`. |
+| E-4 | DriftDiffusionModel.js | LOW | `t0 < 0` not validated. | **RESOLVED (8c)**: RangeError thrown when t0<0; test added. |
+| E-5 | ParticleInBoxModel.js | LOW | `cdf(xMax > L)` not guarded. | **RESOLVED (8c)**: `xMax = Math.min(Math.max(xMax, 0), L)` before integration; test passes xMax=2L. |
 
 ---
 
 ## Section 4: Independent review-agent findings
 
 Review agent ran in fresh context over all Phase 8 model, test, and core files.
-Full 25-finding report; abbreviated to key items here.
+Full 25-finding report; each finding tagged with Phase 8c disposition.
 
 ### HIGH severity
 
 **F-1 — `stationaryN` uses wrong matrix convention (MarkovModel.js:112–126)**
 The n-state `stationaryN` loop `vNext[j] += v[i] * P[i][j]` computes v·P (left multiply),
-while the docstring says "power iteration on Pᵀ". The 2-state `powerIterate` builds an
-explicit PT and multiplies PT·v (right multiply). The two methods use opposite conventions;
-both converge to the left stationary distribution of P, so output is correct for ergodic
-row-stochastic matrices, but a column-stochastic P would silently produce a wrong result.
-**Recommendation:** align comment with actual operation and document the convention.
+while the docstring said "power iteration on Pᵀ". The 2-state `powerIterate` builds an
+explicit PT and multiplies PT·v (right multiply). Both converge correctly for ergodic
+row-stochastic matrices, but convention mismatch was misleading.
+**Disposition: FIXED (8c)** — comment aligned; non-symmetric P test confirms left-eigenvector output and verifies right≠left.
 
 ### MED severity
 
 **F-2 — `nullcline2` undefined at a21=0** (CompetitiveExclusionModel.js:126)
-Constructor allows a21=0 (only rejects a21<0). `nullcline2()` returns `{ intercept: K2/a21, slope: -1/a21 }` = `{Infinity, -Infinity}` silently.
+Constructor allows a21=0 (only rejects a21<0). `nullcline2()` returned `{Infinity, -Infinity}` silently.
+**Disposition: FIXED (8c)** — α=0 returns typed sentinel (`{type:'horizontal',value:K2}` / `{type:'vertical',value:K1}`); view updated to draw these; 4 new tests.
 
 **F-3 — expm1 not implemented in general case** (PharmacokineticsModel.js:80–82)
-The class docstring explicitly documents an expm1-based catastrophic-cancellation fix for
-`(e^{-ke·t} − e^{-ka·t})` at small t; the actual code uses plain subtraction. The expm1 path
-exists only for the ka≈ke limit (line 75). The comment creates a false assurance.
+Docstring documented the expm1 cancellation fix; code used plain subtraction.
+**Disposition: FIXED (8c)** — expm1 form: `exp(-ke·t)·(−expm1(-(ka−ke)·t))`; small-t Taylor test ±1e-14 rel.
 
 **F-4 — `D === 0` uses exact float equality** (PhasePlaneModel.js:52)
-The degenerate-zero-eigenvalue branch compares `det === 0` without tolerance. A near-singular
-matrix will fall through to the spiral/node branches and be misclassified.
+Near-singular matrices fall through to wrong branch.
+**Disposition: FIXED (8c)** — `|D| < eps·max(1,normA²)` with eps=1e-10; decimal-det test added.
 
 **T-3 — `COP_ref(Tc=0)` not tested** (carnot.test.js)
-The test `COP_hp(Tc=0) = 1` exists, but `COP_ref(Tc=0) = Tc/(Th-Tc) = 0` is not asserted.
+**Disposition: FIXED (8c)** — test `COP_ref(T_c=0) = 0 ±1e-15 (T-3)` added.
 
 **T-4 — Large-μ limit untested** (drift-diffusion.test.js)
-For large μ/σ², P+ → 1 and meanFPT → a/μ. Neither limit is tested.
+**Disposition: FIXED (8c)** — P+>1−1e-8 and |meanFPT−a/μ|<1e-9 at μ=10; tolerances derived from exp(−20).
 
 **T-5 — r1 ≠ r2 untested** (competitive-exclusion.test.js)
-Every test uses default r1=r2=1. The Jacobian formula uses r1 and r2 explicitly; a regression
-swapping r1/r2 in the Jacobian rows would go undetected.
+**Disposition: FIXED (8c)** — r1=1, r2=2; eigenvalues −1±1/√3; anchors derivation in anchors-phase8.mjs T-5 section.
 
 ### LOW severity
 
-- **E-4:** `t0 < 0` not validated in DriftDiffusionModel constructor.
-- **E-5:** `cdf(xMax > L)` not guarded in ParticleInBoxModel.
-- **N-1:** `tMix` loop calls `|λ₂|**k` up to 10,000 times; cumulative multiply would be faster.
-- **Q-4:** `t > 100` safety cap in `simulate` is undocumented relative to expected FPT scale.
-- **Q-5:** `outcome` returns string `'undefined'` (misleading sentinel).
+- **E-4:** `t0 < 0` not validated in DriftDiffusionModel constructor. **FIXED (8c)** — RangeError added.
+- **E-5:** `cdf(xMax > L)` not guarded in ParticleInBoxModel. **FIXED (8c)** — clamp added; test passes xMax=2L.
+- **N-1:** `tMix` loop calls `|λ₂|**k` up to 10,000 times; cumulative multiply would be faster. **DEFERRED** — performance-only; correctness unaffected; candidate for Phase 9 cleanup.
+- **Q-4:** `t > 100` safety cap in `simulate` is undocumented relative to expected FPT scale. **DEFERRED** — low risk; no test added; Phase 9 candidate.
+- **Q-5:** `outcome` returns string `'undefined'` (misleading sentinel). **FIXED (8c)** — changed to `'unknown'`.
 
 ---
 
 ## Section 5: Test-name tables
 
-### particle-in-box.test.js (18 tests)
+### particle-in-box.test.js (21 tests)
 
-| Test name |
-|---|
-| E_1(L=1nm) ≈ 6.0247e-20 J ±1e-27 |
-| E_1 in eV ≈ 0.376030 ±1e-5 eV |
-| E_2/E_1 = 4 ±1e-15 rel |
-| E_3/E_1 = 9 ±1e-15 rel |
-| photon λ(2→1) at L=1nm ≈ 1099 nm ±1 nm |
-| normalization n=1 ±1e-8 (Simpson) |
-| normalization n=2 ±1e-8 (Simpson) |
-| orthogonality ψ₁·ψ₂ ±1e-8 (Simpson) |
-| P(0<x<L/3) n=1 ≈ 0.195501 ±1e-6 |
-| \<x²\>_1 = L²(1/3−1/(2π²)) ±1e-12 rel |
-| \<x²\>_2 = L²(1/3−1/(8π²)) ±1e-12 rel |
-| \<x²\>_3 = L²(1/3−1/(18π²)) ±1e-12 rel |
-| P(0<x<L/3) n=2 = 1/3 + √3/(8π) ±1e-6 |
-| P(0<x<L/3) n=3 = 1/3 exactly ±1e-6 |
-| E_1(2L)/E_1(L) = 0.25 ±1e-15 rel |
-| energies strictly increasing for n=1..5 |
-| n<1 → RangeError |
-| n=0.5 (non-integer) → RangeError |
+| Test name | Phase |
+|---|---|
+| E_1(L=1nm) ≈ 6.0247e-20 J ±1e-27 | 8 |
+| E_1 in eV ≈ 0.376030 ±1e-5 eV | 8 |
+| E_2/E_1 = 4 ±1e-15 rel | 8 |
+| E_3/E_1 = 9 ±1e-15 rel | 8 |
+| photon λ(2→1) at L=1nm ≈ 1099 nm ±1 nm | 8 |
+| normalization n=1 ±1e-8 (Simpson) | 8 |
+| normalization n=2 ±1e-8 (Simpson) | 8 |
+| orthogonality ψ₁·ψ₂ ±1e-8 (Simpson) | 8 |
+| P(0<x<L/3) n=1 ≈ 0.195501 ±1e-6 | 8 |
+| \<x²\>_1 = L²(1/3−1/(2π²)) ±1e-12 rel | 8b |
+| \<x²\>_2 = L²(1/3−1/(8π²)) ±1e-12 rel | 8b |
+| \<x²\>_3 = L²(1/3−1/(18π²)) ±1e-12 rel | 8b |
+| P(0<x<L/3) n=2 = 1/3 + √3/(8π) ±1e-6 | 8b |
+| P(0<x<L/3) n=3 = 1/3 exactly ±1e-6 | 8b |
+| E_1(2L)/E_1(L) = 0.25 ±1e-15 rel | 8b |
+| energies strictly increasing for n=1..5 | 8b |
+| n<1 → RangeError | 8 |
+| n=0.5 (non-integer) → RangeError | 8 |
+| \<x\>_n = L/2 ±1e-8 for n=1,2,3 (Simpson N=10000) | **8c** |
+| cdf(L,n)≈1 ±1e-6 for n=1,2,3 (total probability = 1) | **8c** |
+| cdf(xMax>L) clamped to cdf(L)≈1 ±1e-6 (E-5 guard) | **8c** |
 
-### carnot.test.js (16 tests)
+### carnot.test.js (17 tests)
 
-| Test name |
-|---|
-| η(T_h=500, T_c=300) = 0.4 ±1e-15 |
-| η(T_h=500, T_c=0) = 1.0 ±1e-15 |
-| COP_hp(500,300) = 2.5 ±1e-10 |
-| COP_ref(500,300) = 1.5 ±1e-10 |
-| COP_hp − COP_ref = 1 ±1e-15 |
-| η × COP_hp = 1 ±1e-15 |
-| COP_hp(T_c=0) = 1 ±1e-15 |
-| T-S shoelace area = W = (T_h−T_c)·ΔS ±1e-10 |
-| η monotone decreasing: η(100) > η(200) > η(300) at T_h=500 |
-| T_c >= T_h → RangeError |
-| T_c,max for η=0.33, T_h=873.15 K: T_c = T_h·(1−η) ≈ 585.0 K ±0.2 |
-| Clausius equality: Q_h/T_h = Q_c/T_c = dS ±1e-10 |
-| W = Q_h − Q_c ±1e-10 |
-| T_c < 0 → RangeError (absolute zero) |
-| T_h ≤ 0 → RangeError |
-| NaN inputs → RangeError |
+| Test name | Phase |
+|---|---|
+| η(T_h=500, T_c=300) = 0.4 ±1e-15 | 8 |
+| η(T_h=500, T_c=0) = 1.0 ±1e-15 | 8 |
+| COP_hp(500,300) = 2.5 ±1e-10 | 8 |
+| COP_ref(500,300) = 1.5 ±1e-10 | 8 |
+| COP_hp − COP_ref = 1 ±1e-15 | 8 |
+| η × COP_hp = 1 ±1e-15 | 8 |
+| COP_hp(T_c=0) = 1 ±1e-15 | 8 |
+| T-S shoelace area = W = (T_h−T_c)·ΔS ±1e-10 | 8 |
+| η monotone decreasing: η(100) > η(200) > η(300) at T_h=500 | 8 |
+| T_c >= T_h → RangeError | 8 |
+| T_c,max for η=0.33, T_h=873.15 K: T_c = T_h·(1−η) = 585.0105 K ±1e-10 | 8b |
+| Clausius equality: Q_h/T_h = Q_c/T_c = dS ±1e-10 | 8b |
+| W = Q_h − Q_c ±1e-10 | 8b |
+| T_c < 0 → RangeError (absolute zero) | 8b |
+| T_h ≤ 0 → RangeError | 8b |
+| NaN inputs → RangeError | 8b |
+| COP_ref(T_c=0) = 0 ±1e-15 (T-3) | **8c** |
 
 ### tests/core/eigen2x2.test.js (6 tests)
 
@@ -333,116 +382,127 @@ swapping r1/r2 in the Jacobian rows would go undetected.
 | star node [[2,0],[0,2]]: repeated=true, defective=false |
 | eigen2x2 vs jacobiEigen on [[2,1],[1,2]]: eigenvalues match ±1e-10 |
 
-### markov-chains.test.js (21 tests)
+### markov-chains.test.js (22 tests)
 
-| Test name |
-|---|
-| π₀ = q/(p+q) = 4/7 ±1e-10 |
-| π₁ = p/(p+q) = 3/7 ±1e-10 |
-| λ₂ = 1-p-q = 0.3 ±1e-15 |
-| spectral gap = p+q = 0.7 ±1e-15 |
-| π·P = π residual ±1e-14 |
-| detailed balance π₀·p = π₁·q ±1e-12 |
-| exact TV(4) ≤ 0.01 → t_mix(0.01) = 4 |
-| TV(3) > 0.01 (t_mix not 3) |
-| power iteration converges to π ±1e-10 |
-| p=q=0.6 (p+q>1): λ₂ = -0.2 ±1e-15 |
-| p=q=0: stationary is null (no unique π) |
-| 3-state preset: π·P = π ±1e-10 |
-| 3-state second eigenvalue = 0.5 ±1e-10 (via ratio TV step test) |
-| LPW upper bound 7.789 ≥ exact t_mix 4 (p=0.3, q=0.4, ε=0.01) |
-| p=q=1: λ₂ = -1 ±1e-15 (periodic chain) |
-| p=q=1: tMix(0.01) = Infinity (never mixes) |
-| p outside [0,1] → RangeError |
-| q outside [0,1] → RangeError |
-| 3-state preset: π = [1/4, 1/2, 1/4] by value ±1e-10 |
-| 3-state preset: π·P = π ±1e-14 (stationarity by algebraic identity) |
-| 3-state preset: eigenvalues include 1, 0.5, 0 (verified via det(P−λI)=0) |
+| Test name | Phase |
+|---|---|
+| π₀ = q/(p+q) = 4/7 ±1e-10 | 8 |
+| π₁ = p/(p+q) = 3/7 ±1e-10 | 8 |
+| λ₂ = 1-p-q = 0.3 ±1e-15 | 8 |
+| spectral gap = p+q = 0.7 ±1e-15 | 8 |
+| π·P = π residual ±1e-14 | 8 |
+| detailed balance π₀·p = π₁·q ±1e-12 | 8 |
+| exact TV(4) ≤ 0.01 → t_mix(0.01) = 4 | 8 |
+| TV(3) > 0.01 (t_mix not 3) | 8 |
+| power iteration converges to π ±1e-10 | 8 |
+| p=q=0.6 (p+q>1): λ₂ = -0.2 ±1e-15 | 8 |
+| p=q=0: stationary is null (no unique π) | 8 |
+| 3-state preset: π·P = π ±1e-10 | 8 |
+| 3-state second eigenvalue = 0.5 ±1e-10 (via ratio TV step test) | 8 |
+| LPW upper bound 7.789 ≥ exact t_mix 4 (p=0.3, q=0.4, ε=0.01) | 8b |
+| p=q=1: λ₂ = -1 ±1e-15 (periodic chain) | 8b |
+| p=q=1: tMix(0.01) = Infinity (never mixes) | 8b |
+| p outside [0,1] → RangeError | 8b |
+| q outside [0,1] → RangeError | 8b |
+| 3-state preset: π = [1/4, 1/2, 1/4] by value ±1e-10 | 8b |
+| 3-state preset: π·P = π ±1e-14 (stationarity by algebraic identity) | 8b |
+| 3-state preset: eigenvalues include 1, 0.5, 0 (verified via det(P−λI)=0) | 8b |
+| stationaryN row-vector convention: π·P=π ±1e-10 for non-symmetric P | **8c** |
 
-### drift-diffusion.test.js (10 tests)
+### drift-diffusion.test.js (12 tests)
 
-| Test name |
-|---|
-| P+(μ=1,a=1,σ=1) ±1e-6 |
-| RT_mean(μ=1,a=1,σ=1,t0=0.3) ±1e-6 |
-| P+(μ=0) = 0.5 ±1e-15 |
-| E[T](μ=0) = a²/σ² = 1 ±1e-10 |
-| E[T] continuity: μ=1e-8 ≈ a²/σ² ±1e-10 |
-| σ<=0 → RangeError |
-| a<=0 → RangeError |
-| RT_mean > t₀ |
-| simulation P+ within 4√(p(1-p)/N) of formula (N=5000, seed=42) |
-| dt-halving: P+ converges (|dt - dt/2| > |dt/2 - dt/4|) |
+| Test name | Phase |
+|---|---|
+| P+(μ=1,a=1,σ=1) ±1e-6 | 8 |
+| RT_mean(μ=1,a=1,σ=1,t0=0.3) ±1e-6 | 8 |
+| P+(μ=0) = 0.5 ±1e-15 | 8 |
+| E[T](μ=0) = a²/σ² = 1 ±1e-10 | 8 |
+| E[T] continuity: μ=1e-8 ≈ a²/σ² ±1e-10 | 8 |
+| σ<=0 → RangeError | 8 |
+| a<=0 → RangeError | 8 |
+| RT_mean > t₀ | 8 |
+| simulation P+ within 4√(p(1-p)/N) of formula (N=5000, seed=42) | 8 |
+| dt-halving: P+ converges (\|dt - dt/2\| > \|dt/2 - dt/4\|) | 8 |
+| t0 < 0 → RangeError | **8c** |
+| large-μ: P+ → 1 and meanFPT → a/μ at μ=10 (a=σ=1) | **8c** |
 
-### phase-plane.test.js (20 tests)
+### phase-plane.test.js (21 tests)
 
-| Test name |
-|---|
-| stable node [[-1,0],[0,-2]]: τ=-3 ±1e-15 |
-| center [[0,-1],[1,0]]: Δ=1 ±1e-15 |
-| stable spiral [[-1,-1],[1,-1]]: disc = -4 ±1e-15 |
-| saddle [[1,0],[0,-1]]: Δ=-1 ±1e-15 |
-| unstable node [[1,0],[0,2]]: τ=3 ±1e-15 |
-| star node [[2,0],[0,2]]: repeated=true, defective=false |
-| τ=Δ=0 classification = "Fully degenerate" |
-| spiral \|x(2π)\| = e^{-2π} ±1e-6 (A=[[-1,-1],[1,-1]], x0=[1,0]) |
-| center \|x(2π)\| = 1 ±1e-5 (A=[[0,-1],[1,0]], x0=[1,0]) |
-| nonlinear r(1) = 1/√3 ±1e-6 (μ=-1, r₀=1, t=1) |
-| classification: stable node for [[-1,0],[0,-2]] |
-| classification: unstable node for [[1,0],[0,2]] |
-| classification: stable spiral for [[-1,-1],[1,-1]] |
-| classification: unstable spiral for [[1,-1],[1,1]] |
-| classification: center for [[0,-1],[1,0]] |
-| classification: saddle for [[1,0],[0,-1]] |
-| classification: stable star node for [[-2,0],[0,-2]] |
-| spiral dt-halving: \|x(2π)\| converges as dt halves |
-| nonlinear r(1) dt-halving: convergence to 1/√3 |
-| vectorField: every point satisfies dx=A*x (μ=0) |
+| Test name | Phase |
+|---|---|
+| stable node [[-1,0],[0,-2]]: τ=-3 ±1e-15 | 8 |
+| center [[0,-1],[1,0]]: Δ=1 ±1e-15 | 8 |
+| stable spiral [[-1,-1],[1,-1]]: disc = -4 ±1e-15 | 8 |
+| saddle [[1,0],[0,-1]]: Δ=-1 ±1e-15 | 8 |
+| unstable node [[1,0],[0,2]]: τ=3 ±1e-15 | 8 |
+| star node [[2,0],[0,2]]: repeated=true, defective=false | 8 |
+| τ=Δ=0 classification = "Fully degenerate" | 8 |
+| spiral \|x(2π)\| = e^{-2π} ±1e-6 (A=[[-1,-1],[1,-1]], x0=[1,0]) | 8b |
+| center \|x(2π)\| = 1 ±1e-5 (A=[[0,-1],[1,0]], x0=[1,0]) | 8b |
+| nonlinear r(1) = 1/√3 ±1e-6 (μ=-1, r₀=1, t=1) | 8b |
+| classification: stable node for [[-1,0],[0,-2]] | 8b |
+| classification: unstable node for [[1,0],[0,2]] | 8b |
+| classification: stable spiral for [[-1,-1],[1,-1]] | 8b |
+| classification: unstable spiral for [[1,-1],[1,1]] | 8b |
+| classification: center for [[0,-1],[1,0]] | 8b |
+| classification: saddle for [[1,0],[0,-1]] | 8b |
+| classification: stable star node for [[-2,0],[0,-2]] | 8b |
+| classification: D≈0 from decimal arithmetic → Degenerate (zero eigenvalue) | **8c** |
+| spiral dt-halving: error ratio in [12,20] (RK4 Richardson) | 8b |
+| nonlinear r(1) dt-halving: convergence to 1/√3 (μ=-1, r₀=1) | 8b |
+| vectorField: every point satisfies dx=A*x (μ=0) | 8b |
 
-### competitive-exclusion.test.js (19 tests)
+### competitive-exclusion.test.js (25 tests)
 
-| Test name |
-|---|
-| coexistence N₁* = 200/3 ±1e-10 (K=100, α=0.5) |
-| coexistence N₂* = 200/3 ±1e-10 (K=100, α=0.5) |
-| counterexample N₂* = -200 ±1e-10 (α₁₂=0.5, α₂₁=1.5) |
-| counterexample outcome is sp1-wins |
-| sp2-wins: α₁₂=1.5, α₂₁=0.5 → N₁*=-200 ±1e-10 |
-| Jacobian eigenvalues at coexistence: -1 and -1/3 ±1e-10 |
-| α=1 parallel nullclines: outcome = parallel |
-| α=1 parallel nullclines: trajectory from (10,20) → N₁≈33.3, N₂≈66.7 ±1% |
-| RK4 convergence to coexistence ±1% of N* at t=100 |
-| bistable N₁* = N₂* = 40 ±1e-10 (K=100, α=1.5) |
-| bistable outcome = "bistable" (α12=α21=1.5) |
-| bistable Jacobian eigenvalues = +0.2 and -1 ±1e-10 |
-| bistable (60,40) → sp1 wins at t=300 (N₂<1, N₁>50) |
-| bistable (40,60) → sp2 wins at t=300 (N₁<1, N₂>50) |
-| grid sweep: formula outcome matches RK4 for 3 deterministic cases |
-| coexistence dt-halving: \|N₁(10) − N₁_fine\| decreases as dt halves |
-| K1 ≤ 0 → RangeError |
-| K2 ≤ 0 → RangeError |
-| α < 0 → RangeError |
+| Test name | Phase |
+|---|---|
+| coexistence N₁* = 200/3 ±1e-10 (K=100, α=0.5) | 8 |
+| coexistence N₂* = 200/3 ±1e-10 (K=100, α=0.5) | 8 |
+| counterexample N₂* = -200 ±1e-10 (α₁₂=0.5, α₂₁=1.5) | 8 |
+| counterexample outcome is sp1-wins | 8 |
+| sp2-wins: α₁₂=1.5, α₂₁=0.5 → N₁*=-200 ±1e-10 | 8 |
+| Jacobian eigenvalues at coexistence: -1 and -1/3 ±1e-10 | 8 |
+| α=1 parallel nullclines: outcome = parallel | 8 |
+| α=1 parallel nullclines: trajectory from (10,20) → N₁≈33.3, N₂≈66.7 ±1% | 8 |
+| RK4 convergence to coexistence ±1% of N* at t=100 | 8 |
+| bistable N₁* = N₂* = 40 ±1e-10 (K=100, α=1.5) | 8b |
+| bistable outcome = "bistable" (α12=α21=1.5) | 8b |
+| bistable Jacobian eigenvalues = +0.2 and -1 ±1e-10 | 8b |
+| bistable (60,40) → sp1 wins at t=300: \|N₁−100\|<1e-6 and N₂<1e-6 | 8b→**8c** |
+| bistable (40,60) → sp2 wins at t=300: \|N₂−100\|<1e-6 and N₁<1e-6 | 8b→**8c** |
+| grid sweep: formula outcome matches RK4 for all deterministic α pairs | 8b→**8c** |
+| coexistence dt-halving: \|N₁(10) − N₁_fine\| decreases as dt halves | 8b |
+| K1 ≤ 0 → RangeError | 8b |
+| K2 ≤ 0 → RangeError | 8b |
+| α < 0 → RangeError | 8b |
+| r1≠r2: Jacobian eigenvalues = -1±1/√3 ±1e-10 (r1=1, r2=2, K=100, α=0.5) | **8c** |
+| outcome string is "unknown" not "undefined" for unreachable path | **8c** |
+| α21=0: nullcline2 is horizontal at K2 (no Infinity) | **8c** |
+| α12=0: nullcline1 is vertical at K1 (no Infinity) | **8c** |
+| α12=α21=0: outcome coexistence, N1*=K1, N2*=K2 (independent species) | **8c** |
+| α21=0: trajectory → N2 converges to K2, independent of N1 ±1% | **8c** |
 
-### pharmacokinetics.test.js (16 tests)
+### pharmacokinetics.test.js (17 tests)
 
-| Test name |
-|---|
-| IV: C₀ = D/Vd ±1e-15 relative |
-| IV: C(5h) = C₀·e^{-ke·5} ±1e-8 relative (ke=0.1) |
-| IV: t½ = ln2/ke ±1e-10 relative (ke=0.1) |
-| IV: AUC = C₀/ke ±1e-6 relative (ke=0.1, D=100, Vd=10) |
-| IV: strictly decreasing concentration curve |
-| Oral: tMax = ln(ka/ke)/(ka-ke) ±1e-10 (ka=1, ke=0.1) |
-| Oral: dC/dt ≈ 0 at tMax ±1e-6 relative to C(tMax) (ka=1, ke=0.1) |
-| Oral: AUC = F·D/(Vd·ke) ±1e-6 relative (F=0.8, ke=0.1, D=100, Vd=10) |
-| Oral/IV: AUC_oral / AUC_IV = F ±1e-10 (F=0.8) |
-| ka=ke limit: C(t) is continuous as ka→ke ±1e-6 relative (ke=ka=0.1) |
-| Flip-flop symmetry: ke·C(t;ka,ke) = ka·C(t;ke,ka) ±1e-10 relative |
-| Accumulation R(τ=t½) with t½=24h, τ=12h: R = 2+√2 ±1e-6 |
-| ke ≤ 0 → RangeError |
-| ka ≤ 0 → RangeError |
-| Vd ≤ 0 → RangeError |
-| F outside (0,1] → RangeError |
+| Test name | Phase |
+|---|---|
+| IV: C₀ = D/Vd ±1e-15 relative | 8 |
+| IV: C(5h) = C₀·e^{-ke·5} ±1e-8 relative (ke=0.1) | 8 |
+| IV: t½ = ln2/ke ±1e-10 relative (ke=0.1) | 8 |
+| IV: AUC = C₀/ke ±1e-6 relative (ke=0.1, D=100, Vd=10) | 8 |
+| IV: strictly decreasing concentration curve | 8 |
+| Oral: tMax = ln(ka/ke)/(ka-ke) ±1e-10 (ka=1, ke=0.1) | 8 |
+| Oral: dC/dt ≈ 0 at tMax ±1e-6 relative to C(tMax) (ka=1, ke=0.1) | 8 |
+| Oral: AUC = F·D/(Vd·ke) ±1e-6 relative (F=0.8, ke=0.1, D=100, Vd=10) | 8 |
+| Oral/IV: AUC_oral / AUC_IV = F ±1e-10 (F=0.8) | 8 |
+| ka=ke limit: C(t) is continuous as ka→ke ±1e-6 relative (ke=ka=0.1) | 8 |
+| Flip-flop symmetry: ke·C(t;ka,ke) = ka·C(t;ke,ka) ±1e-10 relative | 8 |
+| Accumulation R(τ=t½) with t½=24h, τ=12h: R = 2+√2 ±1e-6 | 8 |
+| ke ≤ 0 → RangeError | 8b |
+| ka ≤ 0 → RangeError | 8b |
+| Vd ≤ 0 → RangeError | 8b |
+| F outside (0,1] → RangeError | 8b |
+| Oral C(t=1e-6) vs Taylor series ±1e-14 relative (expm1 stability) | **8c** |
 
 ---
 
@@ -450,16 +510,16 @@ swapping r1/r2 in the Jacobian rows would go undetected.
 
 Each formula verified in `tools/anchors-phase8.mjs` (no model code). Run: `node tools/anchors-phase8.mjs`.
 
-1. **E_n = n²π²ℏ²/(2m_eL²):** Schrödinger equation with infinite-well BC. E_1=0.376030 eV ✓. m_e = CODATA 2018 (unverified; CODATA 2022 fetch unavailable).
+1. **E_n = n²π²ℏ²/(2m_eL²):** Schrödinger equation with infinite-well BC. E_1=0.376030 eV ✓. m_e = 9.1093837139e-31 kg (CODATA 2022, **fetched 2026-10-16 from physics.nist.gov**; Δ=+1.36 ppb vs CODATA 2018). ⟨x⟩_n = L/2 verified by Simpson; cdf(L,n)=1 verified; cdf(xMax>L) guard added (Phase 8c).
 2. **photon λ = hc/(E_2−E_1):** hc = 1239.842 eV·nm; λ = 1239.842/(3·0.376030) ≈ 1099 nm ✓.
-3. **η = 1−T_c/T_h:** COP_hp−COP_ref = T_h/W − T_c/W = 1 algebraically ✓. COP_ref(Tc=0) = 0 (see gap T-3).
+3. **η = 1−T_c/T_h:** COP_hp−COP_ref = T_h/W − T_c/W = 1 algebraically ✓. COP_ref(Tc=0) = Tc/(Th−Tc) = 0 verified (Phase 8c T-3). T_c,max tolerance tightened to ±1e-10.
 4. **λ₂=1−p−q:** Char poly of [[1-p,p],[q,1-q]]. t_mix(0.01)=4 via exact TV formula ✓. LPW bound = tRel·ln(1/(ε·π_min)) = (1/0.7)·ln(233.33) ≈ 7.789 ✓.
 5. **p=q=0.6: λ₂=−0.2 (oscillating).** Negative λ₂ means alternating-sign TV decay; not fully periodic (that requires |λ₂|=1).
 6. **P+(μ=0)=0.5 and E[T]=a²/σ²:** L'Hôpital limits ✓. Continuity at μ=1e-8: residual = z²/3 ≈ 3e-17 ✓.
 7. **r(t)=r₀/√(1−2μr₀²t):** Separation of variables on ṙ=μr³. r(1)=1/√3 at μ=−1, r₀=1 ✓.
 8. **N* = (K₁−α₁₂K₂)/(1−α₁₂α₂₁):** Nullcline intersection. Bistable: K=100, α=1.5 → N*=40 ✓. λ_J = +0.2 and −1 ✓.
 9. **C₀ = D/Vd = 100/10 = 10 mg/L** (fixed from 100). AUC_IV = 100 mg·h/L ✓. C(5h) = 6.0653 mg/L ✓.
-10. **R = 1/(1−e^{-ke·τ}):** ke=ln2/24, τ=12 → R = 2+√2 ✓. Flip-flop: ke·C(t;ka,ke) = ka·C(t;ke,ka) algebraically ✓.
+10. **R = 1/(1−e^{-ke·τ}):** ke=ln2/24, τ=12 → R = 2+√2 ✓. Flip-flop: ke·C(t;ka,ke) = ka·C(t;ke,ka) algebraically ✓. Bateman function now uses expm1 form `exp(-ke·t)·(−expm1(-(ka−ke)·t))` for numerical stability at small t (Phase 8c F-3); small-t Taylor test ±1e-14 rel added.
 
 ---
 
@@ -476,47 +536,49 @@ Verified at HEAD by `npm test` and `npm run smoke`:
 
 ## Section 8: npm test summary
 
-Phase 8b final state:
+Phase 8c final state:
 
 ```
-# tests 740
+# tests 755
 # suites 16
-# pass 740
+# pass 755
 # fail 0
-# duration_ms ~1618
+# duration_ms ~1600
 ```
 
-Test counts per file (phase-8b state):
+Test counts per file (phase-8c state):
 
-| File | Tests |
-|---|---|
-| particle-in-box.test.js | 18 |
-| carnot.test.js | 16 |
-| eigen2x2.test.js (new) | 6 |
-| markov-chains.test.js | 21 |
-| drift-diffusion.test.js | 10 |
-| phase-plane.test.js | 20 |
-| competitive-exclusion.test.js | 19 |
-| pharmacokinetics.test.js | 16 |
-| **Phase 8b subtotal** | **126** (78 from phase-8 + 48 from phase-8b) |
+| File | 8 | 8b | 8c | Total |
+|---|---|---|---|---|
+| particle-in-box.test.js | 14 | 4 | 3 | **21** |
+| carnot.test.js | 10 | 6 | 1 | **17** |
+| eigen2x2.test.js | — | 6 | — | **6** |
+| markov-chains.test.js | 13 | 8 | 1 | **22** |
+| drift-diffusion.test.js | 10 | 0 | 2 | **12** |
+| phase-plane.test.js | 7 | 13 | 1 | **21** |
+| competitive-exclusion.test.js | 9 | 10 | 6 | **25** |
+| pharmacokinetics.test.js | 12 | 4 | 1 | **17** |
+| **Phase 8 all files subtotal** | **75** | **51** | **15** | **141** |
+
+(75+51+15 = 141 new Phase 8 tests on top of 614 from phase-7b = 755 total)
 
 ---
 
 ## Section 9: Open questions and Phase 9 items
 
-1. **m_e CODATA 2022:** CODATA 2022 data is available but the NIST CGI endpoint returned HTML
-   rather than parseable ASCII during this session. Value 9.1093837015e-31 kg is from CODATA 2018
-   and is likely unchanged (≤ 0.1 ppb revision), but marked **unverified** in anchors-phase8.mjs.
+1. **m_e CODATA 2022:** ~~RESOLVED in Phase 8c.~~ Value updated from 9.1093837015e-31 (CODATA 2018) to
+   9.1093837139e-31 kg (CODATA 2022), fetched 2026-10-16 from physics.nist.gov.
+   Difference: +1.36 ppb (the earlier draft claim of "≤ 0.1 ppb" was wrong — see SOURCES.md).
 
 2. **Bateman (1910) attribution:** The Bateman function is cited in PharmacokineticsModel.js
    but not fetched. The formula itself is standard; the attribution is an academic note.
+   expm1 fix now implemented and tested (Phase 8c F-3).
 
-3. **stationaryN convention (F-1):** The most impactful open item: the comment/code mismatch
-   means a caller passing a column-stochastic P would get silently wrong results. Low risk in
-   practice (all internal callers use row-stochastic matrices), but misleading.
+3. ~~**stationaryN convention (F-1):**~~ **RESOLVED (8c)** — comment aligned; test for
+   non-symmetric P confirms left-eigenvector output (π·P=π) and verifies P·π≠π.
 
-4. **PhasePlaneModel D===0 (F-4):** Near-singular matrices will misclassify. This is a latent
-   bug for near-degenerate matrices passed from the UI (slider at near-zero determinant).
+4. ~~**PhasePlaneModel D===0 (F-4):**~~ **RESOLVED (8c)** — replaced with eps-tolerance
+   comparison; decimal-det test added (A=[[0.1,0.3],[0.3,0.9]] correctly classified).
 
 5. **Phase 9 candidates** (from ROADMAP): entropy-mixing, stdp, cable-equation, random-walk,
    solow, opinion-dynamics, age-structure, Complex.js infrastructure.

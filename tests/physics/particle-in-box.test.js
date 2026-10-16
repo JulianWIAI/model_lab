@@ -5,7 +5,7 @@ import { ParticleInBoxModel } from '../../js/benches/physics/quantum/particle-in
 // Anchor constants (independent — no model import)
 const H_JS = 6.62607015e-34;
 const HBAR = H_JS / (2 * Math.PI);
-const ME   = 9.1093837015e-31;
+const ME   = 9.1093837139e-31;    // CODATA 2022 — fetched 2026-10-16
 const EV_J = 1.602176634e-19;
 const C_SI = 299792458;
 const L1NM = 1e-9;
@@ -134,6 +134,47 @@ test('energies strictly increasing for n=1..5', () => {
     assert.ok(m.energy(k + 1) > m.energy(k),
       `E_${k+1} not > E_${k}`);
   }
+});
+
+// ── T-1: ⟨x⟩ = L/2 by symmetry ─────────────────────────────────────────────
+
+test('<x>_n = L/2 ±1e-8 for n=1,2,3 (Simpson N=10000)', () => {
+  // ∫₀ᴸ x·|ψ_n|² dx = L/2 exactly (symmetric wavefunction)
+  function simpsonX(n, L, N=10000) {
+    let s = 0;
+    const h = 1 / N;
+    const norm = 2 / L;
+    for (let i = 0; i <= N; i++) {
+      const t = i / N;
+      const x = t * L;
+      const psi2 = norm * Math.sin(n * Math.PI * t) ** 2;
+      const w = (i === 0 || i === N) ? 1 : (i % 2 === 0 ? 2 : 4);
+      s += w * x * psi2;
+    }
+    return s * h / 3 * L;
+  }
+  for (const n of [1, 2, 3]) {
+    const xMean = simpsonX(n, L1NM);
+    assert.ok(Math.abs(xMean - L1NM / 2) < 1e-8 * L1NM,
+      `<x>_${n}=${xMean}, expected=${L1NM/2}`);
+  }
+});
+
+// ── T-2: cdf(L) ≈ 1 via model ────────────────────────────────────────────────
+
+test('cdf(L,n)≈1 ±1e-6 for n=1,2,3 (total probability = 1)', () => {
+  for (const n of [1, 2, 3]) {
+    const m = new ParticleInBoxModel({ L: L1NM, n });
+    const p = m.cdf(L1NM, n);
+    assert.ok(Math.abs(p - 1) < 1e-6, `cdf(L,n=${n})=${p}`);
+  }
+});
+
+test('cdf(xMax>L) clamped to cdf(L)≈1 ±1e-6 (E-5 guard)', () => {
+  // Passing xMax > L previously integrated beyond the box (psi=0 outside, but clamp prevents it)
+  const m = new ParticleInBoxModel({ L: L1NM, n: 1 });
+  const p = m.cdf(2 * L1NM, 1);   // xMax = 2L > L — should clamp to L
+  assert.ok(Math.abs(p - 1) < 1e-6, `cdf(2L)=${p}, expected≈1`);
 });
 
 test('n<1 → RangeError', () => {

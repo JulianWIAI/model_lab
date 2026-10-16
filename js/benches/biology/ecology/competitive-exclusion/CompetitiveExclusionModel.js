@@ -56,20 +56,28 @@ export class CompetitiveExclusionModel {
   }
 
   /**
-   * Qualitative outcome.
-   * @returns {'coexistence'|'sp1-wins'|'sp2-wins'|'bistable'|'parallel'|'undefined'}
+   * Qualitative outcome based on single-species equilibrium stability.
+   *
+   * (K1, 0) is stable (sp1-wins) iff a21 > K2/K1   [sp2 cannot invade sp1's niche]
+   * (0, K2) is stable (sp2-wins) iff a12 > K1/K2   [sp1 cannot invade sp2's niche]
+   *
+   * This avoids the sign-of-N* pitfall when α₁₂·α₂₁ > 1 and the interior
+   * equilibrium is in a mixed-sign quadrant (e.g. a12=0.75, a21=1.5, K=K:
+   * N1*<0 but sp1 wins because a21>1 yet a12<1).
+   *
+   * @returns {'coexistence'|'sp1-wins'|'sp2-wins'|'bistable'|'parallel'|'unknown'}
    */
   get outcome() {
     const { a12, a21, K1, K2 } = this;
     const prod = a12 * a21;
     if (Math.abs(1 - prod) < 1e-12) return 'parallel';
-    const [N1s, N2s] = this.equilibrium;
-    if (N1s > 0 && N2s > 0) {
-      return prod < 1 ? 'coexistence' : 'bistable';
-    }
-    if (N2s <= 0) return 'sp1-wins';
-    if (N1s <= 0) return 'sp2-wins';
-    return 'undefined';
+    // Single-species equilibrium stability (invasion criterion)
+    const sp1stable = a21 > K2 / K1;  // (K1,0) stable: sp2 invasion rate < 0
+    const sp2stable = a12 > K1 / K2;  // (0,K2) stable: sp1 invasion rate < 0
+    if (!sp1stable && !sp2stable) return 'coexistence';
+    if ( sp1stable && !sp2stable) return 'sp1-wins';
+    if (!sp1stable &&  sp2stable) return 'sp2-wins';
+    return 'bistable';
   }
 
   /**
@@ -115,13 +123,21 @@ export class CompetitiveExclusionModel {
 
   /**
    * Nullcline for sp1: N₁ = K₁ − α₁₂N₂.
-   * Returns {slope, intercept} in N₂–N₁ space.
+   * When α₁₂=0: N₁ = K₁ for all N₂ (vertical line).
+   * Returns {slope, intercept} in N₂→N₁ form, or {type:'vertical', value:K₁}.
    */
-  nullcline1() { return { intercept: this.K1, slope: -this.a12 }; }
+  nullcline1() {
+    if (this.a12 === 0) return { type: 'vertical', value: this.K1 };
+    return { intercept: this.K1, slope: -this.a12 };
+  }
 
   /**
-   * Nullcline for sp2: N₂ = K₂ − α₂₁N₁  →  N₁ = (K₂ − N₂)/α₂₁.
-   * Returns a function N₂ → N₁ for plotting as N₁ on x-axis.
+   * Nullcline for sp2: N₂ = K₂ − α₂₁N₁.
+   * When α₂₁=0: N₂ = K₂ for all N₁ (horizontal line).
+   * Returns {slope, intercept} in N₁→N₂ form, or {type:'horizontal', value:K₂}.
    */
-  nullcline2() { return { intercept: this.K2 / this.a21, slope: -1 / this.a21 }; }
+  nullcline2() {
+    if (this.a21 === 0) return { type: 'horizontal', value: this.K2 };
+    return { intercept: this.K2, slope: -this.a21 };
+  }
 }

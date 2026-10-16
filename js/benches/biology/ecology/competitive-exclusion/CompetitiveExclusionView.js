@@ -35,34 +35,38 @@ export class CompetitiveExclusionView {
       yFormat: v => v.toFixed(0),
     });
 
-    // Nullcline 1: N₂ = (K₁ − N₁)/α₁₂
-    const nc1 = model.nullcline1();  // N₁-axis intercept=K1, slope for N₂ vs N₁
-    // N₂ = (K1 − a12·N2) → as function of N1: N₂ = (K1 − N1)/a12 if a12>0
-    const nc1pts = [[0, model.K1], [model.K1, 0]];
+    // Nullcline 1: N₁ = K₁ − α₁₂N₂ (vertical line N₁=K₁ when α₁₂=0)
+    const nc1 = model.nullcline1();
     c.save();
     c.strokeStyle = theme.color('--accent');
     c.lineWidth = 2;
     c.beginPath();
-    for (let i = 0; i < nc1pts.length; i++) {
-      const [n1, n2] = nc1pts[i];
-      const N2 = model.a12 > 0 ? (model.K1 - n1) / model.a12 : model.K1;
-      if (i === 0) c.moveTo(axes.x(n1), axes.y(Math.max(0, N2)));
-      else         c.lineTo(axes.x(n1), axes.y(Math.max(0, N2)));
+    if (nc1.type === 'vertical') {
+      // N₁=K₁ for all N₂
+      c.moveTo(axes.x(nc1.value), axes.y(0));
+      c.lineTo(axes.x(nc1.value), axes.y(Nmax));
+    } else {
+      // line from (0, K₁/α₁₂) to (K₁, 0)
+      c.moveTo(axes.x(0),          axes.y(model.K1 / model.a12));
+      c.lineTo(axes.x(model.K1),   axes.y(0));
     }
     c.stroke();
     c.restore();
 
-    // Nullcline 2: N₁ = (K₂ − N₂)/α₂₁
-    const N2vals = [0, Nmax];
+    // Nullcline 2: N₂ = K₂ − α₂₁N₁ (horizontal line N₂=K₂ when α₂₁=0)
+    const nc2 = model.nullcline2();
     c.save();
     c.strokeStyle = theme.color('--signal');
     c.lineWidth = 2;
     c.beginPath();
-    for (let i = 0; i < N2vals.length; i++) {
-      const N2 = N2vals[i];
-      const N1 = model.a21 > 0 ? (model.K2 - N2) / model.a21 : model.K2;
-      if (i === 0) c.moveTo(axes.x(Math.max(0, N1)), axes.y(N2));
-      else         c.lineTo(axes.x(Math.max(0, N1)), axes.y(N2));
+    if (nc2.type === 'horizontal') {
+      // N₂=K₂ for all N₁
+      c.moveTo(axes.x(0),    axes.y(nc2.value));
+      c.lineTo(axes.x(Nmax), axes.y(nc2.value));
+    } else {
+      // line from (0, K₂) to (K₂/α₂₁, 0)
+      c.moveTo(axes.x(0),              axes.y(model.K2));
+      c.lineTo(axes.x(model.K2 / model.a21), axes.y(0));
     }
     c.stroke();
     c.restore();

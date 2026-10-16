@@ -44,14 +44,24 @@ export class PhasePlaneModel {
 
   /**
    * Qualitative classification of the fixed point at origin.
+   * Uses |Δ| < ε·max(1,‖A‖²) to detect near-zero determinant robustly against
+   * floating-point rounding in decimal slider matrices (e.g. 0.1·0.9 ≠ 0.3·0.3 exactly).
    * @returns {string}
    */
   get classification() {
     const { tau, det: D, disc } = this;
-    if (D < 0) return 'Saddle';
-    if (D === 0 && tau !== 0) return 'Degenerate (zero eigenvalue)';
-    if (tau === 0 && D === 0) return 'Fully degenerate';
-    if (tau === 0 && D > 0)   return 'Center';
+    const A = this.A;
+    const normA2 = A[0][0]**2 + A[0][1]**2 + A[1][0]**2 + A[1][1]**2;
+    const eps = 1e-10 * Math.max(1, normA2);
+    const detZero = Math.abs(D) < eps;
+
+    if (!detZero && D < 0) return 'Saddle';
+    if (detZero) {
+      if (Math.abs(tau) < eps) return 'Fully degenerate';
+      return 'Degenerate (zero eigenvalue)';
+    }
+    // D > eps: positive determinant
+    if (Math.abs(tau) < eps) return 'Center';
     const { repeated, defective } = this.eigenvalues;
     if (repeated) {
       return defective

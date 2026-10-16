@@ -80,3 +80,27 @@ test('dt-halving: P+ converges (|dt - dt/2| > |dt/2 - dt/4|)', () => {
   assert.ok(Math.abs(p4 - pRef) < 0.05,
     `p4=${p4}, ref=${pRef}`);
 });
+
+
+// ── RangeError for t0 < 0 (E-4) ─────────────────────────────────────────────
+
+test('t0 < 0 → RangeError', () => {
+  assert.throws(() => new DriftDiffusionModel({ t0: -0.1 }), RangeError);
+  assert.throws(() => new DriftDiffusionModel({ t0: -1   }), RangeError);
+});
+
+// ── T-4: large-μ asymptotic limits ──────────────────────────────────────────
+// pUpper → 1, meanFPT → a/μ as μ → ∞
+// Asymptotic error at μ=10, a=1, σ=1:
+//   1 - pUpper ≈ exp(-20) ≈ 2e-9  →  tolerance 1e-8
+//   |meanFPT - a/μ| ≈ 2(a/μ)exp(-20) ≈ 4e-11  →  tolerance 1e-9
+
+test('large-μ: P+ → 1 and meanFPT → a/μ at μ=10 (a=σ=1)', () => {
+  const mu = 10, a = 1, sigma = 1;
+  const m  = new DriftDiffusionModel({ mu, sigma, a });
+  // P+ = 1/(1+exp(-2μa/σ²)); asymptotic error ≈ exp(-20) ≈ 2e-9
+  assert.ok(m.pUpper > 1 - 1e-8, `pUpper=${m.pUpper}, should be ≈ 1`);
+  // meanFPT = (a/μ)·tanh(μa/σ²); asymptotic error ≈ 2(a/μ)exp(-20) ≈ 4e-11
+  assert.ok(Math.abs(m.meanFPT - a / mu) < 1e-9,
+    `meanFPT=${m.meanFPT}, expected=${a/mu}`);
+});

@@ -61,12 +61,13 @@ test('T_c >= T_h → RangeError', () => {
 
 // ── New tests for Phase 8b ──────────────────────────────────────────────────
 
-test('T_c,max for η=0.33, T_h=873.15 K: T_c = T_h·(1−η) ≈ 585.0 K ±0.2', () => {
-  // Formula: T_c = T_h·(1−η) = 873.15·0.67 = 585.0105 K
+test('T_c,max for η=0.33, T_h=873.15 K: T_c = T_h·(1−η) = 585.0105 K ±1e-10', () => {
+  // Formula: T_c = T_h·(1−η) = 873.15·(1−0.33) = 873.15·0.67 = 585.0105 K (exact in float)
   const Th = 873.15;
   const eta = 0.33;
-  const Tc = Th * (1 - eta);
-  assert.ok(Math.abs(Tc - 585.0) < 0.2, `T_c=${Tc}`);
+  const Tc = Th * (1 - eta);  // closed-form, no rounding: 873.15 * 0.67 is exact in double
+  const expected = 873.15 * (1 - 0.33);
+  assert.ok(Math.abs(Tc - expected) < 1e-10, `T_c=${Tc}`);
   // Cross-check: build model and verify eta round-trips
   const m = new CarnotModel({ Th, Tc, dS: 1 });
   assert.ok(Math.abs(m.eta - eta) < 1e-10, `m.eta=${m.eta}, expected=${eta}`);
@@ -95,4 +96,10 @@ test('T_h ≤ 0 → RangeError', () => {
 test('NaN inputs → RangeError', () => {
   assert.throws(() => new CarnotModel({ Th: NaN, Tc: 300 }), RangeError);
   assert.throws(() => new CarnotModel({ Th: 500, Tc: NaN }), RangeError);
+});
+
+test('COP_ref(T_c=0) = 0 ±1e-15 (T-3)', () => {
+  const m = new CarnotModel({ Th: 500, Tc: 0 });
+  assert.ok(Math.abs(m.copRefrigerator - 0) < 1e-15,
+    `COP_ref=${m.copRefrigerator}`);
 });

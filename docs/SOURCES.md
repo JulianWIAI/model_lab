@@ -12,10 +12,15 @@ the value stored, where it came from, and whether the primary source was actuall
 
 ## Fundamental physical constants
 
-All values are from **NIST CODATA 2018** (`js/data/constants.js`).
+Most exact values are from **NIST CODATA 2018** (`js/data/constants.js`).
 The constants page was **not fetched** during implementation; values were taken from prior knowledge
 of CODATA 2018. The 2019 SI redefinition made c, h, e, k_B, N_A, R, F exact by definition, so
 their values are unambiguous.
+
+**m_e update (Phase 8c, 2026-10-16):** the electron mass was updated from CODATA 2018 to CODATA 2022.
+The new value was fetched directly from `https://physics.nist.gov/cuu/Constants/Table/allascii.txt`.
+CODATA 2018: 9.109 383 7015 × 10⁻³¹ kg; CODATA 2022: 9.109 383 7139 × 10⁻³¹ kg.
+Difference: +1.24 × 10⁻³⁸ kg ≈ **+1.36 ppb** (not ≤0.1 ppb as stated in an earlier review draft).
 
 | Constant | Value | Unit | Status | Notes |
 |---|---|---|---|---|
@@ -29,7 +34,7 @@ their values are unambiguous.
 | F (Faraday) | 96 485.332 12 | C/mol | secondary | Exact (= N_A · e) |
 | G (gravitational) | 6.674 30 × 10⁻¹¹ | N·m²/kg² | secondary | CODATA 2018, ±0.000 15 × 10⁻¹¹ |
 | g (standard gravity) | 9.806 65 | m/s² | secondary | Exact by convention (ISO 80000-3) |
-| m_e (electron mass) | 9.109 383 7015 × 10⁻³¹ | kg | secondary | CODATA 2018 |
+| m_e (electron mass) | 9.109 383 7139 × 10⁻³¹ | kg | **verified** | CODATA 2022 — fetched 2026-10-16 from physics.nist.gov; u = ±0.000 000 0028 × 10⁻³¹ kg |
 | m_p (proton mass) | 1.672 621 923 69 × 10⁻²⁷ | kg | secondary | CODATA 2018 |
 | m_d (deuteron mass) | 3.343 583 7724 × 10⁻²⁷ | kg | secondary | CODATA 2018 |
 | R_∞ (Rydberg) | 1.097 373 156 816 0 × 10⁷ | m⁻¹ | secondary | CODATA 2018, ±2.1 × 10⁻³ m⁻¹ |
@@ -421,7 +426,7 @@ The following items were noted as uncertain during implementation and have not b
 
 ### Particle in a box
 - E_n = n²π²ℏ²/(2·m_e·L²): algebraically exact from Schrödinger equation with infinite-well boundary conditions.
-- Constants: ℏ = 6.62607015e-34/(2π), m_e = 9.1093837015e-31 kg, eV = 1.602176634e-19 J (CODATA 2018 exact values).
+- Constants: ℏ = 6.62607015e-34/(2π), m_e = 9.1093837139e-31 kg (CODATA 2022, fetched 2026-10-16), eV = 1.602176634e-19 J (exact SI 2019).
 - Griffiths, D.J. (2005) *Introduction to Quantum Mechanics*, 2nd ed. — cited, not fetched.
 
 ### Carnot cycle

@@ -127,16 +127,31 @@ test('classification: stable star node for [[2,0],[0,2]] (reflected sign)', () =
   assert.strictEqual(m.classification, 'Stable star node');
 });
 
+test('classification: D≈0 from decimal arithmetic → Degenerate (zero eigenvalue)', () => {
+  // A = [[0.1,0.3],[0.3,0.9]]: exact det = 0.1*0.9 - 0.3*0.3 = 0 (rank-1 matrix)
+  // In floating point: 0.1*0.9 = 0.09000000000000001, 0.3*0.3 = 0.09 → det ≈ 1e-17
+  // D===0 would FAIL; tolerance |D| < eps*normA² must catch it
+  const A = [[0.1, 0.3], [0.3, 0.9]];
+  const m = new PhasePlaneModel({ A });
+  assert.strictEqual(m.classification, 'Degenerate (zero eigenvalue)');
+});
+
 // ── dt-halving convergence for spiral ─────────────────────────────────────
 
-test('spiral dt-halving: |x(2π)| converges as dt halves (A=[[-1,-1],[1,-1]])', () => {
+test('spiral dt-halving: error ratio in [12,20] (RK4 Richardson)', () => {
+  // RK4 is O(dt^4): halving dt reduces error by factor ~16.
+  // Accept [12, 20] to allow for slight anharmonicity in the integrand.
   const tMax = 2 * Math.PI;
-  const err1 = Math.abs(orbitNorm([[-1,-1],[1,-1]], [1,0], tMax, tMax/1000) - Math.exp(-tMax));
-  const err2 = Math.abs(orbitNorm([[-1,-1],[1,-1]], [1,0], tMax, tMax/2000) - Math.exp(-tMax));
-  const err3 = Math.abs(orbitNorm([[-1,-1],[1,-1]], [1,0], tMax, tMax/4000) - Math.exp(-tMax));
-  // RK4 is O(dt^4): err ratio ~16
-  assert.ok(err1 > err2, `error not decreasing: err1=${err1}, err2=${err2}`);
-  assert.ok(err2 > err3, `error not decreasing: err2=${err2}, err3=${err3}`);
+  const exact = Math.exp(-tMax);
+  const err1 = Math.abs(orbitNorm([[-1,-1],[1,-1]], [1,0], tMax, tMax/500)  - exact);
+  const err2 = Math.abs(orbitNorm([[-1,-1],[1,-1]], [1,0], tMax, tMax/1000) - exact);
+  const err3 = Math.abs(orbitNorm([[-1,-1],[1,-1]], [1,0], tMax, tMax/2000) - exact);
+  const ratio12 = err1 / err2;
+  const ratio23 = err2 / err3;
+  assert.ok(ratio12 >= 12 && ratio12 <= 20,
+    `err ratio (dt/2 halving) = ${ratio12.toFixed(2)}, expected [12,20] (RK4 ~ 16)`);
+  assert.ok(ratio23 >= 12 && ratio23 <= 20,
+    `err ratio (dt/4 halving) = ${ratio23.toFixed(2)}, expected [12,20] (RK4 ~ 16)`);
 });
 
 // ── dt-halving convergence for nonlinear case ─────────────────────────────

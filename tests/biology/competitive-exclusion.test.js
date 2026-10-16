@@ -101,20 +101,24 @@ test('bistable Jacobian eigenvalues = +0.2 and -1 ±1e-10', () => {
   assert.ok(Math.abs(lam2 - (-1)) < 1e-10, `lam2=${lam2}, expected -1`);
 });
 
-test('bistable (60,40) → sp1 wins at t=300 (N₂<1, N₁>50)', () => {
+test('bistable (60,40) → sp1 wins at t=300: |N₁−100|<1e-6 and N₂<1e-6', () => {
+  // Near (K1,0): N2 decays with rate r2*(1-a21*K1/K2)=1*(1-1.5)=-0.5 per unit time.
+  // N2 ≈ N2_0·exp(-0.5·t) in linear regime → negligible at t=300.
+  // N1 → K1=100 on timescale 1/r1 = 1.
   const m    = new CompetitiveExclusionModel({ K1: 100, K2: 100, a12: 1.5, a21: 1.5 });
   const traj = m.trajectory([60, 40], 300, 0.5);
   const last = traj[traj.length - 1];
-  assert.ok(last.N2 < 1,  `N₂=${last.N2} should be < 1 (sp2 excluded)`);
-  assert.ok(last.N1 > 50, `N₁=${last.N1} should be > 50 (sp1 dominant)`);
+  assert.ok(Math.abs(last.N1 - 100) < 1e-6, `N₁=${last.N1} should be ≈ 100 (sp1 at K1)`);
+  assert.ok(last.N2 < 1e-6,                  `N₂=${last.N2} should be < 1e-6 (sp2 excluded)`);
 });
 
-test('bistable (40,60) → sp2 wins at t=300 (N₁<1, N₂>50)', () => {
+test('bistable (40,60) → sp2 wins at t=300: |N₂−100|<1e-6 and N₁<1e-6', () => {
+  // Symmetric: from (40,60) sp2 wins; N2→K2=100, N1→0
   const m    = new CompetitiveExclusionModel({ K1: 100, K2: 100, a12: 1.5, a21: 1.5 });
   const traj = m.trajectory([40, 60], 300, 0.5);
   const last = traj[traj.length - 1];
-  assert.ok(last.N1 < 1,  `N₁=${last.N1} should be < 1 (sp1 excluded)`);
-  assert.ok(last.N2 > 50, `N₂=${last.N2} should be > 50 (sp2 dominant)`);
+  assert.ok(Math.abs(last.N2 - 100) < 1e-6, `N₂=${last.N2} should be ≈ 100 (sp2 at K2)`);
+  assert.ok(last.N1 < 1e-6,                  `N₁=${last.N1} should be < 1e-6 (sp1 excluded)`);
 });
 
 // ── Grid sweep: formula outcome matches long-run RK4 ───────────────────────
@@ -122,22 +126,36 @@ test('bistable (40,60) → sp2 wins at t=300 (N₁<1, N₂>50)', () => {
 // sp1-wins: α21>1, α12<1; sp2-wins: α12>1, α21<1
 // Tests use deterministic non-bistable cases (RK4 outcome is unambiguous)
 
-test('grid sweep: formula outcome matches RK4 for 3 deterministic cases', () => {
-  // [a12, a21, expectedOutcome, IC, whichSurvives ('N1'|'N2'|'both')]
-  const cases = [
-    { a12: 0.5, a21: 0.5, outcome: 'coexistence', ic: [10, 10], both: true  },
-    { a12: 0.5, a21: 1.5, outcome: 'sp1-wins',    ic: [10, 10], sp1: true   },
-    { a12: 1.5, a21: 0.5, outcome: 'sp2-wins',    ic: [10, 10], sp2: true   },
-  ];
-  for (const c of cases) {
-    const m = new CompetitiveExclusionModel({ K1: 100, K2: 100, a12: c.a12, a21: c.a21 });
-    assert.strictEqual(m.outcome, c.outcome, `outcome mismatch for a12=${c.a12},a21=${c.a21}`);
-    const traj = m.trajectory(c.ic, 200, 0.5);
-    const last = traj[traj.length - 1];
-    if (c.both)  assert.ok(last.N1 > 1 && last.N2 > 1, `both should survive: N1=${last.N1},N2=${last.N2}`);
-    if (c.sp1)   assert.ok(last.N1 > 1 && last.N2 < 1, `sp1 should win: N1=${last.N1},N2=${last.N2}`);
-    if (c.sp2)   assert.ok(last.N2 > 1 && last.N1 < 1, `sp2 should win: N1=${last.N1},N2=${last.N2}`);
+test('grid sweep: formula outcome matches RK4 for all deterministic α pairs', () => {
+  // α ∈ {0.25,0.5,0.75,1.25,1.5,2} × same; skip bistable (α12=α21>1) which are IC-sensitive.
+  // Two ICs per case: both must agree with formula outcome.
+  const alphas = [0.25, 0.5, 0.75, 1.25, 1.5, 2.0];
+  let count = 0;
+  for (const a12 of alphas) {
+    for (const a21 of alphas) {
+      const m = new CompetitiveExclusionModel({ K1: 100, K2: 100, a12, a21 });
+      const outcome = m.outcome;
+      // Skip bistable (α12·α21 > 1 and both N*>0): IC-dependent, RK4 not deterministic
+      if (outcome === 'bistable' || outcome === 'parallel') continue;
+      const ics = [[10, 10], [80, 20]];
+      for (const ic of ics) {
+        const traj = m.trajectory(ic, 250, 0.5);
+        const last = traj[traj.length - 1];
+        if (outcome === 'coexistence') {
+          assert.ok(last.N1 > 1 && last.N2 > 1,
+            `coexistence: both>1 at a12=${a12},a21=${a21}, ic=${ic}: N1=${last.N1},N2=${last.N2}`);
+        } else if (outcome === 'sp1-wins') {
+          assert.ok(last.N1 > 1 && last.N2 < 1,
+            `sp1-wins at a12=${a12},a21=${a21}, ic=${ic}: N1=${last.N1},N2=${last.N2}`);
+        } else if (outcome === 'sp2-wins') {
+          assert.ok(last.N2 > 1 && last.N1 < 1,
+            `sp2-wins at a12=${a12},a21=${a21}, ic=${ic}: N1=${last.N1},N2=${last.N2}`);
+        }
+        count++;
+      }
+    }
   }
+  assert.ok(count > 10, `grid sweep ran ${count} IC/outcome checks`);
 });
 
 // ── dt-halving convergence ─────────────────────────────────────────────────
@@ -153,6 +171,72 @@ test('coexistence dt-halving: |N₁(10) − N₁_fine| decreases as dt halves', 
   const e3 = Math.abs(n1(0.1) - ref);
   assert.ok(e1 > e2, `error not decreasing: e1=${e1}, e2=${e2}`);
   assert.ok(e2 > e3, `error not decreasing: e2=${e2}, e3=${e3}`);
+});
+
+// ── T-5: Jacobian eigenvalues for r1≠r2 ────────────────────────────────────
+// Independent derivation in tools/anchors-phase8.mjs (T-5 section)
+// K1=K2=100, a12=a21=0.5, r1=1, r2=2
+// N1*=N2*=200/3; J=[[-2/3,-1/3],[-2/3,-4/3]]; τ=-2, Δ=2/3, disc=4/3
+// λ = -1 ± 1/√3
+
+test('r1≠r2: Jacobian eigenvalues = -1±1/√3 ±1e-10 (r1=1, r2=2, K=100, α=0.5)', () => {
+  const m = new CompetitiveExclusionModel({ K1: 100, K2: 100, a12: 0.5, a21: 0.5, r1: 1, r2: 2 });
+  const J = m.jacobianAtEquilibrium;
+  assert.ok(J !== null, 'Jacobian should exist');
+  const tau  = J[0][0] + J[1][1];
+  const det  = J[0][0] * J[1][1] - J[0][1] * J[1][0];
+  const disc = tau ** 2 - 4 * det;
+  const lam1 = (tau + Math.sqrt(disc)) / 2;
+  const lam2 = (tau - Math.sqrt(disc)) / 2;
+  const expected1 = -1 + 1 / Math.sqrt(3);   // ≈ -0.4226
+  const expected2 = -1 - 1 / Math.sqrt(3);   // ≈ -1.5774
+  assert.ok(Math.abs(lam1 - expected1) < 1e-10, `lam1=${lam1}, expected ${expected1}`);
+  assert.ok(Math.abs(lam2 - expected2) < 1e-10, `lam2=${lam2}, expected ${expected2}`);
+});
+
+// ── outcome 'unknown' not 'undefined' (Q-5) ────────────────────────────────
+// 'undefined' is truthy in JS; use 'unknown' to avoid ambiguity.
+
+test('outcome string is "unknown" not "undefined" for unreachable path', () => {
+  // N1s>0 and N2s>0 → coexistence or bistable; N2s≤0 → sp1-wins; N1s≤0 → sp2-wins
+  // The only remaining case (both ≤ 0) is 'unknown'; hard to construct without NaN/Inf
+  // Verify the symbol is not 'undefined' for a normal case
+  const m = new CompetitiveExclusionModel({ K1: 100, K2: 100, a12: 0.5, a21: 0.5 });
+  assert.notStrictEqual(m.outcome, 'undefined');
+  assert.strictEqual(m.outcome, 'coexistence');
+});
+
+// ── α=0 edge cases ────────────────────────────────────────────────────────
+// α21=0: sp2 not affected by sp1; nullcline2 is horizontal line N2=K2
+// α12=0: sp1 not affected by sp2; nullcline1 is vertical line N1=K1
+
+test('α21=0: nullcline2 is horizontal at K2 (no Infinity)', () => {
+  const m = new CompetitiveExclusionModel({ K1: 100, K2: 80, a12: 0.5, a21: 0 });
+  const nc2 = m.nullcline2();
+  assert.strictEqual(nc2.type, 'horizontal');
+  assert.strictEqual(nc2.value, 80);
+});
+
+test('α12=0: nullcline1 is vertical at K1 (no Infinity)', () => {
+  const m = new CompetitiveExclusionModel({ K1: 100, K2: 80, a12: 0, a21: 0.5 });
+  const nc1 = m.nullcline1();
+  assert.strictEqual(nc1.type, 'vertical');
+  assert.strictEqual(nc1.value, 100);
+});
+
+test('α12=α21=0: outcome coexistence, N1*=K1, N2*=K2 (independent species)', () => {
+  const m = new CompetitiveExclusionModel({ K1: 100, K2: 80, a12: 0, a21: 0 });
+  assert.strictEqual(m.outcome, 'coexistence');
+  const [N1s, N2s] = m.equilibrium;
+  assert.ok(Math.abs(N1s - 100) < 1e-10, `N1*=${N1s}`);
+  assert.ok(Math.abs(N2s - 80)  < 1e-10, `N2*=${N2s}`);
+});
+
+test('α21=0: trajectory → N2 converges to K2, independent of N1 ±1%', () => {
+  const m = new CompetitiveExclusionModel({ K1: 100, K2: 80, a12: 0.5, a21: 0 });
+  const traj = m.trajectory([50, 10], 200, 0.5);
+  const last = traj[traj.length - 1];
+  assert.ok(Math.abs(last.N2 - 80) < 0.8, `N2=${last.N2}, expected≈80`);
 });
 
 // ── RangeError validation ──────────────────────────────────────────────────

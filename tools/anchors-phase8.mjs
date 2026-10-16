@@ -14,11 +14,11 @@ const row = (label, value, note='') => console.log(`  ${label.padEnd(48)} ${fmt(
 // ═══════════════════════════════════════════════════════════════════════
 sec('1. PARTICLE-IN-BOX');
 
-// Exact SI 2019 / CODATA 2018 constants
+// Exact SI 2019 / CODATA 2022 constants
 const h     = 6.62607015e-34;    // J·s  exact SI 2019
 const c_si  = 299792458;         // m/s  exact SI 1983
 const hbar  = h / (2*Math.PI);   // J·s  derived (exact)
-const me    = 9.1093837015e-31;  // kg   CODATA 2018 — unverified (not fetched)
+const me    = 9.1093837139e-31;  // kg   CODATA 2022 — fetched 2026-10-16 from physics.nist.gov/cuu/Constants/Table/allascii.txt; u=0.0000000028e-31
 const eV    = 1.602176634e-19;   // J    exact SI 2019
 const L1nm  = 1e-9;              // m    1 nm
 
@@ -26,7 +26,7 @@ row('h (exact SI 2019)',          h,     'J·s');
 row('c (exact SI 1983)',          c_si,  'm/s');
 row('hbar = h/(2π)',              hbar,  'J·s');
 row('eV (exact SI 2019)',         eV,    'J');
-row('me (CODATA 2018, unverified)', me,  'kg');
+row('me (CODATA 2022, fetched)',    me,  'kg');
 
 // E_n = n²π²ℏ²/(2m_e L²)
 const E1 = Math.PI**2 * hbar**2 / (2 * me * L1nm**2);
@@ -223,11 +223,18 @@ const sigma_Phat = Math.sqrt(P_up*(1-P_up)/5000);
 row('\n3σ tol for P̂ (N=5000)',         3*sigma_Phat, '≈ 0.0138');
 
 // Broadie-Glasserman-Kou boundary correction (dt-bias):
-// Effective boundary shift ≈ 0.5826·σ·√dt for discrete-time simulation
-const BGK = 0.5826;
+// Effective boundary shift ≈ BGK·σ·√dt where BGK = -ζ(1/2)/√(2π)
+// ζ(1/2) = -1.46035450880... (Riemann zeta at s=1/2; CITED, NOT INDEPENDENTLY COMPUTED HERE)
+// -ζ(1/2)/√(2π) = 1.46035450880.../√(2π) ≈ 0.58264... → 0.5826 to 4 sig figs
+// Independent verification: literature value BGK=0.5826 (Broadie, Glasserman, Kou 1997)
+// Status: CITED, not independently computed (ζ(1/2) requires convergent series; not implemented here)
+const zeta_half_neg = 1.4603545088095868;   // -ζ(1/2), from Broadie et al.
+const BGK = zeta_half_neg / Math.sqrt(2 * Math.PI);
 const dt_dd = 0.001;
 const shift = BGK * sig_dd * Math.sqrt(dt_dd);
-row('\nBGK boundary shift (σ=1, dt=0.001)', shift, '≈ 0.01842 (≈+0.004 in P, +0.02s in RT)');
+row('\n-ζ(1/2) (cited, not computed)',      zeta_half_neg, '≈ 1.46035');
+row('BGK = -ζ(1/2)/√(2π)',                  BGK,           '≈ 0.58264 (cited)');
+row('BGK boundary shift (σ=1, dt=0.001)', shift, '≈ 0.01842 (≈+0.004 in P, +0.02s in RT)');
 
 // ═══════════════════════════════════════════════════════════════════════
 // 5. PHASE-PLANE
@@ -405,6 +412,41 @@ const h_cd = 1e-4;
 const C_plus  = A_bat*(Math.exp(-ke*(t_max+h_cd))-Math.exp(-ka*(t_max+h_cd)));
 const C_minus = A_bat*(Math.exp(-ke*(t_max-h_cd))-Math.exp(-ka*(t_max-h_cd)));
 row('\ndC/dt at t_max (central diff h=1e-4)', (C_plus-C_minus)/(2*h_cd), '≈ 0 (tol 1e-7)');
+
+// ═══════════════════════════════════════════════════════════════════════
+// T-5: Competitive exclusion Jacobian eigenvalues for r1≠r2
+// ═══════════════════════════════════════════════════════════════════════
+sec('T-5: COMPETITIVE EXCLUSION JACOBIAN (r1=1, r2=2)');
+
+// Parameters: K1=K2=100, a12=0.5, a21=0.5, r1=1, r2=2
+const K1_t5 = 100, K2_t5 = 100, a12_t5 = 0.5, a21_t5 = 0.5, r1_t5 = 1, r2_t5 = 2;
+const den_t5 = 1 - a12_t5 * a21_t5;          // = 0.75
+const N1s_t5 = (K1_t5 - a12_t5*K2_t5)/den_t5; // = 200/3
+const N2s_t5 = (K2_t5 - a21_t5*K1_t5)/den_t5; // = 200/3
+row('N1* (K=100, a12=a21=0.5)', N1s_t5, '= 200/3 ≈ 66.667');
+row('N2*', N2s_t5, '= 200/3 ≈ 66.667');
+
+// Jacobian: J[i][j] with ri
+const J11 = -r1_t5 * N1s_t5 / K1_t5;          // -2/3
+const J12 = -r1_t5 * a12_t5 * N1s_t5 / K1_t5; // -1/3
+const J21 = -r2_t5 * a21_t5 * N2s_t5 / K2_t5; // -2/3
+const J22 = -r2_t5 * N2s_t5 / K2_t5;          // -4/3
+row('J11 = -r1·N1*/K1', J11, '= -2/3');
+row('J12 = -r1·a12·N1*/K1', J12, '= -1/3');
+row('J21 = -r2·a21·N2*/K2', J21, '= -2/3');
+row('J22 = -r2·N2*/K2', J22, '= -4/3');
+
+const tau_t5  = J11 + J22;                       // -2
+const det_t5  = J11*J22 - J12*J21;               // 8/9 - 2/9 = 2/3
+const disc_t5 = tau_t5**2 - 4*det_t5;            // 4 - 8/3 = 4/3
+const lam1_t5 = (tau_t5 + Math.sqrt(disc_t5))/2; // -1 + 1/√3
+const lam2_t5 = (tau_t5 - Math.sqrt(disc_t5))/2; // -1 - 1/√3
+row('\nτ = J11+J22', tau_t5, '= -2 (exact)');
+row('Δ = det(J)', det_t5, '= 2/3 (exact)');
+row('disc = τ²-4Δ', disc_t5, '= 4/3 (exact)');
+row('λ1 = -1 + 1/√3', lam1_t5, `= ${-1+1/Math.sqrt(3)} ≈ -0.4226`);
+row('λ2 = -1 - 1/√3', lam2_t5, `= ${-1-1/Math.sqrt(3)} ≈ -1.5774`);
+row('Both eigenvalues < 0?', lam1_t5 < 0 && lam2_t5 < 0, '→ stable coexistence');
 
 // ═══════════════════════════════════════════════════════════════════════
 // Summary

@@ -9,20 +9,20 @@
  * Photon wavelength for n→n-1 transition:
  *   λ = hc / (E_n − E_{n-1})
  *
- * Constants (CODATA 2018 / exact SI 2019):
+ * Constants (CODATA 2022 / exact SI 2019):
  *   h   = 6.626 070 15 × 10⁻³⁴ J·s  (exact)
  *   ℏ   = h / 2π                      (exact)
- *   m_e = 9.109 383 7015 × 10⁻³¹ kg  (CODATA 2018, cited not fetched)
+ *   m_e = 9.109 383 7139 × 10⁻³¹ kg  (CODATA 2022, fetched 2026-10-16)
  *   eV  = 1.602 176 634 × 10⁻¹⁹ J    (exact)
  *   c   = 299 792 458 m/s              (exact)
  *
  * Reference: Griffiths, D.J. (1995). Introduction to Quantum Mechanics §2.2.
  */
 
-// Exact SI 2019 / CODATA 2018 constants
+// Exact SI 2019 / CODATA 2022 constants
 const H_JS   = 6.62607015e-34;      // J·s  exact SI 2019
 const HBAR   = H_JS / (2 * Math.PI);// J·s
-const ME     = 9.1093837015e-31;    // kg   CODATA 2018 — cited, not fetched
+const ME     = 9.1093837139e-31;    // kg   CODATA 2022 — fetched 2026-10-16
 const EV_J   = 1.602176634e-19;     // J    exact SI 2019
 const C_SI   = 299792458;           // m/s  exact SI 1983
 
@@ -96,12 +96,13 @@ export class ParticleInBoxModel {
 
   /**
    * Probability of finding particle in [0, x]  (Simpson N=1000).
-   * @param {number} xMax  upper limit in metres
+   * @param {number} xMax  upper limit in metres (clamped to [0, L])
    * @param {number} [nLevel]
    */
   cdf(xMax, nLevel = this._n) {
+    const x = Math.min(Math.max(xMax, 0), this._L);
     const N = 1000;
-    const h = xMax / N;
+    const h = x / N;
     let s = 0;
     for (let i = 0; i <= N; i++) {
       const w = (i === 0 || i === N) ? 1 : (i % 2 === 0 ? 2 : 4);

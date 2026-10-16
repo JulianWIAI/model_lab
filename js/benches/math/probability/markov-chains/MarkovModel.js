@@ -104,10 +104,16 @@ export class MarkovModel {
 
   /**
    * Compute stationary distribution of an arbitrary row-stochastic n-state
-   * matrix via power iteration on Pᵀ.
+   * matrix via power iteration using row-vector left-multiplication: v ← v·P.
+   *
+   * Convention: P is ROW-stochastic (rows sum to 1). The stationary
+   * distribution π is a ROW vector satisfying π·P = π. This is v·P,
+   * NOT Pᵀ·v — the two are equivalent in value for row-stochastic matrices
+   * but the convention matters for non-symmetric P (left vs right eigenvector).
+   *
    * @param {number[][]} P  n×n row-stochastic matrix
    * @param {number}   [steps=500]
-   * @returns {number[]}  stationary distribution of length n
+   * @returns {number[]}  stationary row-vector π satisfying π·P = π
    */
   static stationaryN(P, steps = 500) {
     const n = P.length;
@@ -116,7 +122,7 @@ export class MarkovModel {
       const vNext = new Array(n).fill(0);
       for (let i = 0; i < n; i++) {
         for (let j = 0; j < n; j++) {
-          vNext[j] += v[i] * P[i][j];
+          vNext[j] += v[i] * P[i][j];  // v·P (row-vector left-multiply)
         }
       }
       // Normalise to guard against floating-point drift

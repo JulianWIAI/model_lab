@@ -31,6 +31,7 @@ export class DriftDiffusionModel {
   constructor({ mu = 1, sigma = 1, a = 1, t0 = 0.3 } = {}) {
     if (sigma <= 0) throw new RangeError(`sigma must be > 0; got ${sigma}`);
     if (a <= 0)     throw new RangeError(`a must be > 0; got ${a}`);
+    if (t0 < 0)     throw new RangeError(`t0 must be ≥ 0; got ${t0}`);
     this.mu    = mu;
     this.sigma = sigma;
     this.a     = a;

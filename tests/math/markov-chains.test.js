@@ -167,6 +167,30 @@ test('3-state preset: π·P = π ±1e-14 (stationarity by algebraic identity)', 
   }
 });
 
+// ── Row-stochastic convention: v·P not Pᵀ·v ───────────────────────────────
+// For a non-symmetric 3-state P, the LEFT eigenvector (π·P=π, row convention)
+// differs from the right eigenvector (P·v=v, column convention).
+// stationaryN uses v·P and must produce the LEFT stationary distribution.
+
+test('stationaryN row-vector convention: π·P=π ±1e-10 for non-symmetric P', () => {
+  // Non-symmetric 3-state row-stochastic matrix (rows sum to 1)
+  // P is NOT symmetric: P[0][1]=0.4 ≠ P[1][0]=0.3
+  const P = [[0.5, 0.4, 0.1], [0.3, 0.5, 0.2], [0.1, 0.3, 0.6]];
+  const pi = MarkovModel.stationaryN(P, 500);
+  // Verify π·P = π (left-eigenvector / row-stochastic convention)
+  for (let j = 0; j < 3; j++) {
+    const piPj = pi.reduce((s, pi_i, i) => s + pi_i * P[i][j], 0);
+    assert.ok(Math.abs(piPj - pi[j]) < 1e-10,
+      `(π·P)[${j}]=${piPj}, π[${j}]=${pi[j]}`);
+  }
+  // Verify P·π ≠ π (would hold for right eigenvector of symmetric P)
+  // For non-symmetric P, P·π is NOT equal to π (unless pi=[1/n,...,1/n])
+  const Ppi0 = P[0].reduce((s, Pij, j) => s + Pij * pi[j], 0);
+  // P·π at row 0 should differ from π[0] (non-symmetric P)
+  assert.ok(Math.abs(Ppi0 - pi[0]) > 1e-6,
+    `P·π[0]=${Ppi0} should ≠ π[0]=${pi[0]} (non-symmetric: right ≠ left eigvec)`);
+});
+
 test('3-state preset: eigenvalues include 1, 0.5, 0 (verified via det(P−λI)=0)', () => {
   // P = [[0.5,0.5,0],[0.25,0.5,0.25],[0,0.5,0.5]]
   // Char poly: (0.5−λ)[(0.5−λ)²−0.25] = 0 → λ∈{0,0.5,1}
