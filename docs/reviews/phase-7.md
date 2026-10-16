@@ -132,15 +132,152 @@ None. All specified tests were implemented and pass.
 
 ## Section 4: WEAK tests
 
-The following tests are potentially weak (formula-vs-formula):
+No independent review agent was run for Phase 7. The following tests are potentially WEAK (formula-vs-formula or thin coverage):
 
-| Test file | Test name | Why WEAK |
-|---|---|---|
-| eigenvectors.test.js | trace = Σλ ±1e-10 | Computes Σλ from same model, then checks model.trace() |
-| eigenvectors.test.js | det = Πλ ±1e-10 | Same concern |
-| bayes.test.js | posteriorVariance formula | Recomputes same formula as model |
+| Test file | Test name | Why WEAK | Mitigation |
+|---|---|---|---|
+| eigenvectors.test.js | trace = Σλ ±1e-10 | Checks model trace against sum of model eigenvalues | Also verified against known trace=4 for [[2,1],[1,2]] |
+| eigenvectors.test.js | det = Πλ ±1e-10 | Same concern | Known det=3 for [[2,1],[1,2]] |
+| bayes.test.js | posteriorVariance Beta(3,5) Simpson | Already replaced with numerical integration | Now independent of model formula |
 
-**Mitigations:** The eigenvalue tests also cross-check against known values (trace=4, det=3 for [[2,1],[1,2]]) independently. The Bayes variance test is mainly structural (ensuring the formula is implemented correctly).
+---
+
+### Complete test-name table for all Phase 7 tests
+
+#### linalg.test.js (15 tests)
+| Test name |
+|---|
+| eigenvalues of [[2,1],[1,2]] = [3,1] (descending) |
+| first eigenvector = [1,1]/√2 up to sign |
+| eigenvectors are orthonormal |
+| reconstruction ‖A - Q·D·Qᵀ‖_F < 1e-10 |
+| throws RangeError for asymmetric matrix |
+| identity 2×2: eigenvalues [1,1] |
+| diagonal [[3,0],[0,1]]: λ=[3,1], vectors aligned with axes |
+| λ = 2-√2, 2, 2+√2 |
+| trace = Σλ = 6 |
+| det = Πλ = 4 |
+| reconstruction ±1e-10; orthogonality Qᵀ·Q=I ±1e-10; ‖Av-λv‖<1e-10 |
+| tanθ_n = (1/3)^n at n=5,10,15 |
+| Rayleigh quotient λ_n = 3 - 2/(9^n+1) at n=5,10 |
+| v0=[1,-1] → converges to λ=1 (not λ=3) |
+| [[0,1],[1,0]] does not converge: iters = maxIter |
+
+#### wave-interference.test.js (9 tests)
+| Test name |
+|---|
+| deltaY = λL/d = 5e-4 m |
+| yDark(0) = deltaY/2 = 2.5e-4 m |
+| I at dark fringe = 0 ±1e-12 |
+| I at bright fringe y=0 = I0 |
+| Δy ratio 700nm/400nm = 1.75 ±1e-10 |
+| RangeError on d=0 |
+| RangeError on lambda=0 |
+| RangeError on L=0 |
+| I(y) in [0, I0] for all y in curve |
+
+#### standing-waves.test.js (8 tests)
+| Test name |
+|---|
+| f₁ string L=1m, v=343 m/s = 171.5 Hz ±1e-10 |
+| f₂/f₁ = 2 exactly ±1e-15 |
+| f_n/f₁ = n for n=1..5 ±1e-15 |
+| closed pipe: only odd harmonics (m=1,3,5 present; m=2,4 absent) |
+| closed pipe f₃/f₁ = 3 ±1e-15 |
+| open pipe f₂/f₁ = 2 ±1e-15 |
+| node positions for n=2: x=0, L/2, L ±1e-12 |
+| n=1 fundamental node positions: x=0, L ±1e-12 |
+
+#### synapse-kinetics.test.js (8 tests)
+| Test name |
+|---|
+| h(τ) = A·e⁻¹ ±1e-10 |
+| h(0) = 0 exactly |
+| h(2τ)/h(τ) = 2/e ±1e-10 |
+| timeToEFraction() ≈ 3.1462·τ ±1e-3·τ |
+| integral() = A·τ ±1e-10 |
+| h(t) > 0 for all t > 0 (10 points) |
+| h → 0 as t → ∞: h(100τ) very small |
+| tPeak = τ ±1e-12 |
+
+#### eigenvectors.test.js (10 tests)
+| Test name |
+|---|
+| [[2,1],[1,2]] → λ=[3,1] ±1e-10 |
+| first eigenvector = [1,1]/√2 up to sign ±1e-10 |
+| eigenvectors orthonormal ±1e-10 |
+| reconstruction ±1e-10 |
+| power iteration residual < 1e-10 after 30 iters |
+| [[0,1],[1,0]] does not converge: iters exhausted |
+| ceil(ln(1e-4)/ln(0.9)) = 88 |
+| trace = Σλ ±1e-10 |
+| det = Πλ ±1e-10 |
+| unit circle ellipse semi-axes = |λ₁|=3, |λ₂|=1 |
+
+#### nash-equilibria.test.js (9 tests)
+| Test name |
+|---|
+| Matching Pennies: p*=0.5, q*=0.5 ±1e-10 |
+| Matching Pennies expected payoff at NE = 0 ±1e-15 |
+| Battle of Sexes: p*=2/3, q*=1/3 ±1e-10 |
+| Battle of Sexes row value at mixed NE = 2/3 ±1e-10 |
+| Battle of Sexes has exactly 3 NE |
+| No profitable unilateral deviation at NE |
+| Degenerate case (all-equal): returns degenerate flag, no crash |
+| Dominated strategy: q* outside [0,1] → dominated flag |
+| Cross-check 20 random 2×2 games: mixedNE p* vs 1000-point grid ±1e-3 |
+
+#### prisoner-dilemma.test.js (14 tests)
+| Test name |
+|---|
+| isPD() true with defaults |
+| isPD() false when 2R≤T+S: T=5,R=2,P=1,S=0 |
+| isPD() false when T≤R: T=3,R=3 |
+| deltastar() = 0.5 ±1e-10 |
+| pvCooperate(0.6) = 7.5 ±1e-10 |
+| pvDefect(0.6) = 6.5 ±1e-10 |
+| pvCooperate > pvDefect at delta=0.6 |
+| pvCooperate < pvDefect at delta=0.4 |
+| grimTrigger cooperates at delta=0.6 |
+| grimTrigger defects at delta=0.4 |
+| pvNumerical(0.6, N=2000) ≈ pvCooperate(0.6) ±1e-9 |
+| deltaStarDerivTwrtT() = 0.125 ±1e-10 |
+| δ* independent of S: change S from 0 to -1 |
+| TFT threshold = max(0.5, 2/3) = 2/3 ±1e-10 |
+
+#### bayes.test.js (11 tests)
+| Test name |
+|---|
+| posteriorMean α=β=1, k=7, n=10 = 2/3 ±1e-10 |
+| Laplace rule: posteriorMean α=β=1 = (k+1)/(n+2) ±1e-10 |
+| posteriorParams() = {a: α+k, b: β+n-k} |
+| posteriorVariance Beta(3,5): Simpson numerical integration ±1e-6 |
+| Γ(1/2) = √π: exp(lnGamma(0.5)) ±1e-6 |
+| B(2,3) = 1/12: exp(logBeta(2,3)) ±1e-10 |
+| Beta(2,2) CDF at x=0.5 = 0.5 ±1e-8 |
+| Beta(1,1) 95% CI = [0.025, 0.975] ±1e-4 |
+| Beta(a,a) median = 0.5 ±1e-4 for a=2,3 |
+| Large n: posteriorMean(α=1,β=1,k=50,n=100) ≈ 0.5 (within 0.01) |
+| I_{0.3}(2,3) via binomial tail = 0.3483 ±1e-6 |
+
+#### information-theory.test.js (15 tests)
+| Test name |
+|---|
+| uniform n=4: entropy = 2 bits ±1e-10 |
+| deterministic p=[1,0,0]: entropy = 0 ±1e-15 |
+| fair coin [0.5,0.5]: entropy = 1 bit ±1e-10 |
+| shannonHartley(1,3) = 2 ±1e-10 |
+| shannonHartley(1,0) = 0 ±1e-15 |
+| shannonHartley(1,63) = 6 ±1e-10 |
+| KL(P‖P) = 0 ±1e-15 |
+| KL([0.5,0.5],[0.25,0.75]) = 1-(1/2)log₂3 ≈ 0.207519 ±1e-6 |
+| KL([0.25,0.75],[0.5,0.5]) ≈ 0.188722 ±1e-6 |
+| KL divergence ≥ 0 for 20 seeded random distributions |
+| KL with Q[i]=0 and P[i]>0 → Infinity |
+| binaryEntropy(0.5) = 1 ±1e-10 |
+| binaryEntropy(p) = binaryEntropy(1-p) ±1e-15 |
+| H₂(p)=0.5 near p≈0.11: binaryEntropy(0.1102) ≈ 0.5 |
+| hMax(n) = log₂(n) ±1e-10 for n=2,4,8 |
 
 ---
 
