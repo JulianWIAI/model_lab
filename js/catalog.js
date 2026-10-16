@@ -21,6 +21,25 @@ export const catalog = [
     name: 'Physics',
     fields: [
       {
+        id: 'quantum',
+        name: 'Quantum mechanics',
+        benches: [
+          {
+            id: 'particle-in-box',
+            navLabel: 'Particle in a box',
+            level: 'intro',
+            keywords: [
+              'particle in a box', 'infinite square well', 'quantum mechanics',
+              'wavefunction', 'energy levels', 'Schrödinger', 'quantum confinement',
+            ],
+            load: () =>
+              import('./benches/physics/quantum/particle-in-box/ParticleInBoxBench.js').then(
+                (m) => m.ParticleInBoxBench,
+              ),
+          },
+        ],
+      },
+      {
         id: 'mechanics',
         name: 'Mechanics',
         benches: [
