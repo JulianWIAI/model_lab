@@ -508,6 +508,19 @@ export const catalog = [
         name: 'Ecology',
         benches: [
           {
+            id: 'competitive-exclusion',
+            navLabel: 'Competitive exclusion',
+            level: 'university',
+            keywords: [
+              'competitive exclusion', 'Lotka-Volterra', 'coexistence', 'nullclines',
+              'carrying capacity', 'interspecific competition', 'ecology', 'Gause',
+            ],
+            load: () =>
+              import('./benches/biology/ecology/competitive-exclusion/CompetitiveExclusionBench.js').then(
+                (m) => m.CompetitiveExclusionBench,
+              ),
+          },
+          {
             id: 'logistic',
             navLabel: 'Logistic growth',
             level: 'intro',
