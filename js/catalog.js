@@ -894,6 +894,25 @@ export const catalog = [
         ],
       },
       {
+        id: 'decision-making',
+        name: 'Decision making',
+        benches: [
+          {
+            id: 'drift-diffusion',
+            navLabel: 'Drift-diffusion',
+            level: 'university',
+            keywords: [
+              'drift-diffusion', 'DDM', 'Ratcliff', 'decision making', 'response time',
+              'Wiener process', 'first passage time', 'speed-accuracy tradeoff',
+            ],
+            load: () =>
+              import('./benches/psychology/decision-making/drift-diffusion/DriftDiffusionBench.js').then(
+                (m) => m.DriftDiffusionBench,
+              ),
+          },
+        ],
+      },
+      {
         id: 'learning',
         name: 'Learning & Decision',
         benches: [
