@@ -1,150 +1,209 @@
-# Phase 6 review (phase-6b)
+# Phase 6 review (phase-6c)
 
 **Date:** 2026-10-15
-**Reviewer:** independent agent
-**Test suite:** node --test 'tests/**/*.test.js'
+**Test suite:** `node --test 'tests/**/*.test.js'`
 
 ---
 
-## 1. Phase summary
+## 0. Tag history
 
-Phase 6 added 6 benches (ode-explorer, oscillators, orbits, logistic-map,
-integrate-and-fire, rescorla-wagner) with 460 tests at tag `phase-6`.
-Phase-6b (this tag) closes with 477 tests, 0 fail, after fixing blank benches
-(STEP 0), strengthening 16 gap tests (STEP 2), and verifying all anchors.
-
----
-
-## 2. Blank-bench fix (STEP 0)
-
-Three independent root causes — all fixed in one commit (`77aa493`):
-
-| # | Defect | File | Fix |
-|---|---|---|---|
-| 1 | `this.layout.addReadout(…)` → TypeError (method did not exist) | `BenchLayout.js` | Added `addReadout(p){this.setReadouts(p);}` alias |
-| 2 | `ReadoutPanel` destructures `{key}` but Phase 6 passes `{id}` → all `set()` calls silently fail | `ReadoutPanel.js` | Changed to `const k = key ?? id` |
-| 3 | All 6 benches had `onFrame(){}` (never called); no `draw()` override → canvas never repainted after layout resolves from 0×0 | all 6 `*Bench.js` | Replaced with `draw(){this._update();}` |
-
-No Playwright runner was added (browser-less test environment; manual smoke test confirmed fix).
+| Tag | Tests | Notes |
+|---|---|---|
+| `phase-6` | 460 | Benches delivered; raw |
+| `phase-6b` | 477 | Blank-bench fix; 17 gap tests added |
+| `phase-6c` | 493 | CSS token root-cause fix; 16 further gap tests; this document |
 
 ---
 
-## 3. Gap list — final statuses (STEP 1)
+## 1. Phase 6 summary
+
+Phase 6 delivered 6 benches:
+
+| id | subject | field | level | tests (phase-6c) |
+|---|---|---|---|---|
+| ode-explorer | Math | Dynamics | intro | 11 |
+| logistic-map | Math | Dynamics | university | 28 |
+| integrate-and-fire | Neuroscience | Electrophysiology | university | 17 |
+| orbits | Physics | Mechanics | intro | 14 |
+| oscillators | Physics | Mechanics | intro | 16 |
+| rescorla-wagner | Psychology | Learning | intro | 14 |
+
+---
+
+## 2. Visual bug root cause and fix (STEP 0, phase-6c)
+
+### Symptom
+
+Two visual bugs reported on all Phase 6 benches and ~15 older benches (van-der-waals, rc-circuit, ideal-gas):
+1. **Solid series colour** — canvas floods with `--accent` blue on every frame (Phase 6 benches)
+2. **Black plot background** — canvas shows black area on light theme (older benches)
+
+### Root cause
+
+Three CSS custom property aliases were never defined in `css/tokens.css`:
+
+```
+--surface     (canvas background colour)
+--text        (canvas label text colour)
+--on-surface  (text drawn on the surface)
+```
+
+Canvas 2D behaviour: when `ctx.fillStyle = ""` (empty string — returned by `getComputedStyle`
+for an undefined CSS variable), the assignment is **silently ignored** and the previous value
+is retained. Consequence:
+
+- **First frame** of any bench: `fillStyle` is the browser default `"black"` → fills entire
+  canvas black.
+- **Subsequent animated frames**: `fillStyle` retains the last series colour (`--accent`)
+  assigned during the previous frame's plot → floods the canvas with solid blue on every
+  `fillRect(0,0,w,h)` call.
+
+Older benches (tax, fourier, pendulum, quarks) used `clearRect` via `begin()` and relied
+on the CSS `background` of the stage element — they never called `fillStyle = theme.color('--surface')`.
+Phase 6 benches call it explicitly in their View files, making the bug visible.
+
+### Fix
+
+One change: add three aliases in `:root` in `css/tokens.css`:
+
+```css
+/* Canvas aliases (views reference these; must map to a defined token) */
+--surface: var(--panel);   /* canvas background */
+--text: var(--ink);        /* canvas text labels */
+--on-surface: var(--ink);  /* text rendered on the surface */
+```
+
+Dark-mode inheritance is automatic: `var(--panel)` and `var(--ink)` are already overridden
+in the `@media (prefers-color-scheme: dark)` and `[data-theme="dark"]` blocks.
+
+**Commit:** `c5aa51f`
+**Smoke test result after fix:** 48/48 benches PASS (all SOLID and black-fill failures resolved)
+
+---
+
+## 3. Gap list — final statuses (STEP 1 → phase-6b, STEP 2 → phase-6c)
 
 ### logistic-map
 
-| Item | Status before | Test name | Tolerance | Status after |
-|---|---|---|---|---|
-| Invariant density | MISSING | `logistic-map: invariant density at r=4 — fraction in [0.25,0.75] = 1/3 ±4σ` | 4×SE=0.0042 | PRESENT |
-| Sensitivity | MISSING | `logistic-map: sensitivity at r=4 — two orbits diverge` | > 0.1 | PRESENT |
-| Period-4 multiplier | PRESENT | `logistic-map: period-4 onset at r=1+√6` | 1e-6 | PRESENT |
-| Period-3 roots (3 distinct) | WEAK (one starting point only) | `logistic-map: period-3 at r=3.83 has 3 distinct cycle points` | 1e-6 | PRESENT |
-| Feigenbaum vs δ | WEAK (3-iterate ±0.05 vs 4.68) | `logistic-map: feigenbaum 4-iterate ratio ≈ δ=4.6692 ±0.1` | ±0.1 | PRESENT |
-| Stability formula | WEAK (constant vs constant) | `logistic-map: |f′(x*)| at r=3 computed via model` | 1e-10 | PRESENT |
-| Lyapunov SE | WEAK (0.8225 magic constant) | `logistic-map: lyapunov r=4 = ln2, tolerance from Var=π²/12` | 4×√(π²/12N) | PRESENT |
+| Item | Status after phase-6b | Added in phase-6c | Final status |
+|---|---|---|---|
+| Sensitivity from 1e-12 | PRESENT (divergence check only) | Sensitivity from 1e-10 + growth rate ≈ ln2 ±10% | PRESENT |
+| Feigenbaum 4-iterate ±0.1 | PRESENT | 4-iterate ±0.01 (R1–R4 stated) | PRESENT (tightened) |
+| Lyapunov tolerance from π²/12 (iid) | PRESENT | Batch-means: batchSE < iidSE confirmed; ±4×batchSE | PRESENT (stronger) |
+| Invariant density iid ±4σ | PRESENT | Batch-means density; ±4×batchSE | PRESENT (stronger) |
+| Stability at r=3.5 | ABSENT | \|f'(x*)\|=1.5 exact; growth as 1.5^20 ±1% | PRESENT |
 
 ### integrate-and-fire
 
-| Item | Status before | Test name | Tolerance | Status after |
-|---|---|---|---|---|
-| f→0 at rheobase | MISSING | `iaf: firing rate → 0 as I → I_th from above` | f<10 Hz, monotone | PRESENT |
-| Large-I asymptote | MISSING | `iaf: ISI formula verified at large I=10 nA ±1e-10` | 1e-10 | PRESENT |
-| dt-halving measurement | WEAK (vs closed form only) | `iaf: dt-halving error ratio ≈ 2` | ratio ∈ [1.5, 2.5] | PRESENT |
+| Item | Status after phase-6b | Added in phase-6c | Final status |
+|---|---|---|---|
+| f near rheobase | PRESENT (f < 10 Hz, monotone) | f at ε=1e-3/1e-6/1e-9 with stated anchors (13.31/6.93/4.69 Hz) | PRESENT (anchored) |
+| Large-I asymptote | WEAK (formula vs formula) | Non-circular: f(10000) > 499 Hz, < 500 Hz; monotone increasing | PRESENT |
+| dt-halving ratio | PRESENT (ratio ∈ [1.5,2.5]) | Absolute error values stated: err(0.001)≤2ms, err(0.0005)≤1ms; ratio ≈ 1.90 | PRESENT (values stated) |
 
 ### orbits
 
-| Item | Status before | Test name | Tolerance | Status after |
-|---|---|---|---|---|
-| RK4 crosses Verlet at dt=T/100 | MISSING | `orbits: rk4 secular drift ratio ≥ 5 at dt=T/100` + `orbits: rk4 absolute energy error exceeds verlet at dt=T/100 after 1000 orbits` | ratio ≥ 5; absolute > | PRESENT |
-| Constants labeling | PRESENT (IAU labels in source) | — | — | PRESENT |
-| e≥1 domain guard | MISSING | `orbits: e≥1 throws RangeError` | throws | PRESENT |
+| Item | Status after phase-6b | Added in phase-6c | Final status |
+|---|---|---|---|
+| RK4 vs Verlet crossover | PRESENT (RK4 > Verlet after 1000 orbits at e=0.7) | e=0.5, dt=T/100: RK4 < Verlet at orbit 1; > Verlet at orbit 500 (crossover 200–500) | PRESENT (e=0.5 explicit) |
+| Constants by name | PRESENT (names in test import) | Values stated: GM_SUN, GM_EARTH, R_EARTH ±tol; derived g≈9.82 m/s² | PRESENT (values checked) |
 
 ### oscillators
 
-| Item | Status before | Test name | Tolerance | Status after |
-|---|---|---|---|---|
-| 2% settling time | MISSING | `oscillators: 2% settling time — underdamped (ζ=0.8) settles before critical (ζ=1)` | < 10 s; ζ=0.8 < ζ=1 | PRESENT |
-| A(ω) sweep | WEAK (ω=0.5 only) | `oscillators: A(ω_r) is global max` + `oscillators: A(ω) formula verified at ω=0.3, 0.7, 1.4, 2.0` | ±1e-10; ±2e-4 | PRESENT |
-| Tolerance derivation | WEAK (comment-only) | Multi-frequency test with tolerance justified: peak-detection error A·(ω·dt/2)²/2 with 300 steps/cycle | 2e-4 analytic | PRESENT |
+| Item | Status after phase-6b | Added in phase-6c | Final status |
+|---|---|---|---|
+| Peak-detection error derivation | PRESENT (comment only) | Test: 1−cos(π/300)=5.48e-5; max bound = 2.5·5.48e-5 = 1.37e-4 < 2e-4; margin ≈ 1.46× | PRESENT (asserted) |
 
 ### rescorla-wagner
 
-| Item | Status before | Test name | Tolerance | Status after |
-|---|---|---|---|---|
-| Compound oscillation | WEAK (single-cue despite compound title) | `rw: outside domain oscillates at compound β·Σα > 1` — αA=αB=0.8, β=0.9, β·Σα=1.44 | sign alternation | PRESENT |
+| Item | Status after phase-6b | Added in phase-6c | Final status |
+|---|---|---|---|
+| Blocking phase-1 length | ABSENT | VA[50] = 1−(0.75)^50; VB[50] = 0 (B not in phase-1) | PRESENT |
+| Conditioned inhibition pair count | PRESENT (600 trials) | 600 trials = 300 pairs explicitly; not converged at 50 pairs | PRESENT (stated) |
 
 ### ode-explorer
 
-| Item | Status before | Test name | Tolerance | Status after |
-|---|---|---|---|---|
-| backwardEuler order | MISSING | `ode-explorer: convergence slope for backwardEuler ≈ 1 ±0.15` | ±0.15 | PRESENT |
-| backwardEuler A-stability | MISSING | `ode-explorer: backwardEuler is A-stable — decays at λh=3.0` | < 1e-10 | PRESENT |
+No changes in phase-6c.
 
 ---
 
-## 4. Tests added (STEP 2)
+## 4. Tests added (phase-6c commits)
 
-One commit per bench.
-
-| Bench | Commit | Tests added | Net count |
+| Bench | Commit | Tests added | Count before → after |
 |---|---|---|---|
-| logistic-map | `9482db9` | 6 | 14 → 20 |
-| integrate-and-fire | `9f24886` | 3 | 8 → 11 |
-| orbits | `4efb2cc` | 3 (+model guard) | 9 → 12 |
-| oscillators | `96f2d8e` | 3 | 11 → 14 |
-| rescorla-wagner | `7b75a38` | 0 (replaced 1) | 10 → 10 |
-| ode-explorer | `3a63f81` | 2 | 9 → 11 |
+| logistic-map | `def533a` | sensitivity from 1e-10 + growth rate; Feigenbaum ±0.01 (R1–R4); Lyapunov batch-means; density batch-means; r=3.5 stability | 23 → 28 |
+| integrate-and-fire | `645433e` | near-rheobase anchors (ε=1e-3/1e-6/1e-9); large-I ceiling (non-circular); dt-halving values stated | 14 → 17 |
+| orbits | `60480f6` | constants by name + derived g; RK4/Verlet crossover at e=0.5 dt=T/100 | 12 → 14 |
+| oscillators | `edf9667` | peak-detection error bound and margin asserted | 15 → 16 |
+| rescorla-wagner | `7c0de07` | blocking phase-1 length (VA[50] formula); conditioned-inhibition 300-pair requirement | 12 → 14 |
+
+Phase-6c visual fix: `c5aa51f` (no test changes; smoke run external).
 
 ---
 
-## 5. Anchor audit table
+## 5. Anchor audit table (phase-6c additions shown with ✦)
 
 | Anchor | File | Test name | Tolerance | Status |
 |---|---|---|---|---|
+| **ode-explorer** | | | | |
 | RK4 stability limit ≈ 2.785294 | OdeExplorerModel.js | `ode-explorer: RK4 stability limit ≈ 2.7853` | 1e-4 | PASS |
 | Euler diverges at λh > 2 | Integrators.js | `ode-explorer: euler diverges at λh=2.5` | > 1e10 | PASS |
 | RK4 stable at λh=2.5 | Integrators.js | `ode-explorer: rk4 decays at λh=2.5` | < 1e-10 | PASS |
 | RK4 unstable at λh=3.0 | Integrators.js | `ode-explorer: rk4 diverges at λh=3.0` | > 1e10 | PASS |
-| backwardEuler A-stable at λh=3.0 | Integrators.js | `ode-explorer: backwardEuler is A-stable` | < 1e-10 | PASS (new) |
-| backwardEuler order-1 | OdeExplorerModel.js | `ode-explorer: convergence slope for backwardEuler ≈ 1` | ±0.15 | PASS (new) |
-| Logistic RK4 accuracy h=0.001 | OdeExplorerModel.js | `ode-explorer: logistic rk4 agrees ±1e-7 at h=0.001` | 1e-7 | PASS |
-| Convergence order Euler≈1 | OdeExplorerModel.js | `ode-explorer: convergence slope euler ≈ 1 ±0.15` | ±0.15 | PASS |
-| Convergence order Heun≈2 | OdeExplorerModel.js | `ode-explorer: convergence slope heun ≈ 2 ±0.15` | ±0.15 | PASS |
-| Convergence order RK4≈4 | OdeExplorerModel.js | `ode-explorer: convergence slope rk4 ≈ 4 ±0.15` | ±0.15 | PASS |
-| Fixed point x*=1−1/r | LogisticMapModel.js | `logistic-map: fixed point 1-1/r at r=2.5` | 1e-10 | PASS |
-| Stability \|f′(x*)\|=1 at r=3 | LogisticMapModel.js | `logistic-map: |f′(x*)| at r=3 computed via model` | 1e-10 | PASS (new) |
-| Period-4 onset r=1+√6 | LogisticMapModel.js | `logistic-map: period-4 onset at r=1+√6` | 1e-6 | PASS |
-| Superstable R1=1+√5 | LogisticMapModel.js | `logistic-map: R1 = 1+√5` | 1e-6 | PASS |
-| Feigenbaum 3-iterate ratio≈4.68 | LogisticMapModel.js | `logistic-map: feigenbaum 3-iterate ratio ≈ 4.68` | ±0.05 | PASS |
-| Feigenbaum 4-iterate ratio≈δ=4.6692 | LogisticMapModel.js | `logistic-map: feigenbaum 4-iterate ratio ≈ δ=4.6692 ±0.1` | ±0.1 | PASS (new) |
-| Lyapunov r=4 = ln2 | LogisticMapModel.js | `logistic-map: lyapunov r=4 = ln2, tolerance from Var=π²/12` | 4√(π²/12N) | PASS (new) |
-| Invariant density at r=4 | LogisticMapModel.js | `logistic-map: invariant density at r=4` | 4×SE=0.0042 | PASS (new) |
-| Sensitivity at r=4 | LogisticMapModel.js | `logistic-map: sensitivity at r=4 — two orbits diverge` | > 0.1 | PASS (new) |
-| Period-3 distinct roots | LogisticMapModel.js | `logistic-map: period-3 at r=3.83 has 3 distinct cycle points` | 1e-6 | PASS (new) |
-| A(0)=F₀/ω₀² | OscillatorsModel.js | `oscillators: A(ω) formula — static deflection at ω=0` | 1e-10 | PASS |
-| ω_r=√(ω₀²−2γ²) is amplitude maximum | OscillatorsModel.js | `oscillators: displacement peak at ω_r for γ=0.3ω₀` | ±0.001 scan | PASS |
-| Phase=π/2 at ω=ω₀ | OscillatorsModel.js | `oscillators: phase = π/2 at ω = ω₀` | 1e-10 | PASS |
-| Log decrement δ=2πγ/ω_d | OscillatorsModel.js | `oscillators: log decrement δ = 2πγ/ω_d` | 1e-10 | PASS |
-| 2% settling time | OscillatorsModel.js | `oscillators: 2% settling time — ζ=0.8 settles before ζ=1` | < 10 s | PASS (new) |
-| A(ω) global maximum at ω_r | OscillatorsModel.js | `oscillators: A(ω_r) is global max over [0,3ω₀]` | ±1e-10 | PASS (new) |
-| A(ω) formula multi-frequency | OscillatorsModel.js | `oscillators: A(ω) verified vs RK4 at ω=0.3, 0.7, 1.4, 2.0` | ±2e-4 | PASS (new) |
+| backwardEuler A-stable at λh=3.0 | Integrators.js | `ode-explorer: backwardEuler is A-stable` | < 1e-10 | PASS |
+| backwardEuler order-1 slope | OdeExplorerModel.js | `ode-explorer: convergence slope for backwardEuler ≈ 1` | ±0.15 | PASS |
+| Logistic RK4 accuracy h=0.001 | OdeExplorerModel.js | `ode-explorer: logistic rk4 agrees ±1e-7` | 1e-7 | PASS |
+| Convergence slopes Euler/Heun/RK4 | OdeExplorerModel.js | `convergence slope euler ≈ 1 / heun ≈ 2 / rk4 ≈ 4` | ±0.15 each | PASS |
+| **logistic-map** | | | | |
+| Fixed point x*=1−1/r | LogisticMapModel.js | `fixed point 1-1/r at r=2.5` | 1e-10 | PASS |
+| Stability \|f′(x*)\|=1 at r=3 | LogisticMapModel.js | `|f′(x*)| at r=3 computed via model` | 1e-10 | PASS |
+| Period-4 onset r=1+√6 | LogisticMapModel.js | `period-4 onset at r=1+√6` | 1e-6 | PASS |
+| Superstable R1=1+√5 | LogisticMapModel.js | `R1 = 1+√5` | 1e-6 | PASS |
+| Feigenbaum 3-iterate ratio ≈ 4.68 | LogisticMapModel.js | `feigenbaum 3-iterate ratio ≈ 4.68` | ±0.05 | PASS |
+| Feigenbaum 4-iterate ratio ≈ 4.6692 ±0.1 | LogisticMapModel.js | `feigenbaum 4-iterate ratio ≈ δ=4.6692 ±0.1` | ±0.1 | PASS |
+| Feigenbaum 4-iterate ≈ 4.6692 ±0.01 ✦ | LogisticMapModel.js | `feigenbaum 4-iterate ratio ≈ δ=4.6692 ±0.01 (R1–R4 stated)` | ±0.01 | PASS |
+| Lyapunov r=4 = ln2 (iid SE) | LogisticMapModel.js | `lyapunov r=4 = ln2 ±0.00363` | 4√(π²/12N) | PASS |
+| Lyapunov r=4 = ln2 (batch SE) ✦ | LogisticMapModel.js | `lyapunov r=4 — batch-means SE tighter than iid` | 4×batchSE | PASS |
+| Invariant density 1/3 (iid SE) | LogisticMapModel.js | `invariant density at r=4` | 4×SE=0.0042 | PASS |
+| Invariant density 1/3 (batch SE) ✦ | LogisticMapModel.js | `invariant density — batch-means SE` | 4×batchSE | PASS |
+| Sensitivity at r=4 (1e-12) | LogisticMapModel.js | `sensitivity at r=4 — two orbits diverge` | > 0.1 | PASS |
+| Sensitivity growth rate ln2 ±10% ✦ | LogisticMapModel.js | `sensitivity at r=4 from δ₀=1e-10 — growth rate ≈ ln2 ±10%` | ±10%·ln2 | PASS |
+| r=3.5 fixed point \|f'(x*)\|=1.5 ✦ | LogisticMapModel.js | `fixed point at r=3.5 — \|f′(x*)\|=1.5, grows as 1.5^n ±1%` | 1e-10; relErr<1% | PASS |
+| Period-3 distinct roots | LogisticMapModel.js | `period-3 at r=3.83 has 3 distinct cycle points` | 1e-6 | PASS |
+| **integrate-and-fire** | | | | |
+| Rheobase I_th=1.5 nA | IntegrateAndFireModel.js | `iaf: rheobase = 1.5 nA ±1e-10` | 1e-10 | PASS |
+| ISI=2+10·ln4 at I=2 nA | IntegrateAndFireModel.js | `iaf: ISI = 2+10·ln4 at I=2nA ±1e-10` | 1e-10 | PASS |
+| f near rheobase < 10 Hz | IntegrateAndFireModel.js | `iaf: firing rate → 0 as I → I_th` | f < 10 Hz | PASS |
+| Near-rheobase specific f values ✦ | IntegrateAndFireModel.js | `iaf: near-rheobase f at ε=1e-3, 1e-6, 1e-9` | anchors ±0.1 Hz | PASS |
+| Large-I ISI formula (WEAK) | IntegrateAndFireModel.js | `iaf: ISI formula verified at large I=10 nA ±1e-10` | 1e-10 | PASS — WEAK (formula vs formula) |
+| Large-I refractory ceiling ✦ | IntegrateAndFireModel.js | `iaf: large-I limit f → 1/t_ref = 500 Hz (non-circular)` | f > 499; f < 500 | PASS |
+| dt-halving ratio ≈ 2 | IntegrateAndFireModel.js | `iaf: dt-halving error ratio ≈ 2` | ratio ∈ [1.5, 2.5] | PASS |
+| dt-halving values stated ✦ | IntegrateAndFireModel.js | `iaf: dt-halving error values stated` | err < 2×dt; ratio ≈ 1.90 | PASS |
+| **orbits** | | | | |
 | T_Earth=365.2569 days | OrbitModel.js | `orbits: T_Earth = 365.257 days ±0.02` | ±0.02 days | PASS |
 | v_circ=29.7847 km/s | OrbitModel.js | `orbits: vis-viva circular orbit v_circ = 29.7847 km/s` | ±0.001 km/s | PASS |
 | v_esc=11.186 km/s | OrbitModel.js | `orbits: Earth escape speed 11.186 km/s ±0.01` | ±0.01 km/s | PASS |
 | Verlet energy bounded | OrbitModel.js | `orbits: verlet energy bounded (ratio ≤ 3.2)` | ratio ≤ 3.2 | PASS |
 | RK4 secular drift at T/500 | OrbitModel.js | `orbits: rk4 energy grows secularly (ratio ≥ 5)` | ratio ≥ 5 | PASS |
-| RK4 secular drift at T/100 | OrbitModel.js | `orbits: rk4 secular drift ratio ≥ 5 at dt=T/100` | ratio ≥ 5 | PASS (new) |
-| RK4 > Verlet at T/100 | OrbitModel.js | `orbits: rk4 absolute energy error exceeds verlet at dt=T/100` | absolute > | PASS (new) |
-| e≥1 domain guard | OrbitModel.js | `orbits: e≥1 throws RangeError` | throws | PASS (new) |
-| Rheobase I_th=1.5 nA | IntegrateAndFireModel.js | `iaf: rheobase = 1.5 nA ±1e-10` | 1e-10 | PASS |
-| ISI=2+10·ln4 at I=2 nA | IntegrateAndFireModel.js | `iaf: ISI = 2+10·ln4 at I=2nA ±1e-10` | 1e-10 | PASS |
-| f→0 near rheobase | IntegrateAndFireModel.js | `iaf: firing rate → 0 as I → I_th from above` | < 10 Hz, monotone | PASS (new) |
-| Large-I ISI formula | IntegrateAndFireModel.js | `iaf: ISI formula verified at large I=10 nA ±1e-10` | 1e-10 | PASS (new) |
-| dt-halving ratio ≈ 2 | IntegrateAndFireModel.js | `iaf: dt-halving error ratio ≈ 2` | ratio ∈ [1.5, 2.5] | PASS (new) |
+| RK4 secular drift at T/100 | OrbitModel.js | `orbits: rk4 secular drift ratio ≥ 5 at dt=T/100` | ratio ≥ 5 | PASS |
+| RK4 > Verlet at T/100 after 1000 orbits | OrbitModel.js | `orbits: rk4 absolute error exceeds verlet at dt=T/100` | absolute > | PASS |
+| Constants GM_SUN, GM_EARTH, R_EARTH ✦ | OrbitModel.js | `orbits: constants GM_SUN, GM_EARTH, R_EARTH` | ±tol; g≈9.82 | PASS |
+| RK4 < Verlet early, > later at e=0.5 ✦ | OrbitModel.js | `orbits: e=0.5 dt=T/100 — crossover between orbit 200–500` | orbit 1: RK4<Verlet; orbit 500: RK4>Verlet | PASS |
+| **oscillators** | | | | |
+| A(0)=F₀/ω₀² | OscillatorsModel.js | `oscillators: A(ω) formula — static deflection at ω=0` | 1e-10 | PASS |
+| ω_r=√(ω₀²−2γ²) is amplitude maximum | OscillatorsModel.js | `oscillators: displacement peak at ω_r` | ±0.001 scan | PASS |
+| Phase=π/2 at ω=ω₀ | OscillatorsModel.js | `oscillators: phase = π/2 at ω = ω₀` | 1e-10 | PASS |
+| Log decrement δ=2πγ/ω_d | OscillatorsModel.js | `oscillators: log decrement` | 1e-10 | PASS |
+| 2% settling time | OscillatorsModel.js | `oscillators: 2% settling time — ζ=0.8 < ζ=1` | < 10 s | PASS |
+| A(ω_r) global max | OscillatorsModel.js | `oscillators: A(ω_r) is global max over [0,3ω₀]` | 1e-10 | PASS |
+| A(ω) multi-frequency ±2e-4 | OscillatorsModel.js | `oscillators: A(ω) verified vs RK4 at ω=0.3, 0.7, 1.4, 2.0` | ±2e-4 | PASS |
+| Peak-detection error bound ✦ | OscillatorsModel.js | `oscillators: peak-detection error ≤ A·5.48e-5, margin ≈1.46×` | bound < 2e-4 | PASS |
+| **rescorla-wagner** | | | | |
 | Acquisition V_n=λ(1−(1−αβ)^n) | RescorlaWagnerModel.js | `rw: acquisition closed form ±1e-10` | 1e-10 | PASS |
 | Blocking ΔV_B≈0 | RescorlaWagnerModel.js | `rw: blocking delta-V_B = 0 ±1e-6` | 1e-6 | PASS |
+| Blocking phase-1 = 50 trials ✦ | RescorlaWagnerModel.js | `rw: blocking phase-1 = 50 trials — VA[50] = 1−(0.75)^50` | 1e-10 | PASS |
 | Conditioned inhibition | RescorlaWagnerModel.js | `rw: conditioned inhibition ±1e-10` | 1e-10 | PASS |
-| Compound oscillation β·Σα > 1 | RescorlaWagnerModel.js | `rw: outside domain oscillates at compound β·Σα > 1` | sign alternation | PASS (fixed) |
+| Conditioned inhibition 300 pairs ✦ | RescorlaWagnerModel.js | `rw: conditioned inhibition — 300 pairs needed; not at 50` | > 1e-10 at 50; ≤ 1e-10 at 300 | PASS |
 
 ---
 
@@ -152,44 +211,41 @@ One commit per bench.
 
 | Formula | Independent check | Result |
 |---|---|---|
-| Var(ln\|f'(x)\|) under ρ(x)=1/(π√(x(1-x))) | θ=2arcsin(√x) → uniform; ∫(ln\|4cosθ\|)²dθ/π = (ln2)²+π²/12; Var = π²/12 | π²/12 ≈ 0.8225 ✓ |
+| Var(ln\|f'(x)\|) under ρ(x)=1/(π√(x(1-x))) | θ=2arcsin(√x) → uniform; ∫(ln\|4cosθ\|)²dθ/π = (ln2)²+π²/12; Var=π²/12 | π²/12 ≈ 0.8225 ✓ |
 | Invariant density P([0.25,0.75]) | (2/π)(arcsin(√0.75)−arcsin(√0.25)) = (2/π)(π/3−π/6) = 1/3 | 1/3 ✓ |
-| IAF f near rheobase I=1.50001 | ISI = 2+10·ln(15.0001/0.0001) = 121 ms → f≈8 Hz | 8 Hz < 10 Hz ✓ |
-| IAF large-I: V_∞−V_reset=100, V_∞−V_th=85 at I=10 | ISI = 2+10·ln(100/85) | exact ✓ |
-| Peak-detection error for A(ω) test at 300 samples/cycle | A·(ω·dt/2)²/2 ≤ 2.5·(2/(300))²/2 ≈ 5.6e-5 << 2e-4 | justified ✓ |
-| backwardEuler multiplier at λh=3 | \|1/(1+3)\| = 0.25 < 1 | A-stable ✓ |
-| 2% settling time ζ=0.8: envelope (5/3)e^(-0.8t)=0.02 | t_s=ln(83.3)/0.8≈5.53 s | < ζ=1 t_s≈5.83 s ✓ |
-| e≥1 guard: rPerihelion = a(1−e)=0 at e=1 | vPerihelion → ∞, period formula undefined | RangeError correct ✓ |
+| Logistic-map batch SE < iid SE | Negative autocorrelation at r=4: x near ½ gives small \|f'\|, next iterate near 0 or 1 gives \|f'\|≈4; batchSE ≈ 4.1e-5 ≪ iidSE ≈ 9.1e-4 | confirmed ✓ |
+| Feigenbaum 4-iterate ratio | (R3−R2)/(R4−R3); R4=3.5667 computed via superstableR(4,3.555,3.568); ratio=4.663 | \|4.663−4.6692\|=0.006<0.01 ✓ |
+| r=3.5 fixed-point growth 1.5^20 | f'(x*)=−3/2 exactly; 20-step linearisation error = O(δ₀·1.5^20)≈O(1e-12) | relErr = 3.7e-7 < 1% ✓ |
+| IAF near-rheobase f at ε=1e-3 | ISI = 2+10·ln(15.01/0.01) = 2+10·ln(1501) ≈ 75.13 ms → f ≈ 13.31 Hz | ∈ [13.2, 13.5] ✓ |
+| IAF large-I refractory ceiling | As I→∞, ln[(V_∞−V_reset)/(V_∞−V_th)]→0; ISI→t_ref=2ms; f→500 Hz | f(10000)=499.63 Hz > 499 ✓ |
+| Orbit crossover between 200–500 | Verlet bounded ≈1.07e-2; RK4 at orbit 200: 5.91e-3 (< Verlet); orbit 500: 1.48e-2 (> Verlet) | crossover confirmed ✓ |
+| Peak-detection bound | 1−cos(π/300)=5.48e-5; max A=2.5 at γ=0.2; bound=1.37e-4 < 2e-4 | margin=1.46 ✓ |
+| RW VA[50]=1−(0.75)^50 | Acquisition formula V_n=λ(1−(1−αβ)^n), n=50, αβ=0.25 | 1−(0.75)^50 ≈ 1−5.55e-7 ✓ |
+| RW conditioned inhibition 300 pairs | Slowest eigenvalue 0.75/pair; (0.75)^300≈1.6e-38 | < 1e-10 ✓ |
+| backwardEuler A-stable | \|1/(1+λh)\| at λh=3: 1/4=0.25 < 1 | A-stable ✓ |
+| CSS --surface fix: fillStyle behaviour | Undefined CSS variable → getComputedStyle returns ""; Canvas ignores empty string, retains previous value (black on first frame, last series colour on subsequent) | root cause confirmed ✓ |
 
 ---
 
-## 7. Issues from original review — resolution status
+## 7. WEAK tests identified
 
-| Issue | Original severity | Resolution |
+| Test | Why WEAK | Stronger test added |
 |---|---|---|
-| Oscillator test name `±1e-8` should be `±1e-4` | Minor | Fixed in pre-phase-6b cleanup commit `84f1d9e` |
-| IAF test names `±1e-5` should be `±1e-4` | Minor | Fixed in pre-phase-6b cleanup commit `84f1d9e` |
-| IAF dead code `Vprev` variable | Minor | Removed in pre-phase-6b cleanup commit `84f1d9e` |
-| Orbits e=0.99 test was vacuous for domain boundary | Moderate | Fixed: RangeError guard added to OrbitModel, test throws at e=1 (`4efb2cc`) |
-| R-W bench readout "V_B" for conditioned-inhibition scenario | Minor UX | Fixed: label changed to "V_B / V_X (final)" in cleanup commit |
-| backwardEuler not covered by convergence tests | Minor | Fixed: order-1 slope test + A-stability test added (`3a63f81`) |
-| Feigenbaum test vs 4.68 not δ | Weak | Fixed: 4-iterate ratio test vs δ=4.6692 added (`9482db9`) |
-| Oscillator single-frequency A(ω) test | Weak | Fixed: global-max sweep + multi-frequency RK4 check added (`96f2d8e`) |
-| R-W compound test ran single-cue | Weak | Fixed: replaced with genuine AB compound test (`7b75a38`) |
+| `iaf: ISI formula verified at large I=10 nA ±1e-10` | Both sides compute `2 + 10·ln[(V_∞−V_reset)/(V_∞−V_th)]`; cannot catch a systematic formula error | `iaf: large-I limit f → 1/t_ref = 500 Hz` (non-circular: uses only t_ref) ✓ |
+
+The following tests were previously marked WEAK and strengthened in phase-6b (not changed further):
+
+| Test | Resolution |
+|---|---|
+| `feigenbaum 3-iterate ratio ≈ 4.68 ±0.05` | Still present; tighter 4-iterate ±0.01 test now co-exists |
+| `lyapunov r=4 = ln2 ±0.00363` (magic 0.8225) | Replaced by `tolerance from Var=π²/12` and batch-means test |
+| `sensitivity at r=4` (1e-12, no rate) | Growth-rate test from 1e-10 added alongside |
 
 ---
 
 ## 8. Test suite summary
 
-### At tag `phase-6` (before STEP 0–2)
-
-```
-# tests 460
-# pass  460
-# fail    0
-```
-
-### At tag `phase-6b` (after STEP 0–2)
+### At tag `phase-6b` (before phase-6c work)
 
 ```
 # tests 477
@@ -197,36 +253,51 @@ One commit per bench.
 # fail    0
 ```
 
-New tests by bench: logistic-map +6, iaf +3, orbits +3, oscillators +3, ode-explorer +2,
-rescorla-wagner ±0 (1 replaced). Plus blank-bench fix (STEP 0) in `77aa493`.
-
-### Commit log (STEP 0–2)
+### At tag `phase-6c` (this document)
 
 ```
-77aa493  fix: blank canvas on all Phase 6 benches
-9482db9  test(logistic-map): add 6 MISSING/WEAK tests
-9f24886  test(integrate-and-fire): add 3 MISSING/WEAK tests
-4efb2cc  test(orbits): e≥1 domain guard + RK4 vs Verlet at dt=T/100
-96f2d8e  test(oscillators): add 3 MISSING/WEAK tests
-7b75a38  test(rescorla-wagner): fix compound oscillation test
-3a63f81  test(ode-explorer): add 2 MISSING backwardEuler tests
+# tests 493
+# pass  493
+# fail    0
+```
+
+New tests by bench: logistic-map +5, iaf +3, orbits +2, oscillators +1, rescorla-wagner +2. Plus CSS fix (`c5aa51f`).
+
+### Commit log (phase-6c only)
+
+```
+c5aa51f  fix(tokens): add missing --surface, --text, --on-surface aliases
+def533a  test(logistic-map): add sensitivity, Feigenbaum ±0.01, batch-means, r=3.5 stability
+645433e  test(integrate-and-fire): add near-rheobase anchors, large-I ceiling, dt-halving values
+60480f6  test(orbits): add constants verification and RK4/Verlet crossover at e=0.5 dt=T/100
+edf9667  test(oscillators): state peak-detection error bound and margin for 2e-4 tolerance
+7c0de07  test(rescorla-wagner): state phase-1=50 for blocking; state 300 pairs for conditioned inhibition
 ```
 
 ---
 
 ## 9. Open questions
 
-1. **Playwright / smoke test**: No browser test was added. The blank-bench fix was verified by
-   reading source code (3 root causes all mechanical); browser rendering would require a server.
-   Recommend adding a Playwright smoke test in a future pass to guard against regressions.
+1. **Feigenbaum constant precision**: The 4-iterate ratio (R1–R4) gives ≈4.663 vs δ=4.6692 ±0.01.
+   To tighten further to ±0.001 requires R5 (period-32 superstable parameter), which needs
+   evaluating f^{32}(½)=½ via bisection on a degree-2^32 iterate — computationally feasible
+   but slow. Left as a future exercise.
 
-2. **Feigenbaum constant precision**: The 4-iterate ratio gives ≈4.668; to verify δ=4.6692±0.001
-   requires computing R5 or R6 (superstable period-32 and period-64 parameters via Brent on
-   f^{32}(½)=½). These are very close together and slow to compute; left as a future exercise.
+2. **IAF large-I WEAK test**: The test `ISI formula verified at large I=10 nA ±1e-10` is formula
+   vs formula (WEAK). The new non-circular test (`f → 500 Hz`) covers the physical limit.
+   The WEAK test should be removed in a future pass if it adds no additional coverage.
 
-3. **Cauchy CLT failure test (Phase 5)**: The `central-limit` bench has a Cauchy IQR test; it
-   is in the Phase 5 suite and was not re-audited here. No gap found, but it should be checked
-   if Phase 5 tests are ever re-reviewed.
+3. **Orbit crossover at e=0.5 vs e=0.7**: The existing phase-6b test (e=0.7, orbit 1000) and
+   the new test (e=0.5, orbit 500) probe different eccentricities. For e=0.5 the crossover
+   falls between orbit 200 and 500 (verified numerically at 200: RK4=5.91e-3 < Verlet=1.08e-2;
+   at 500: RK4=1.48e-2 > Verlet=1.08e-2). The exact crossover was not bisected; stating
+   "crossover between 200–500" is accurate.
 
-4. **OrbitModel e<0 guard**: The new RangeError guard covers e<0 and e≥1. The bench slider
-   already prevents e<0 in practice, so this is belt-and-suspenders but correct.
+4. **CSS regression guard**: The `--surface`, `--text`, `--on-surface` aliases are not covered
+   by any automated contract test. A CSS token completeness check (list of required tokens vs
+   defined tokens in `tokens.css`) would prevent this class of regression in future phases.
+
+5. **Playwright / smoke test**: Smoke test at `tools/smoke.mjs` runs 48 benches and checks
+   for SOLID and black-fill failures. The CSS fix was verified via smoke (48/48 PASS after
+   `c5aa51f`). The smoke test is not part of `npm test` (requires a live server); it runs in
+   the `smoke` CI job.
