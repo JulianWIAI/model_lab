@@ -9,7 +9,7 @@
 | phase-7b | af019382be50872f9ade09217ecd079bfea886bb | 614 | Baseline — last commit before Phase 8 bench work (see note 1) |
 | phase-8 | 904a41feae377376ba175cbeb0ca15df00fe3c02 | 692 | Phase 8 complete (+78 tests) |
 | phase-8b | 7820d47cd4e181f1593104e1b74dcd4fcbc420f6 | 740 | Phase 8b fixes (+48 tests) |
-| phase-8c | c7d7731fad3aff1e3bd36dcb2cd28cc15c31f0d9 | 756 | Phase 8c close-out: m_e CODATA 2022; invasion criterion; K1≠K2 grid test; spiral closed form; dt-halving [12,20]; T-4 fix (+16 tests) |
+| phase-8c | 0e7db3cd6d2261610a39a489e2ead43e95d98a7f | 756 | Phase 8c close-out: m_e CODATA 2022; invasion criterion; K1≠K2 grid test; spiral closed form; dt-halving [12,20]; T-4 fix (+16 tests) |
 
 **Note 1 — phase-7b = af01938:** `af01938` is "fix(smoke): SOLID flag is informational only — remove from fail condition". This is not a Phase 7 feature commit; it is the last commit before Phase 8 bench work started. The tag marks the test-count baseline (614 tests) that Phase 8 was measured against.
 
