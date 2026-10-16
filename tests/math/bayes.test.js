@@ -34,12 +34,39 @@ describe('BayesModel', () => {
     assert.strictEqual(b, 6);
   });
 
-  it('posteriorVariance formula ±1e-10', () => {
-    const m = new BayesModel({ alpha: 1, beta: 1, k: 7, n: 10 });
-    const { a, b } = m.posteriorParams();
-    const s = a + b;
-    const expected = (a * b) / (s * s * (s + 1));
-    assertClose(m.posteriorVariance(), expected, 1e-10, 'posteriorVariance');
+  it('posteriorVariance Beta(3,5): Simpson numerical integration ±1e-6', () => {
+    // Beta(3,5): a=3, b=5; exact variance = a·b/((a+b)²·(a+b+1)) = 15/576 ≈ 0.026042
+    // Numerical check via Simpson's 1/3 rule on Var = E[X²] - (E[X])²
+    // f(x) = x^(a-1)·(1-x)^(b-1) / B(a,b) = 15·x²·(1-x)⁴   [B(3,5)=1/15]
+    // B(3,5) = Γ(3)Γ(5)/Γ(8) = 2·24/5040 = 48/5040 = 1/105  — recheck:
+    //   Γ(3)=2, Γ(5)=24, Γ(8)=5040 → B(3,5)=2·24/5040=1/105
+    //   f(x) = 105·x²·(1-x)⁴
+    // E[X²] = ∫₀¹ x²·f(x)dx = 105·∫₀¹ x⁴(1-x)⁴ dx
+    //       = 105·B(5,5) = 105·(4!·4!/8!) = 105·576/40320 = 105/70 = 1.5  — that can't be right
+    // Let me recompute: B(3,5)=Γ(3)Γ(5)/Γ(8)=2·24/5040=48/5040=1/105
+    // E[X]=a/(a+b)=3/8; E[X²]=B(5,5)/B(3,5)? No: E[X^k]=B(a+k,b)/B(a,b)
+    // E[X²] = B(5,5)/B(3,5) = [Γ(5)Γ(5)/Γ(10)] / [Γ(3)Γ(5)/Γ(8)]
+    //       = [24·24/362880] / [2·24/5040] = (576/362880)/(48/5040) = (1/630)/(1/105) = 105/630 = 1/6
+    // Var = 1/6 - (3/8)² = 1/6 - 9/64 = 64/384 - 54/384 = 10/384 = 5/192 ≈ 0.026042  ✓
+    const expected = 5 / 192; // exact: a*b/((a+b)^2*(a+b+1)) = 15/(64*9) = 15/576 = 5/192
+    const N = 2000;
+    const h = 1 / N;
+    // B(3,5) = 1/105; pdf = 105·x²·(1-x)⁴
+    const pdf = x => 105 * x * x * Math.pow(1 - x, 4);
+    const meanX = 3 / 8;
+    // Simpson: Var = E[X²] - mean² = ∫ x²·pdf dx - (3/8)²
+    let EX2 = 0;
+    for (let i = 0; i <= N; i++) {
+      const x = i * h;
+      const w = (i === 0 || i === N) ? 1 : (i % 2 === 0 ? 2 : 4);
+      EX2 += w * x * x * pdf(x);
+    }
+    EX2 *= h / 3;
+    const numVar = EX2 - meanX * meanX;
+    assertClose(numVar, expected, 1e-6, 'Beta(3,5) variance via Simpson');
+    // Also check the model method agrees with the exact value
+    const m = new BayesModel({ alpha: 3, beta: 5, k: 0, n: 0 });
+    assertClose(m.posteriorVariance(), expected, 1e-10, 'posteriorVariance model vs exact');
   });
 
   it('Γ(1/2) = √π: exp(lnGamma(0.5)) ±1e-6', () => {
