@@ -133,6 +133,42 @@ test('orbits: rk4 absolute energy error exceeds verlet at dt=T/100 after 1000 or
     `At dt=T/100 after 1000 orbits: RK4 err=${eR[999].toExponential(2)} > Verlet err=${eV[999].toExponential(2)}`);
 });
 
+test('orbits: constants GM_SUN, GM_EARTH, R_EARTH — names and values from OrbitModel.js', () => {
+  // OrbitModel.js exports GM_SUN=1.32712440018e20 m³/s², GM_EARTH=3.986004418e14 m³/s², R_EARTH=6.371e6 m.
+  // Independent checks: v_circ_Earth = √(GM_SUN/AU) ≈ 29.785 km/s; g = GM_E/R_E² ≈ 9.82 m/s².
+  assert.ok(Math.abs(GM_SUN  - 1.32712440018e20) < 1e10,
+    `GM_SUN = ${GM_SUN.toExponential(6)}, expected 1.32712440018e20 m³/s²`);
+  assert.ok(Math.abs(GM_EARTH - 3.986004418e14) < 1e5,
+    `GM_EARTH = ${GM_EARTH.toExponential(6)}, expected 3.986004418e14 m³/s²`);
+  assert.ok(Math.abs(R_EARTH - 6.371e6) < 1e3,
+    `R_EARTH = ${R_EARTH}, expected 6.371e6 m`);
+  // Derived check: surface gravity g = GM_E/R_E² ≈ 9.82 m/s²
+  const g = GM_EARTH / R_EARTH ** 2;
+  assert.ok(g > 9.75 && g < 9.90,
+    `g = GM_E/R_E² = ${g.toFixed(3)} m/s², expected ≈9.82 m/s²`);
+});
+
+test('orbits: e=0.5 dt=T/100 — RK4 error < Verlet at orbit 1, > Verlet by orbit 500 (crossover between 200–500)', () => {
+  // RK4 starts more accurate (O(dt^4)≈2.95e-5 at orbit 1) than Verlet (O(dt^2)≈1.50e-3) but
+  // accumulates secular drift. Verlet energy error is bounded (≈1.06e-2 over 1000 orbits).
+  // RK4 secular drift: 2.95e-5 at orbit 1, 1.48e-2 at orbit 500 — crossover between orbit 200–500.
+  // Values computed at a=0.1AU, e=0.5, dt=T/100.
+  const mV = new OrbitModel({ a: 0.1 * AU, e: 0.5, integrator: 'verlet' });
+  const mR = new OrbitModel({ a: 0.1 * AU, e: 0.5, integrator: 'rk4' });
+  mV._dt = mV.period / 100;
+  mR._dt = mR.period / 100;
+  const { energyErrors: eV1 } = mV.integrateOrbits(1);
+  const { energyErrors: eR1 } = mR.integrateOrbits(1);
+  // Orbit 1: RK4 more accurate (higher-order method, negligible drift yet)
+  assert.ok(eR1[0] < eV1[0],
+    `Orbit 1: RK4 err=${eR1[0].toExponential(3)} should be < Verlet err=${eV1[0].toExponential(3)}`);
+  const { energyErrors: eV500 } = mV.integrateOrbits(500);
+  const { energyErrors: eR500 } = mR.integrateOrbits(500);
+  // Orbit 500: RK4 secular drift has overtaken Verlet's bounded truncation error
+  assert.ok(eR500[499] > eV500[499],
+    `Orbit 500: RK4 err=${eR500[499].toExponential(3)} should exceed Verlet err=${eV500[499].toExponential(3)} (crossover before orbit 500)`);
+});
+
 test('orbits: e=0.99 (near-parabolic) has finite period and large perihelion speed', () => {
   // e=0.99 is still a bound orbit (e<1); period = 2π√(a³/GM), independent of e
   const m = new OrbitModel({ a: AU, e: 0.99 });
