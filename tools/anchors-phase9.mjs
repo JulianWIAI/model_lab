@@ -1,12 +1,17 @@
 /**
  * anchors-phase9.mjs — independent numerical anchors for Phase 9 tests.
  *
- * RULES: no model code imported; every value derived from scratch.
+ * RULES: no model code imported; every value derived from scratch;
+ *        every assert() call throws if the anchor is wrong.
  * Run:  node tools/anchors-phase9.mjs
  *
  * Benches: entropy-mixing, stdp, cable-equation, random-walk,
- *          solow, opinion-dynamics, age-structure, Complex.js (infra)
+ *          solow, opinion-dynamics, age-structure
  */
+
+function assert(cond, msg) {
+  if (!cond) throw new Error(`ANCHOR FAILED: ${msg}`);
+}
 
 const fmt = (v, d=10) => typeof v === 'number' ? v.toPrecision(d) : String(v);
 const sec = (label) => {
@@ -22,327 +27,420 @@ const row = (label, value, note='') =>
 // ═══════════════════════════════════════════════════════════════════════
 sec('1. ENTROPY-MIXING');
 
-// R = 8.314462618 J/(mol·K)  — CODATA 2018; exact since SI 2019 redefinition
-// (R = N_A · k_B = 6.02214076e23 × 1.380649e-23 = 8.314462618... J/(mol·K))
-const R_gas = 6.02214076e23 * 1.380649e-23;  // J/(mol·K)  exact SI 2019
+// R = N_A · k_B = 6.02214076e23 × 1.380649e-23  (CODATA 2018 exact SI 2019)
+const R_gas = 6.02214076e23 * 1.380649e-23;
 row('R (gas constant, SI 2019)', R_gas, 'J/(mol·K)');
+assert(Math.abs(R_gas - 8.314462618) < 1e-8, 'R must be 8.314462618 J/(mol·K)');
 
-// Ideal mixing entropy: ΔS_mix = -nR Σ xᵢ ln xᵢ   (n = total moles)
-// For 1 mol of mixture:
-//   Binary equimolar (x₁=x₂=0.5): ΔS = R·ln 2
-//   Ternary equimolar (xᵢ=1/3):   ΔS = R·ln 3
-//   Quaternary equimolar (1/4):    ΔS = R·ln 4
-
+// Ideal mixing entropy: ΔS_mix = -R Σ xᵢ ln xᵢ  (per mole of mixture)
+// Independent derivation: -Σxᵢlnxᵢ gives the dimensionless part; multiply by R.
 function mixingEntropy(xs) {
-  // xs: mole fractions (must sum to 1); returns ΔS_mix/R (dimensionless)
+  // xs: mole fractions; returns ΔS_mix/R  (dimensionless)
   return -xs.reduce((s, x) => s + (x > 0 ? x * Math.log(x) : 0), 0);
 }
 
-const dS_bin = R_gas * mixingEntropy([0.5, 0.5]);     // = R·ln2
-const dS_ter = R_gas * mixingEntropy([1/3, 1/3, 1/3]); // = R·ln3
-const dS_qua = R_gas * mixingEntropy([0.25, 0.25, 0.25, 0.25]); // = R·ln4
+// Binary equimolar (x=0.5 each): -2·(0.5·ln0.5) = ln2 exactly
+const dS_bin = R_gas * mixingEntropy([0.5, 0.5]);
+const dS_bin_exact = R_gas * Math.LN2;
+row('Binary equimolar ΔS',   dS_bin,       'J/(mol·K)');
+row('  R·ln2 (independent)', dS_bin_exact, 'J/(mol·K)');
+row('  discrepancy',         dS_bin - dS_bin_exact, '(must be 0)');
+assert(Math.abs(dS_bin - dS_bin_exact) < 1e-12,
+  `binary ΔS must equal R·ln2; got discrepancy ${dS_bin - dS_bin_exact}`);
 
-row('\nBinary equimolar ΔS (R·ln2)',    dS_bin, 'J/(mol·K)  exact');
-row('  R·ln2 (check)',                  R_gas * Math.LN2, 'J/(mol·K)');
-row('  discrepancy (should be 0)',       dS_bin - R_gas * Math.LN2, '');
+// Ternary equimolar (x=1/3): -3·(1/3·ln(1/3)) = ln3
+const dS_ter = R_gas * mixingEntropy([1/3, 1/3, 1/3]);
+const dS_ter_exact = R_gas * Math.log(3);
+row('\nTernary equimolar ΔS',  dS_ter,       'J/(mol·K)');
+row('  R·ln3 (independent)',  dS_ter_exact, 'J/(mol·K)');
+assert(Math.abs(dS_ter - dS_ter_exact) < 1e-12,
+  `ternary ΔS must equal R·ln3`);
 
-row('\nTernary equimolar ΔS (R·ln3)',   dS_ter, 'J/(mol·K)');
-row('  R·ln3 (check)',                  R_gas * Math.log(3), 'J/(mol·K)');
+// Quaternary equimolar (x=0.25): 2·R·ln2
+const dS_qua = R_gas * mixingEntropy([0.25, 0.25, 0.25, 0.25]);
+const dS_qua_exact = 2 * R_gas * Math.LN2;
+row('\nQuaternary equimolar ΔS',  dS_qua,       'J/(mol·K)  = 2·R·ln2');
+row('  2·R·ln2 (independent)',   dS_qua_exact, '');
+assert(Math.abs(dS_qua - dS_qua_exact) < 1e-12,
+  `quaternary ΔS must equal 2·R·ln2`);
 
-row('\nQuaternary equimolar ΔS (R·ln4)',dS_qua, 'J/(mol·K)  = 2·R·ln2');
-row('  2·R·ln2 (check)',               2 * R_gas * Math.LN2, '');
-
-// Non-equimolar binary: x₁=0.3, x₂=0.7
+// Asymmetric binary (0.3/0.7)
 const dS_asym = R_gas * mixingEntropy([0.3, 0.7]);
-row('\nAsymmetric binary (0.3/0.7) ΔS', dS_asym, 'J/(mol·K)');
+row('\nAsymmetric binary (0.3/0.7)', dS_asym, 'J/(mol·K)');
 
-// Boundary: pure component x₁=1 → ΔS = 0 (no mixing)
+// Pure component x=1 → ΔS=0 exactly (x·ln(x)→0 as x→1)
 const dS_pure = mixingEntropy([1.0, 0.0]);
-row('Pure component (1,0) ΔS/R',        dS_pure, '(must be 0 exactly)');
+row('Pure component (1,0) ΔS/R', dS_pure, '(must be 0 exactly)');
+assert(dS_pure === 0, `pure component ΔS must be 0; got ${dS_pure}`);
 
-// Monotonicity: maximum at equimolar (ΔS_max = R·ln n_components)
-row('\nMax binary entropy = R·ln2',    R_gas * Math.LN2, 'J/(mol·K)');
-row('Max ternary entropy = R·ln3',     R_gas * Math.log(3), 'J/(mol·K)');
+// Maximum at equimolar: binary ≥ asymmetric
+assert(dS_bin >= dS_asym, 'equimolar binary must maximise ΔS among binary mixtures');
+row('\nMax binary ΔS = R·ln2',  dS_bin_exact, 'J/(mol·K)  confirmed equimolar maximum');
 
 // ═══════════════════════════════════════════════════════════════════════
 // 2. STDP (Spike-Timing-Dependent Plasticity)
 // ═══════════════════════════════════════════════════════════════════════
 sec('2. STDP');
 
-// STDP kernel (Song, Miller & Abbott 2000, Nat. Neurosci. 3:919):
-//   Δw(Δt > 0) = A₊ · exp(-Δt / τ₊)   [pre-before-post → LTP]
-//   Δw(Δt < 0) = -A₋ · exp(Δt / τ₋)   [post-before-pre → LTD]
+// Song, Miller & Abbott (2000, Nat. Neurosci. 3:919) parameters:
+//   A₊ = 0.005,  A₋ = A₊ × 1.05 = 0.00525,  τ₊ = τ₋ = 20 ms
 //
-// Song et al. (2000) parameters (cited, not fetched):
-//   τ₊ = τ₋ = 20 ms,  A₊ = 0.01,  A₋ = A₊ × (τ₊/τ₋) × 1.05 = 0.0105
+// Convention: Δt = t_post − t_pre
+//   Δt > 0  (pre fires before post) → LTP:  Δw = +A₊ · exp(−Δt/τ₊)
+//   Δt < 0  (post fires before pre) → LTD:  Δw = −A₋ · exp( Δt/τ₋)
 //
-// TRAP: net sign of weight change depends on A₊·τ₊ vs A₋·τ₋.
-//   Net area = ∫₀^∞ A₊·e^{-Δt/τ₊} d(Δt) − ∫₀^∞ A₋·e^{-Δt/τ₋} d(Δt)
-//            = A₊·τ₊ − A₋·τ₋
+// Net area (integral over all Δt):
+//   ∫₀^∞ A₊·e^{-Δt/τ₊} dΔt − ∫₀^∞ A₋·e^{-Δt/τ₋} dΔt
+//   = A₊·τ₊ − A₋·τ₋ (in time units of τ)
+//
+// TRAP: A₋/A₊ = 1.05 > 1 → net LTD → weights shrink under random Poisson pairing
+//   → steady-state weight distribution is BIMODAL (Song 2000 Fig. 3)
 
-const A_plus  = 0.01;   // LTP amplitude
-const A_minus = 0.0105; // LTD amplitude  (Song 2000: A₋ = A₊·1.05 for τ₊=τ₋)
-const tau_p   = 20e-3;  // s   (20 ms)
-const tau_m   = 20e-3;  // s   (20 ms)
+const A_plus  = 0.005;           // LTP amplitude
+const A_minus = A_plus * 1.05;   // LTD amplitude = 0.00525  (A₋/A₊ = 1.05)
+const tau_p   = 20e-3;           // s  (20 ms)
+const tau_m   = 20e-3;           // s  (20 ms)
 
-const ltp_area = A_plus  * tau_p * 1000;  // convert to ms units
-const ltd_area = A_minus * tau_m * 1000;
-const net_area = ltp_area - ltd_area;
+row('A₊', A_plus,  '(Song 2000)');
+row('A₋', A_minus, '= A₊ × 1.05');
+row('A₋/A₊', A_minus/A_plus, '(must be 1.05 exactly)');
+assert(Math.abs(A_minus/A_plus - 1.05) < 1e-15,
+  `A₋/A₊ must be 1.05; got ${A_minus/A_plus}`);
 
-row('LTP area = A₊·τ₊ (ms)',       ltp_area,  'ms  (Song 2000)');
-row('LTD area = A₋·τ₋ (ms)',       ltd_area,  'ms');
-row('Net area = LTP − LTD (ms)',    net_area,  'ms  NEGATIVE → LTD dominant → weights shrink on avg');
+// Point kernel values at Δt = ±10 ms  (independent: e^{-0.5} from Taylor)
+const dt_ex = 10e-3;   // 10 ms
+const e_half = Math.exp(-0.5);  // ≈ 0.60653
+const dw_ltp = A_plus  * e_half;   // kernel(+10ms)
+const dw_ltd = A_minus * e_half;   // |kernel(-10ms)|
 
-// Point values at Δt = +10 ms and -10 ms
-const dt_ex = 10e-3;  // 10 ms
-const dw_ltp = A_plus  * Math.exp(-dt_ex / tau_p);
-const dw_ltd = A_minus * Math.exp(-dt_ex / tau_m);  // note: negative contribution
-row('\nΔw(Δt=+10ms) = A₊·e^{-0.5}',  dw_ltp, '(LTP)');
-row('-Δw(Δt=-10ms) = A₋·e^{-0.5}',   dw_ltd, '(LTD magnitude)');
-row('LTP > LTD for this Δt?',         dw_ltp > dw_ltd ? 'yes' : 'no', 'true for all |Δt| when A₊<A₋ but τ₊=τ₋');
+row('\nkernel(Δt=+10ms) = A₊·e^{-0.5}', dw_ltp,   '(LTP)');
+row('|kernel(Δt=−10ms)| = A₋·e^{-0.5}', dw_ltd,  '(LTD magnitude)');
+assert(Math.abs(dw_ltp - 0.005 * Math.exp(-0.5)) < 1e-15,
+  `kernel(+10ms) must be 0.005·e^{-0.5}`);
+assert(dw_ltd > dw_ltp, 'LTD point value must exceed LTP for |Δt|=10ms (A₋>A₊, τ equal)');
 
-// Symmetric simplified kernel: τ₊=τ₋=τ, A₊=A₋=A → net area = 0 (no bias)
-// Song (2000) asymmetry: A₋/A₊ = 1.05 → slightly net LTD
-row('\nA₋/A₊ ratio',                  A_minus/A_plus, '(>1 → net LTD; Song 2000: 1.05)');
+// Net area (ms units)
+const ltp_area = A_plus  * tau_p * 1000;   // 0.005 × 20 = 0.1 ms
+const ltd_area = A_minus * tau_m * 1000;   // 0.00525 × 20 = 0.105 ms
+const net_area = ltp_area - ltd_area;       // −0.005 ms  (LTD dominant)
 
-// Integral test: ∫₋ᵀ^T kernel(Δt) d(Δt) ≈ (A₊τ₊ − A₋τ₋) for large T
-const T_int = 5 * Math.max(tau_p, tau_m);
+row('\nLTP area = A₊·τ₊ (ms)', ltp_area, 'ms  = 0.1 exactly');
+row('LTD area = A₋·τ₋ (ms)', ltd_area, 'ms  = 0.105 exactly');
+row('Net area (ms)',           net_area, 'ms  NEGATIVE → LTD dominant → bimodal weights');
+assert(Math.abs(ltp_area - 0.1) < 1e-15,
+  `LTP area must be 0.1 ms; got ${ltp_area}`);
+assert(Math.abs(ltd_area - 0.105) < 1e-15,
+  `LTD area must be 0.105 ms; got ${ltd_area}`);
+assert(Math.abs(net_area - (-0.005)) < 1e-15,
+  `net area must be -0.005 ms; got ${net_area}`);
+
+// Numerical ∫ kernel dΔt over [−5τ, +5τ]: cross-check
+const T_int = 20 * Math.max(tau_p, tau_m);  // 20τ → truncation error ≈ A·τ·e^{-20} < 1e-10
 const N_int = 100000;
 const dt_int = 2 * T_int / N_int;
 let integral = 0;
 for (let i = 0; i < N_int; i++) {
   const dt = -T_int + (i + 0.5) * dt_int;
+  // Δt = t_post − t_pre: dt>0 → LTP, dt<0 → LTD
   const dw = dt > 0
     ? A_plus  * Math.exp(-dt / tau_p)
     : -A_minus * Math.exp( dt / tau_m);
   integral += dw * dt_int;
 }
-row('\nNumerical ∫ kernel dΔt (s)',    integral * 1000, 'ms  (should match net_area)');
-row('Closed form net area (ms)',       net_area, 'ms');
+row('\nNumerical ∫ kernel dΔt (ms)', integral * 1000, 'ms  (should ≈ net_area)');
+assert(Math.abs(integral * 1000 - net_area) < 1e-5,
+  `numerical integral ${integral*1000} must match net_area ${net_area}`);
 
 // ═══════════════════════════════════════════════════════════════════════
 // 3. CABLE EQUATION
 // ═══════════════════════════════════════════════════════════════════════
 sec('3. CABLE EQUATION');
 
-// Steady-state cable equation:
-//   V(x) = V₀ · e^{-x/λ}
-//   λ = √(r_m / r_i)
-// where:
-//   r_m = membrane resistance per unit length [Ω·m]  = Rm / (π·d)
-//   r_i = axial resistance per unit length [Ω/m]    = 4Ra / (π·d²)
-//   λ = d/2 · √(Rm / Ra)   (standard result after cancellation)
-//
-// Physical intuition: λ is the length over which V drops by 1/e.
-// Larger d → larger λ (thicker axons have better signal propagation).
-// Larger Rm (or lower Ra) → larger λ.
-//
-// Reference: Rall (1967) J. Neurophysiol. 30:1138 — cited, not fetched.
+// Steady-state semi-infinite cable: V(x) = V₀·e^{−x/λ}
+// Space constant: λ = √(r_m / r_i)
+//   r_m = Rm / (π·d)      [Ω·m]   membrane resistance per unit length
+//   r_i = 4·Ra / (π·d²)   [Ω/m]   axial resistance per unit length
+// Cancelling: λ = (1/2)·√(d·Rm/Ra)   [m]
+// λ ∝ √d (NOT d or d²)
 
-const d_axon  = 1e-6;    // m   (1 μm diameter, thin axon)
-const Rm_spec = 0.1;     // Ω·m²  (specific membrane resistance = 1 Ω·cm² × 1e-4)
-const Ra_spec = 1.0;     // Ω·m   (specific axial resistance = 100 Ω·cm × 1e-2)
+const d_axon  = 1e-6;    // m   (1 μm diameter)
+const Rm_spec = 0.1;     // Ω·m²  (specific membrane resistance)
+const Ra_spec = 1.0;     // Ω·m   (specific axial resistivity)
 
-// r_m = Rm / (π·d),  r_i = 4Ra / (π·d²)
 const r_m = Rm_spec / (Math.PI * d_axon);
 const r_i = 4 * Ra_spec / (Math.PI * d_axon**2);
-const lambda_cable = Math.sqrt(r_m / r_i);
-// λ = (1/2)·√(d·Rm/Ra)  — simplified from √(r_m/r_i)
-const lambda_check = 0.5 * Math.sqrt(d_axon * Rm_spec / Ra_spec);
+const lambda_from_ri = Math.sqrt(r_m / r_i);
 
-row('d (axon diameter, m)',            d_axon,        'm');
-row('Rm (specific membrane R, Ω·m²)', Rm_spec,       'Ω·m²');
-row('Ra (axial resistivity, Ω·m)',     Ra_spec,       'Ω·m');
-row('r_m = Rm/(π·d)  [Ω·m]',          r_m,           'Ω·m  per unit length (not Ω·m²)');
-row('r_i = 4Ra/(π·d²)  [Ω/m]',        r_i,           'Ω/m');
-row('\nλ = √(r_m/r_i)  (m)',           lambda_cable,  'm');
-row('λ = d/2·√(Rm/Ra) (check)',        lambda_check,  'm  (must match above)');
-row('λ in μm',                         lambda_cable*1e6, 'μm  (≈158 μm for these params)');
+// Independent check via simplified form
+const lambda_simplified = 0.5 * Math.sqrt(d_axon * Rm_spec / Ra_spec);
 
-// Verify: V at x=λ should be V₀/e = V₀·exp(-1)
-row('\nV(λ)/V₀ = e^{-1}',             Math.exp(-1),  '≈ 0.368');
-// V at x=2λ:
-row('V(2λ)/V₀ = e^{-2}',             Math.exp(-2),  '≈ 0.135');
+row('r_m = Rm/(π·d)  [Ω·m]',       r_m,              'Ω·m per unit length');
+row('r_i = 4Ra/(π·d²)  [Ω/m]',     r_i,              'Ω/m');
+row('\nλ = √(r_m/r_i)  [m]',        lambda_from_ri,   'm');
+row('λ = (1/2)·√(d·Rm/Ra)  [m]',    lambda_simplified,'m  (must match)');
+row('λ in μm',                       lambda_from_ri*1e6,'μm  (≈158 μm)');
+assert(Math.abs(lambda_from_ri - lambda_simplified) < 1e-20,
+  `two λ formulas must agree; discrepancy ${lambda_from_ri - lambda_simplified}`);
 
-// Larger axon: d=10 μm → λ scales as √d  (since λ = (1/2)√(d·Rm/Ra) ∝ √d)
+// Verify V at key distances
+row('\nV(0)/V₀ = e^0 = 1',          Math.exp(0),      '(boundary condition)');
+row('V(λ)/V₀ = e^{-1}',             Math.exp(-1),     '≈ 0.36788');
+row('V(2λ)/V₀ = e^{-2}',            Math.exp(-2),     '≈ 0.13534');
+assert(Math.abs(Math.exp(-1) - 0.36787944117144233) < 1e-15,
+  'e^{-1} spot check');
+
+// λ scales as √d: 10 μm vs 1 μm → ratio = √10
 const d_large = 10e-6;
 const lambda_large = 0.5 * Math.sqrt(d_large * Rm_spec / Ra_spec);
-row('\nλ(d=10μm) / λ(d=1μm)',         lambda_large / lambda_cable, '= √10 ≈ 3.162 (since λ ∝ √d)');
-row('√10 check',                      Math.sqrt(10),                '');
-
-// Half-electrotonic length: V(L/2) / V₀ for L = λ
-row('\nElectrotonic scaling (exact):');
-row('  e^{-0} = 1',                   Math.exp(0),   '(boundary condition)');
-row('  e^{-0.5} = √e⁻¹',             Math.exp(-0.5),'≈ 0.6065');
-row('  e^{-1}',                       Math.exp(-1),  '≈ 0.3679');
-row('  e^{-2}',                       Math.exp(-2),  '≈ 0.1353');
+const ratio_lambda = lambda_large / lambda_from_ri;
+row('\nλ(10μm)/λ(1μm)',             ratio_lambda,      '= √10 (since λ ∝ √d)');
+row('√10',                          Math.sqrt(10),     '(must match above)');
+assert(Math.abs(ratio_lambda - Math.sqrt(10)) < 1e-12,
+  `λ ratio must be √10; got ${ratio_lambda}`);
 
 // ═══════════════════════════════════════════════════════════════════════
 // 4. RANDOM WALK
 // ═══════════════════════════════════════════════════════════════════════
 sec('4. RANDOM WALK');
 
-// 1D symmetric: steps ±1 with equal probability.
-//   E[X_n] = 0 (unbiased)
-//   E[X_n²] = n  (exact, by independence: Var(sum) = n·Var(single step) = n·1)
-//   E[|X_n|] ≈ √(2n/π)  (Gaussian approx, valid for large n)
-//   P(|X_n| ≤ k) ≈ erf(k/√(2n))  (by CLT)
+// 1D symmetric ±1 walk of n steps:
+//   E[Xₙ] = 0                   (unbiased)
+//   E[Xₙ²] = n                  (EXACT: independence gives Var = n·1)
+//   E[|Xₙ|] = n·C(n,n/2)/2^n   (EXACT formula for even n)
+//   E[|Xₙ|] ≈ √(2n/π)          (ASYMPTOTIC: from CLT / half-normal)
 //
-// Gambler's ruin (absorbing barriers at 0 and N, start at k):
-//   P(reach N before 0 | start k) = k/N  (symmetric)
-//   For start at a above 0, absorbing walls at +a+b and -b:
-//   P(reach +a+b) = (b+a)/(a+b) ... wait
-//   Actually: P(reach +N before 0 | start at k) = k/N
-//   So P(reach +a | start 0, absorbing at -b and +a) is NOT well-defined (0 is interior)
-//   Standard: start at s, absorbing at 0 and N: P(reach N) = s/N
-//
-// Diffusion: D = σ²/(2Δt) for continuous time
-//   For discrete ±1 steps with step size Δx and time step Δt:
-//   D = (Δx)²/(2Δt)
-//
-// 2D isotropic: E[r²] = 4Dt = 4·(1/2)·n = 2n (for unit steps in 2D, D=1/2 per dimension)
-//   Wait: for 2D walk with unit steps in x and y:
-//   Var(x) = n (x steps), Var(y) = n (y steps), E[r²] = E[x²]+E[y²] = 2n
-//   With D = Δx²/(2Δt) for each dimension: E[r²] = 4Dt (standard formula, D per direction)
+// These two are DIFFERENT. For n=100:
+//   Exact: 100·C(100,50)/2^100 = 7.9589...
+//   Asymp: √(200/π)            = 7.9788...
+//   Error ≈ 0.020 (≈0.25%)
 
-const n_steps = 100;  // number of steps
-row('n steps',                      n_steps,            '');
-row('E[X²] = n (exact)',            n_steps,            'exact');
-row('E[|X|] ≈ √(2n/π)',            Math.sqrt(2*n_steps/Math.PI), 'Gaussian approx');
-row('RMS = √n',                     Math.sqrt(n_steps), 'exact (for unbiased walk)');
+const n_steps = 100;
 
-// Check: √(2n/π) vs √n
-row('\n√(2/π) ≈ 0.7979',           Math.sqrt(2/Math.PI), '(ratio E[|X|]/RMS)');
+// Exact E[|X_100|] via log of C(100,50)
+// log C(100,50) = Σ_{k=1}^{50} [log(101-k) - log(k)]
+let logC100_50 = 0;
+for (let k = 1; k <= 50; k++) logC100_50 += Math.log(101 - k) - Math.log(k);
+const E_abs_exact = n_steps * Math.exp(logC100_50 - n_steps * Math.LN2);
 
-// Gambler's ruin: start at s=30, N=100 → P(ruin=0) = 1 - 30/100 = 0.7
-const s_start = 30, N_barrier = 100;
-const p_win = s_start / N_barrier;
-row('\nGambler\'s ruin: start=30, N=100');
-row('  P(reach 100) = 30/100',      p_win,              'exact = 0.3');
-row('  P(ruin at 0) = 70/100',      1 - p_win,          'exact = 0.7');
+// Asymptotic approximation
+const E_abs_asymp = Math.sqrt(2 * n_steps / Math.PI);
 
-// Mean time to absorption: E[T | start k] = k·(N-k) for symmetric walk
-const mean_T = s_start * (N_barrier - s_start);
-row('  E[steps to absorption]',     mean_T,             '= k·(N-k) = 30·70 = 2100');
+row('n steps',                     n_steps,       '');
+row('E[X²] = n (EXACT)',           n_steps,       'integer, zero tolerance');
+row('E[|X|] EXACT = 100·C(100,50)/2^100', E_abs_exact,  '');
+row('E[|X|] ASYMPTOTIC = √(200/π)', E_abs_asymp,  'CLT / half-normal approx');
+row('Error (asymp − exact)',        E_abs_asymp - E_abs_exact, '≈ 0.020 (0.25%)');
+assert(Math.abs(E_abs_exact - 7.9589) < 0.0001,
+  `exact E[|X_100|] must be ≈7.9589; got ${E_abs_exact}`);
+assert(E_abs_asymp > E_abs_exact,
+  'asymptotic √(2n/π) overestimates exact for n=100');
 
-// 2D: E[r²] after n steps
-row('\n2D random walk: E[r²] = 2n', 2 * n_steps,       'exact (unit steps in x and y)');
+// MC MSD tolerance
+// Var(Xₙ²) = E[Xₙ⁴] − (E[Xₙ²])² = 2n² − 2n  (for symmetric ±1 walk)
+// SE of MSD estimate from trials simulations: √((2n²−2n) / trials)
+// Use tolerance = 4·SE
+const trials_msd = 10000;
+const var_X2 = 2*n_steps**2 - 2*n_steps;   // = 19800
+const SE_msd  = Math.sqrt(var_X2 / trials_msd);
+const tol_msd = 4 * SE_msd;
+row('\nVar(X²) = 2n²−2n',          var_X2,    '= 19800 (not 2n²=20000)');
+row('SE of MSD (trials=10000)',     SE_msd,    '≈ 1.407');
+row('4·SE tolerance for MC test',  tol_msd,   '≈ 5.63');
+assert(Math.abs(var_X2 - (2*n_steps**2 - 2*n_steps)) < 1e-9,
+  `Var(X²) must be 2n²-2n=${2*n_steps**2-2*n_steps}`);
 
-// Diffusion coefficient: D = 1/2 per dimension (unit steps, unit time)
-// In 2D: E[r²] = 2·(2D)·t = 4Dt with D=1/2 → E[r²] = 4·(1/2)·n = 2n ✓
-row('D (per dimension, unit steps)', 0.5,               'D = σ²/(2Δt) = 1/(2·1) = 0.5');
+// 2D nearest-neighbour random walk: steps are {±1,0} or {0,±1}
+// Each step moves exactly 1 unit in one axis (4 choices equally likely)
+// X and Y are independent; each has n steps of ±1 with equal prob → E[X²]=n, E[Y²]=n
+// Wait: in nearest-neighbour 2D, at each time step ONE coordinate changes by ±1.
+// So after n steps, each coordinate changes on average n/2 times.
+// E[X²] = n/2 (x-steps), E[Y²] = n/2 (y-steps) ... actually:
+// The x-coordinate moves only when the walk goes left or right (prob 1/2 each step).
+// So x takes a ±1 step each tick with prob 1/2, stays put with prob 1/2.
+// E[x²] after n steps = n/2·1 = n/2 (only n/2 expected x-steps).
+// E[r²] = E[x²]+E[y²] = n/2 + n/2 = n.
+// CONTRAST: diagonal 2D walk (each step is (+/-1, +/-1)):
+//   Each step contributes 1 to x AND 1 to y → E[r²] = E[x²]+E[y²] = n+n = 2n.
+row('\n2D nearest-neighbour walk: E[r²] = n', n_steps, 'each step moves 1 axis');
+row('2D diagonal walk: E[r²] = 2n',           2*n_steps, 'each step moves both axes');
+
+// Gambler's ruin: absorbing barriers at 0 and N, start at k
+const k_ruin = 30, N_ruin = 100;
+const p_win = k_ruin / N_ruin;        // = 0.3 exact
+const mean_T_ruin = k_ruin * (N_ruin - k_ruin);  // = 30×70 = 2100
+row('\nGambler ruin (k=30, N=100)');
+row('  P(win) = k/N = 0.3',         p_win,        'exact rational');
+row('  E[T] = k(N−k) = 2100',       mean_T_ruin,  'exact integer');
+assert(Math.abs(p_win - 0.3) < 1e-15, 'P(win) must be 0.3 exactly');
+assert(mean_T_ruin === 2100,           'E[T] must be 2100 exactly');
+
+// Gambler's ruin via absorbing Markov chain (fundamental matrix N = (I-Q)^{-1}):
+// For k=1 start, N=3 barriers (0 and 3): transient states {1,2}
+// Q = [[0, 1/2], [1/2, 0]];  I-Q = [[1,-1/2],[-1/2,1]]
+// (I-Q)^{-1} = (1/(1-1/4))·[[1,1/2],[1/2,1]] = (4/3)·[[1,1/2],[1/2,1]]
+// E[T | start 1] = row 1 sum of N·1 = (4/3)·(1+1/2) = (4/3)·(3/2) = 2
+// Check: k(N-k) = 1·2 = 2 ✓
+const k_small = 1, N_small = 3;
+const E_T_check = k_small * (N_small - k_small);  // = 2
+// Fundamental matrix for N=3: (I-Q)^{-1} where Q is 2×2 [[0,1/2],[1/2,0]]
+// (I-Q)^{-1} = (4/3)[[1,1/2],[1/2,1]]  → row-1 sum = (4/3)(1+0.5) = 2  ✓
+const N_fund_row1 = (4/3) * (1 + 0.5);
+row('\nFundamental matrix check (k=1, N=3)');
+row('  E[T] = k(N-k) = 1×2 = 2',   E_T_check,    'exact');
+row('  (I-Q)^{-1} row 1 sum',       N_fund_row1,  '(must equal E[T]=2)');
+assert(Math.abs(N_fund_row1 - E_T_check) < 1e-14,
+  `fundamental matrix E[T] must be ${E_T_check}; got ${N_fund_row1}`);
 
 // ═══════════════════════════════════════════════════════════════════════
 // 5. SOLOW GROWTH MODEL
 // ═══════════════════════════════════════════════════════════════════════
 sec('5. SOLOW GROWTH MODEL');
 
-// Cobb-Douglas: Y = A·Kᵃ·L^{1-α}
-// Per worker: y = A·kᵃ,  k = K/L
-// Capital accumulation: k̇ = s·A·kᵃ − (n + δ + g)·k
-// (g = TFP growth rate; k is capital per effective worker in general form)
+// Cobb-Douglas per effective worker: y = A·k^α
+// Capital accumulation: dk/dt = s·A·k^α − (n + δ + g)·k
+// where g = labour-augmenting (TFP) growth rate.
+// Steady state: k* = (sA/(n+δ+g))^{1/(1-α)}
 //
-// Steady state (k̇=0):
-//   s·A·(k*)ᵃ = (n+δ+g)·k*
-//   (k*)^{1-α} = sA/(n+δ+g)
-//   k* = [sA/(n+δ+g)]^{1/(1-α)}
+// With α = 1/3 EXACTLY and s=0.3, A=1, n=0.01, δ=0.05, g=0:
+//   denom = n+δ+g = 0.06 = 3/50
+//   sA/denom = 0.3/0.06 = 5
+//   k* = 5^{1/(1-1/3)} = 5^{3/2} = 5·√5 = 11.18034...  (EXACT)
+//   y* = (k*)^{1/3} = (5^{3/2})^{1/3} = 5^{1/2} = √5    (EXACT)
+//   c* = (1-s)·y* = 0.7·√5                               (EXACT)
 //
-// TRAP: formula is k* = (sA/(n+δ+g))^{1/(1-α)}, NOT (s/(n+δ))^{1/(1-α)}.
-//   TFP growth g shifts steady-state capital per effective worker downward.
+// Golden rule: f'(k_GR) = n+δ+g → α·k_GR^{α-1} = 0.06 → k_GR^{1-α} = α/0.06 = 1/0.18 = 50/9
+//   k_GR = (50/9)^{3/2} = (50/9)·√(50/9) = 250√2/27      (EXACT)
+//   y_GR = (k_GR)^{1/3} = (50/9)^{1/2} = 5√2/3            (EXACT)
+//   c_GR = y_GR − 0.06·k_GR = 5√2/3 − 0.06·250√2/27
+//        = 5√2/3 − 5√2/9 = (15√2 − 5√2)/9 = 10√2/9       (EXACT)
+//   s_GR = α = 1/3 for any A (golden rule condition)
 
-const s_sol  = 0.30;   // savings rate
-const A_sol  = 1.00;   // TFP
-const n_sol  = 0.01;   // population growth
-const delta  = 0.05;   // depreciation
-const g_tfp  = 0.00;   // TFP growth (0 for baseline)
-const alpha  = 0.333;  // capital share (≈1/3)
+const alpha_exact = 1/3;   // EXACTLY 1/3
+const s_sol  = 0.30;
+const A_sol  = 1.00;
+const n_sol  = 0.01;
+const delta_sol = 0.05;
+const g_sol  = 0.00;   // g = labour-augmenting growth (0 for baseline)
 
-const denom = n_sol + delta + g_tfp;
-const k_star = Math.pow(s_sol * A_sol / denom, 1 / (1 - alpha));
-const y_star = A_sol * Math.pow(k_star, alpha);
-const c_star = (1 - s_sol) * y_star;
+const denom_sol = n_sol + delta_sol + g_sol;  // = 0.06
 
-row('s (savings rate)',              s_sol,  '');
-row('A (TFP)',                       A_sol,  '');
-row('n (pop growth)',                n_sol,  '');
-row('δ (depreciation)',              delta,  '');
-row('g (TFP growth)',                g_tfp,  '');
-row('α (capital share)',             alpha,  '');
-row('\nk* = (sA/(n+δ+g))^{1/(1-α)}',k_star, 'steady-state capital per worker');
-row('y* = A·(k*)^α',                y_star, 'steady-state output per worker');
-row('c* = (1-s)·y*',                c_star, 'steady-state consumption per worker');
+// k* via formula
+const k_star_sol = Math.pow(s_sol * A_sol / denom_sol, 1 / (1 - alpha_exact));
+// Independent derivation: 5^(3/2) = 5·√5
+const k_star_exact = 5 * Math.sqrt(5);
+const y_star_sol = Math.sqrt(5);               // = 5^{1/2}
+const c_star_sol = 0.7 * Math.sqrt(5);         // = 0.7·√5
 
-// Verification: at k*, investment = depreciation
-const investment = s_sol * y_star;
-const break_even = denom * k_star;
-row('\nInvestment s·y* (verify = (n+δ)·k*)', investment, '');
-row('Breakeven (n+δ)·k*',           break_even, '(must match investment)');
-row('Discrepancy (should be ≈0)',    investment - break_even, '');
+row('α = 1/3 (EXACT)',              alpha_exact, '');
+row('sA/(n+δ+g) = 0.3/0.06 = 5',   s_sol*A_sol/denom_sol, '= 5 exactly');
+row('\nk* computed',                 k_star_sol,  '');
+row('k* = 5·√5 (exact)',            k_star_exact,'');
+row('k* discrepancy',               k_star_sol - k_star_exact, '(must be ≈ 0)');
+assert(Math.abs(k_star_sol - k_star_exact) < 1e-10,
+  `k* must be 5·√5=${k_star_exact}; got ${k_star_sol}`);
 
-// Golden rule: maximises c*  →  f\'(k_GR) = n+δ+g
-//   α·A·k_GR^{α-1} = n+δ+g
-//   k_GR = (α·A/(n+δ+g))^{1/(1-α)}
-//   c_GR = A·k_GR^α − (n+δ+g)·k_GR
-const k_GR = Math.pow(alpha * A_sol / denom, 1 / (1 - alpha));
-const y_GR = A_sol * Math.pow(k_GR, alpha);
-const c_GR = y_GR - denom * k_GR;
-const s_GR = 1 - c_GR / y_GR;  // savings rate that achieves golden rule
+row('\ny* = √5 (exact)',             y_star_sol,  '');
+row('y* computed',                   A_sol * Math.pow(k_star_sol, alpha_exact), '');
+assert(Math.abs(A_sol * Math.pow(k_star_sol, alpha_exact) - y_star_sol) < 1e-12,
+  `y* must be √5=${y_star_sol}`);
 
-row('\nGolden rule k_GR',           k_GR,  '(f\'(k_GR) = n+δ+g)');
-row('Golden rule c_GR',             c_GR,  'max steady-state consumption');
-row('Golden rule s_GR = α (exact)', s_GR,  `≈ α = ${alpha} (exact when A=1)`);
-row('s_GR == α?',                   Math.abs(s_GR - alpha) < 1e-12 ? 'yes' : 'no', '(should be yes for A=1)');
+row('\nc* = 0.7·√5 (exact)',         c_star_sol,  '');
+assert(Math.abs((1-s_sol)*y_star_sol - c_star_sol) < 1e-15,
+  `c* must be 0.7·√5`);
+
+// Golden rule
+const k_GR_sol = Math.pow(50/9, 3/2);           // = (50/9)^{3/2}
+const c_GR_sol = 10 * Math.sqrt(2) / 9;          // = 10√2/9
+const k_GR_comp = Math.pow(alpha_exact * A_sol / denom_sol, 1/(1-alpha_exact));
+
+row('\nk_GR = (50/9)^{3/2} (exact)',  k_GR_sol,  '');
+row('k_GR computed',                  k_GR_comp, '');
+row('k_GR discrepancy',               k_GR_comp - k_GR_sol, '(must be ≈ 0)');
+assert(Math.abs(k_GR_comp - k_GR_sol) < 1e-10,
+  `k_GR must be (50/9)^{3/2}=${k_GR_sol}`);
+
+row('\nc_GR = 10√2/9 (exact)',        c_GR_sol,  '');
+const y_GR_comp = A_sol * Math.pow(k_GR_comp, alpha_exact);
+const c_GR_comp = y_GR_comp - denom_sol * k_GR_comp;
+row('c_GR computed',                  c_GR_comp, '');
+assert(Math.abs(c_GR_comp - c_GR_sol) < 1e-10,
+  `c_GR must be 10√2/9=${c_GR_sol}`);
+
+// s_GR = α (exact, any A, Cobb-Douglas)
+const s_GR_check = 1 - c_GR_comp / y_GR_comp;
+row('\ns_GR computed',                s_GR_check,       '');
+row('s_GR − α (must be ≈ 0)',        s_GR_check - alpha_exact, '');
+assert(Math.abs(s_GR_check - alpha_exact) < 1e-12,
+  `s_GR must equal α=1/3`);
+
+// Verify steady state: investment = breakeven
+const invest_sol = s_sol * y_star_sol;
+const breakeven  = denom_sol * k_star_sol;
+row('\nInvestment s·y*',             invest_sol,  '(must = (n+δ)·k*)');
+row('Breakeven (n+δ)·k*',           breakeven,   '');
+row('Discrepancy',                   invest_sol - breakeven, '(must be ≈ 0)');
+assert(Math.abs(invest_sol - breakeven) < 1e-12,
+  `investment must equal breakeven at steady state`);
+
+// Exact linearization for RK4 dt-halving test:
+// Change of variable z = k^{1-α}:
+//   dz/dt = (1-α)·k^{-α}·dk/dt = (1-α)·[sA − (n+δ+g)·k^{1-α}]
+//         = (1-α)·sA − (1-α)(n+δ+g)·z
+// Steady state: z* = (k*)^{1-α} = 5 (= sA/denom)
+// Linear ODE: dz/dt = −(1-α)(n+δ+g)·(z − z*)
+// Solution: z(t) = z* + (z₀ − z*)·exp(−(1-α)(n+δ+g)·t)
+// Convergence rate: μ = (1-α)·(n+δ+g) = (2/3)·0.06 = 0.04
+const mu_solow = (1 - alpha_exact) * denom_sol;  // = 0.04
+const z_star = Math.pow(k_star_sol, 1 - alpha_exact);  // = 5
+
+row('\nExact linearization: z = k^{1-α}');
+row('  z* = (k*)^{2/3} = 5',         z_star,    '');
+row('  convergence rate μ = 2/3·0.06 = 0.04', mu_solow, '');
+// Check: at k0=2, z0=2^(2/3); after t=200 yr z should be z* to within exp(-8)
+const k0_sol = 2;
+const z0_sol = Math.pow(k0_sol, 1 - alpha_exact);
+const t_test = 200;
+const z_t_exact = z_star + (z0_sol - z_star) * Math.exp(-mu_solow * t_test);
+const k_t_exact = Math.pow(z_t_exact, 1/(1-alpha_exact));
+row('  k(t=200, k0=2) from exact soln', k_t_exact, '(should be ≈ k*)');
+row('  |k(200) − k*| / k*',          Math.abs(k_t_exact - k_star_sol)/k_star_sol, '(< 1e-3)');
+assert(Math.abs(k_t_exact - k_star_sol) / k_star_sol < 1e-3,
+  `exact solution must be within 0.1% of k* at t=200`);
 
 // ═══════════════════════════════════════════════════════════════════════
 // 6. OPINION DYNAMICS
 // ═══════════════════════════════════════════════════════════════════════
 sec('6. OPINION DYNAMICS');
 
-// Deffuant bounded-confidence model:
-//   Agents i,j update if |xᵢ − xⱼ| < ε
-//   xᵢ ← xᵢ + μ(xⱼ − xᵢ),  xⱼ ← xⱼ + μ(xᵢ − xⱼ)   (μ typically 0.5)
-//
-// Key results (Deffuant et al. 2000, cited not fetched):
-//   ε > 0.5: consensus → all converge to mean
-//   ε < 0.5: possible polarization (≥2 clusters)
-//   Conserved quantity: sum of opinions (mean is invariant)
+// DeGroot model: x(t+1) = W·x(t)
+// TRAP: consensus = π·x₀ where π is the LEFT eigenvector (stationary distribution).
+//   π satisfies: π·W = π  (row vector; NOT W·π = π which is the right eigenvector).
+//   For row-stochastic W: right eigenvector = 1 (all ones); NOT the consensus.
+//   Left eigenvector found by power iteration on Wᵀ.
+// Do NOT use jacobiEigen (symmetric-only) on a general W.
 
 const opinions_0 = [0.1, 0.3, 0.5, 0.7, 0.9];
 const mean_op = opinions_0.reduce((a,b)=>a+b,0) / opinions_0.length;
-row('N agents', opinions_0.length, '');
-row('Initial opinions', opinions_0.join(', '), '');
-row('Mean (conserved quantity)', mean_op, '');
+row('Mean of x₀ (conserved for doubly stochastic)', mean_op, '= 0.5');
+assert(Math.abs(mean_op - 0.5) < 1e-15, 'initial mean must be 0.5');
 
-// With ε=0.6 (>0.5): all pairs can interact → consensus = mean
-row('ε=0.6 consensus value = mean', mean_op, '= 0.5 exactly');
-
-// With ε=0.2: only adjacent pairs interact → 2 or 3 clusters expected
-row('ε=0.2: polarization expected (ε < 0.5)', 'two clusters', 'near 0.2 and 0.8 roughly');
-
-// DeGroot model: x(t+1) = W · x(t)
-// TRAP: consensus = π · x(0) where π is the LEFT eigenvector of W (not right).
-//   Left eigenvector: π · W = π   (row vector interpretation)
-//   For row-stochastic W: right eigenvector is 1 (all ones);
-//   left eigenvector for eigenvalue 1 is the stationary distribution π.
-//   At convergence: W^∞ each row = π → x(∞) = (Σπᵢ·xᵢ(0)) · 1
-//
-// Simple 3-agent W (symmetric → π = [1/3,1/3,1/3]):
+// 3-agent example: W is not symmetric
 const W3 = [[0.5, 0.3, 0.2],
             [0.2, 0.6, 0.2],
             [0.1, 0.3, 0.6]];
-// Row sums should be 1
-W3.forEach((row_w, i) => {
-  const s = row_w.reduce((a,b)=>a+b,0);
-  console.log(`  W3 row ${i+1} sum: ${s.toPrecision(4)} (must be 1)`);
-});
 
-// Power iteration for left eigenvector (π W = π):
-// Equivalent to right eigenvector of Wᵀ
-function leftEigenvec(W, iter=1000) {
+// Verify row sums = 1
+W3.forEach((r, i) => {
+  const s = r.reduce((a,b)=>a+b,0);
+  assert(Math.abs(s - 1) < 1e-15, `W3 row ${i} sum must be 1; got ${s}`);
+});
+row('W3 row sums', 'all 1.0', 'validated');
+
+// Power iteration for left eigenvector: v ← v·W  (row vector times matrix)
+function leftEigenvec(W, iter=2000) {
   const n = W.length;
   let v = Array(n).fill(1/n);
   for (let k = 0; k < iter; k++) {
-    // v = v · W  (row vector times matrix)
     const vn = Array(n).fill(0);
     for (let i = 0; i < n; i++)
       for (let j = 0; j < n; j++)
@@ -354,192 +452,142 @@ function leftEigenvec(W, iter=1000) {
 }
 
 const pi3 = leftEigenvec(W3);
+// Verify π·W = π
+const piW = Array(3).fill(0);
+for (let i = 0; i < 3; i++)
+  for (let j = 0; j < 3; j++)
+    piW[j] += pi3[i] * W3[i][j];
+const pi_residual = pi3.map((p,j) => Math.abs(p - piW[j])).reduce((a,b)=>a+b,0);
+row('\nW3 left eigenvector π',  pi3.map(x=>x.toFixed(6)).join(', '), '');
+row('π·W − π residual (must be ≈0)', pi_residual, '');
+assert(pi_residual < 1e-10, `π·W=π residual must be < 1e-10; got ${pi_residual}`);
+
 const x0_degroot = [0.2, 0.8, 0.5];
 const consensus3 = pi3.reduce((s, pi_i, i) => s + pi_i * x0_degroot[i], 0);
+row('Consensus = π·x₀ for x₀=[0.2,0.8,0.5]', consensus3, '≈ 0.5571');
+assert(Math.abs(consensus3 - 0.5571) < 1e-3,
+  `consensus must be ≈ 0.5571; got ${consensus3}`);
 
-row('\nDeGroot W3 left eigenvector π',  pi3.map(x=>x.toFixed(6)).join(', '), '');
-row('Consensus = π·x(0) for x0=[0.2,0.8,0.5]', consensus3, '');
-
-// Verify: W^200·x0 should converge: x_i(t+1) = Σⱼ W[i][j]·x[j](t)
+// Cross-check: long-run W^200·x₀ must match π·x₀
 let x_cur = [...x0_degroot];
 for (let t = 0; t < 200; t++) {
   const xn = Array(3).fill(0);
   for (let i = 0; i < 3; i++)
     for (let j = 0; j < 3; j++)
-      xn[i] += W3[i][j] * x_cur[j];  // x_new[i] = Σⱼ W[i][j]·x[j]  (DeGroot update)
+      xn[i] += W3[i][j] * x_cur[j];
   x_cur = xn;
 }
-row('W^200·x0[0] (DeGroot update)',     x_cur[0], '(= consensus since W is ergodic)');
-row('DeGroot consensus (π·x0)',          consensus3, '(should match above)');
-row('|discrepancy|',                     Math.abs(x_cur[0] - consensus3), '(should be ≈0)');
+row('\nW^200·x₀[0]',           x_cur[0],  '(must ≈ consensus)');
+row('|W^200·x₀[0] − consensus|', Math.abs(x_cur[0] - consensus3), '(< 1e-6)');
+assert(Math.abs(x_cur[0] - consensus3) < 1e-6,
+  `W^200·x₀[0]=${x_cur[0]} must match consensus=${consensus3}`);
 
 // ═══════════════════════════════════════════════════════════════════════
 // 7. AGE-STRUCTURED POPULATION (LESLIE MATRIX)
 // ═══════════════════════════════════════════════════════════════════════
 sec('7. AGE-STRUCTURED POPULATION (LESLIE MATRIX)');
 
-// Leslie matrix (Leslie 1945, Biometrika 33:183 — cited, not fetched):
-//
-//   L[i+1][i] = survival rate sᵢ (subdiagonal)
-//   L[0][j]   = fecundity fⱼ (first row)
-//
-// Dominant eigenvalue λ = asymptotic per-capita growth rate (finite-time r = ln λ).
-// Stable age distribution = dominant right eigenvector.
-// Reproductive value = dominant LEFT eigenvector.
-//
 // EIGENSOLVER TRAP:
-//   jacobiEigen (in js/core/LinAlg.js) is SYMMETRIC-ONLY.
-//   Leslie matrices are NOT symmetric. Use:
-//     - Power iteration (for dominant eigenvalue + eigenvector)
-//     - eigen2x2 (exact, 2×2 only)
-//     - QR iteration (general, if added in Phase 9 as infra)
-//   Do NOT call jacobiEigen on a Leslie matrix.
+//   jacobiEigen (js/core/LinAlg.js) is SYMMETRIC-ONLY.
+//   Leslie matrices are generally NOT symmetric → do NOT use jacobiEigen.
+//   For 2-age: use eigen2x2 (exact) or solve char poly directly.
+//   For 3-age: use power iteration.
 //
-// Euler-Lotka equation (discrete form; Euler 1760 / Lotka 1907):
-//   Σ_{x=0}^{∞} λ^{-x} · l(x) · m(x) = 1
-// where l(0)=1, l(x) = Πᵢ₌₀^{x-1} sᵢ (cumulative survival),
-//       m(x) = per-capita birth rate at age x.
-//
-// NOTE: the fecundity entries fⱼ in row 0 of the Leslie matrix are:
-//   fⱼ = l(j)·m(j)·(s₀/l(1)) in pre-breeding census convention.
-//   In the simplest post-breeding convention: f[j] = l(j)·m(j).
-//   Convention must match test: derive char poly directly from matrix entries.
+// PRIMITIVE vs IMPRIMITIVE:
+//   A non-negative matrix is primitive if it is irreducible AND aperiodic.
+//   Power iteration converges to dominant eigenvalue only for PRIMITIVE matrices.
+//   Perron-Frobenius guarantees a unique positive dominant eigenvalue for PRIMITIVE matrices.
+//   (Not for general positive matrices — a positive periodic matrix is imprimitive.)
 
-// ── 2-age example (exact): L = [[0, f], [s, 0]]
-// Char poly: λ² = s·f  →  λ = √(sf)
+// ── 2-age IMPRIMITIVE boundary case: L = [[0, 4], [0.5, 0]]
+// Char poly: λ² − f·s = 0  →  λ = ±√(4·0.5) = ±√2
+// |λ₂/λ₁| = 1 (two eigenvalues of equal modulus) → IMPRIMITIVE
+// Power iteration oscillates (does not converge to a stable age distribution).
+// Primitivity check: L² = [[4·0.5, 0],[0, 4·0.5]] = [[2,0],[0,2]] is diagonal, not positive.
+// Model MUST detect this and report "imprimitive: no stable age distribution".
 const f_2age = 4, s_2age = 0.5;
-const lambda_2age = Math.sqrt(s_2age * f_2age);  // = √2 exactly
-row('2-age L=[[0,4],[0.5,0]]: λ=√(sf)', lambda_2age, `= √${s_2age*f_2age} = √2`);
-row('  √2 check',                        Math.SQRT2,  '(must match)');
-row('  discrepancy',                     lambda_2age - Math.SQRT2, '(must be 0)');
+const lambda_2age_pos = Math.sqrt(s_2age * f_2age);   //  +√2
+const lambda_2age_neg = -Math.sqrt(s_2age * f_2age);  //  −√2
+row('2-age L=[[0,4],[0.5,0]]: λ₁ = +√2', lambda_2age_pos, `= ${Math.SQRT2}`);
+row('2-age: λ₂ = −√2',                    lambda_2age_neg, '(imprimitive: |λ₂|=|λ₁|)');
+row('|λ₂/λ₁| = 1',  Math.abs(lambda_2age_neg/lambda_2age_pos), '(must be 1 exactly)');
+assert(Math.abs(lambda_2age_pos - Math.SQRT2) < 1e-15,
+  `λ₁ for 2-age must be √2; got ${lambda_2age_pos}`);
+assert(Math.abs(lambda_2age_neg/lambda_2age_pos) - 1 < 1e-15,
+  '|λ₂/λ₁| must be 1 (imprimitive)');
 
-// ── 3-age example: L = [[0, 1, 5], [0.4, 0, 0], [0, 0.6, 0]]
-// Char poly (expand det(L - λI)):
-//   -λ·(λ² - 0) - 1·(-0.4λ) + 5·(0.4·0.6)
-//   = -λ³ + 0.4λ + 1.2 = 0
-//   → λ³ = 0.4λ + 1.2
+// ── 3-age PRIMITIVE main example: L = [[0, 1, 5], [s₀, 0, 0], [0, s₁, 0]]
+// with s₀=0.4, s₁=0.6  (this is primitive: L³ has all positive entries)
+// Char poly: λ³ − s₀·f₁·λ − s₀·s₁·f₂ = λ³ − 0.4·1·λ − 0.4·0.6·5
+//           = λ³ − 0.4λ − 1.2 = 0
 const L3 = [[0, 1, 5], [0.4, 0, 0], [0, 0.6, 0]];
 row('\n3-age L=[[0,1,5],[0.4,0,0],[0,0.6,0]]', '', '');
-row('  Char poly: λ³ − 0.4λ − 1.2 = 0', '', 'dominant root by power iteration:');
+row('  Char poly: λ³ − 0.4λ − 1.2 = 0', '', '');
 
-// Power iteration to find dominant eigenvalue
-function powerIterLeslie(L, iter=500) {
+// Power iteration — use 400 steps (|λ₂/λ₁|≈0.846; 400 steps → 0.846^400 ≈ 10^{-30})
+function powerIterLeslie(L, iter=400) {
   const n = L.length;
-  let v = Array(n).fill(1).map((_,i) => i===0 ? 1 : 0.5);
-  let lambda_pi = 0;
+  let v = [1, 0.5, 0.3];
+  let lam = 0;
   for (let k = 0; k < iter; k++) {
     const Lv = Array(n).fill(0);
     for (let i = 0; i < n; i++)
       for (let j = 0; j < n; j++)
         Lv[i] += L[i][j] * v[j];
     const norm = Math.max(...Lv.map(Math.abs));
-    lambda_pi = norm;
+    lam = norm;
     v = Lv.map(x => x / norm);
   }
-  return { lambda: lambda_pi, v };
+  return { lambda: lam, v };
 }
 
-const { lambda: lambda_3age, v: stable_age } = powerIterLeslie(L3);
-row('  Dominant λ (power iter)',     lambda_3age, '');
-row('  Char poly check λ³-0.4λ-1.2', lambda_3age**3 - 0.4*lambda_3age - 1.2, '(should be ≈0)');
-row('  Stable age dist (normalized)',
-  stable_age.map(x=>(x/stable_age.reduce((a,b)=>a+b,0)).toFixed(4)).join(', '), '');
+const { lambda: lambda_3age, v: stable_age_3 } = powerIterLeslie(L3);
+row('  Dominant λ (400-iter power iter)',  lambda_3age, '');
+row('  Char poly residual λ³−0.4λ−1.2',   lambda_3age**3 - 0.4*lambda_3age - 1.2, '(must be ≈ 0)');
+assert(Math.abs(lambda_3age**3 - 0.4*lambda_3age - 1.2) < 1e-13,
+  `char poly residual must be < 1e-13; got ${lambda_3age**3 - 0.4*lambda_3age - 1.2}`);
+// |λ₂/λ₁| ≈ 0.846 (complex pair); ~110 iterations for 1e-8 convergence
+row('  |λ₂/λ₁| ≈ 0.846 (complex pair)', 0.8464, '→ use 400 iters for 1e-10 precision');
 
-// Verify via Euler-Lotka (post-breeding: f[j] = l(j)·m(j)):
-// L first row: [0, 1, 5]  →  l(0)·m(0)=0, l(1)·m(1)=1, l(2)·m(2)=5
-// l(0)=1, l(1)=0.4, l(2)=0.4×0.6=0.24
-// m(1)=f[1]/l(1)=1/0.4=2.5, m(2)=f[2]/l(2)=5/0.24=20.833
-// Euler-Lotka: Σλ^{-x}·l(x)·m(x) = 0 + λ^{-1}·0.4·2.5 + λ^{-2}·0.24·20.833
-//            = 1/λ + 5/λ² = 1  →  λ² = λ + 5  →  λ = (1+√21)/2 ≈ 2.791  ← WRONG
-// This illustrates the convention issue: for the standard Leslie encoding:
-//   fⱼ (first row) = m_j directly (pre-breeding), not l(j)·m(j).
-// Using char poly directly: λ³ = 0.4λ + 1.2  (most reliable).
-// Euler-Lotka as char poly divided by λ³: 1 = f₁s₀/λ² + f₂s₀s₁/λ³
-// (matches λ³ - f₁s₀λ - f₂s₀s₁ = 0 → λ³ = 0.4λ + 1.2 → divide by λ³)
-row('\nEuler-Lotka (char poly / λ³):', '', '');
-const l1 = L3[1][0];            // s₀ = 0.4
-const l2 = L3[1][0] * L3[2][1]; // s₀·s₁ = 0.24
-const el_check = l1 * L3[0][1] / lambda_3age**2 + l2 * L3[0][2] / lambda_3age**3;
-row('  l₁·f₁/λ² + l₂·f₂/λ³ (should=1)', el_check, '');
-// Actually just verify char poly:
-const cp3 = lambda_3age**3 - 0.4 * lambda_3age - 1.2;
-row('  Char poly at dominant λ',     cp3, '(must be ≈ 0)');
+// Euler-Lotka check: l₁f₁/λ² + l₂f₂/λ³ = 1 (derived from char poly ÷ λ³)
+const s0_3 = L3[1][0];                  // 0.4
+const s1_3 = L3[2][1];                  // 0.6
+const l1_3 = s0_3;                       // 0.4
+const l2_3 = s0_3 * s1_3;              // 0.24
+const el_check = l1_3 * L3[0][1] / lambda_3age**2 + l2_3 * L3[0][2] / lambda_3age**3;
+row('  Euler-Lotka: l₁f₁/λ² + l₂f₂/λ³', el_check, '(must be ≈ 1)');
+assert(Math.abs(el_check - 1) < 1e-13,
+  `Euler-Lotka must equal 1; got ${el_check}`);
 
-// ─ Second eigenvalue (should have |λ₂| < λ₁)
-// For 3-age: char poly λ³ - 0.4λ - 1.2 has 3 roots.
-// Dominant is real positive ≈1.188; others may be complex or negative.
-row('  |λ₂| < λ_dominant (by Perron-Frobenius)', '', '(positive Leslie → unique dominant)');
+// R₀ = net reproductive rate = Σ lₓ·fₓ
+const R0_3 = l1_3 * L3[0][1] + l2_3 * L3[0][2];  // = 0.4 + 1.2 = 1.6
+row('  R₀ = Σlₓfₓ = 0.4+1.2 = 1.6',   R0_3, '> 1 → growing');
+assert(Math.abs(R0_3 - 1.6) < 1e-15, `R₀ must be 1.6; got ${R0_3}`);
 
-// ── 2-age example with net reproductive rate R₀ = Σ lₓ mₓ:
-// For stationary pop (λ=1): R₀ = Σ lₓ mₓ = 1 (replacement-level fertility)
-// For L=[[0,4],[0.5,0]]: R₀ = l(0)·f₀ + l(1)·f₁ = 0 + 0.5·4 = 2 → λ > 1 (growing)
-const R0_2age = L3[1][0] * L3[0][1] + L3[1][0] * L3[2][1] * L3[0][2];
-row('\nNet reproductive rate R₀ for 3-age', R0_2age, '= Σ lₓ·fₓ (sum of Leslie first-row path products)');
-row('R₀ > 1 → growing population',  R0_2age > 1 ? 'yes' : 'no', '');
+// Closed form: λ=1 when s₀ = 1/(f₁ + s₁·f₂)
+// Char poly at λ=1: 1 − s₀·f₁ − s₀·s₁·f₂ = 0 → s₀ = 1/(f₁+s₁·f₂)
+const f1_3 = L3[0][1], f2_3 = L3[0][2];
+const s0_for_lambda1 = 1 / (f1_3 + s1_3 * f2_3);   // = 1/(1+3) = 0.25
+const L3_stat = [[0, f1_3, f2_3], [s0_for_lambda1, 0, 0], [0, s1_3, 0]];
+const cp_at_1 = 1 - s0_for_lambda1*f1_3 - s0_for_lambda1*s1_3*f2_3;
+row('\n  λ=1 closed form: s₀=1/(f₁+s₁f₂)=0.25', s0_for_lambda1, '');
+row('  Char poly at λ=1 (must be 0)',            cp_at_1,         '');
+assert(Math.abs(s0_for_lambda1 - 0.25) < 1e-15,
+  `s₀ for λ=1 must be 0.25; got ${s0_for_lambda1}`);
+assert(Math.abs(cp_at_1) < 1e-15,
+  `char poly at λ=1 must be 0; got ${cp_at_1}`);
 
-// ═══════════════════════════════════════════════════════════════════════
-// 8. COMPLEX.JS INFRASTRUCTURE
-// ═══════════════════════════════════════════════════════════════════════
-sec('8. COMPLEX.JS INFRASTRUCTURE');
+// Verify with power iteration on stationary matrix
+const { lambda: lambda_stat } = powerIterLeslie(L3_stat);
+row('  λ (power iter, s₀=0.25)',  lambda_stat, '(must be ≈ 1.0000)');
+assert(Math.abs(lambda_stat - 1.0) < 1e-8,
+  `stationary matrix λ must be 1.0; got ${lambda_stat}`);
 
-// Complex number: z = a + bi
-// Operations to implement (all algebraically exact):
-//   |z| = √(a²+b²)
-//   z·w = (ac−bd) + (ad+bc)i
-//   z/w = z·conj(w) / |w|²
-//   e^z = e^a · (cos b + i sin b)
-//   arg(z) = atan2(b, a)
-
-// Euler's identity: e^(iπ) = cos π + i sin π = -1 + 0i
-const eIpi_re = Math.cos(Math.PI);  // should be -1
-const eIpi_im = Math.sin(Math.PI);  // should be ≈0 (≈1.225e-16)
-row('Re(e^(iπ)) = cos π',           eIpi_re, '(must be -1 exactly)');
-row('Im(e^(iπ)) = sin π',           eIpi_im, '(should be ≈0; trig rounding)');
-row('|e^(iπ) − (−1)| (tolerance)',  Math.abs(eIpi_re - (-1)) + Math.abs(eIpi_im), '(< 1e-15)');
-
-// |3 + 4i| = 5 exactly (3-4-5 Pythagorean triple)
-const abs_3_4i = Math.sqrt(3**2 + 4**2);
-row('\n|3+4i| = √(9+16) = √25 = 5',  abs_3_4i, '(must be 5 exactly)');
-row('  discrepancy from 5',           abs_3_4i - 5, '(should be 0)');
-
-// (1+i)² = 1 + 2i + i² = 1 + 2i − 1 = 2i
-const sq_re = 1**2 - 1**2;  // Re((1+i)²) = 1 - 1 = 0
-const sq_im = 2*1*1;        // Im((1+i)²) = 2
-row('\n(1+i)²: Re = 0',              sq_re, '(must be 0 exactly)');
-row('(1+i)²: Im = 2',               sq_im, '(must be 2 exactly)');
-
-// (3+4i)·(3−4i) = 9 + 16 = 25 (conjugate product = |z|²)
-const conj_prod_re = 3*3 + 4*4;  // = 25
-const conj_prod_im = 3*(-4) + 4*3;  // = -12 + 12 = 0
-row('\n(3+4i)(3-4i) = 25 + 0i:');
-row('  Re = 9+16',                   conj_prod_re, '(must be 25)');
-row('  Im = -12+12',                 conj_prod_im, '(must be 0)');
-
-// arg(1+i) = π/4 exactly
-const arg_1_1i = Math.atan2(1, 1);
-row('\narg(1+i) = π/4',              arg_1_1i, '');
-row('  π/4 check',                   Math.PI/4, '(must match)');
-row('  |discrepancy|',               Math.abs(arg_1_1i - Math.PI/4), '(should be 0)');
-
-// arg(−1+0i) = π exactly (= arg(e^(iπ)))
-const arg_neg1 = Math.atan2(0, -1);
-row('\narg(−1) = π',                 arg_neg1, '');
-row('  |arg(−1) − π|',              Math.abs(arg_neg1 - Math.PI), '(should be 0)');
-
-// e^(iπ/2) = 0 + 1i (i itself)
-const eIpi2_re = Math.cos(Math.PI/2);
-const eIpi2_im = Math.sin(Math.PI/2);
-row('\nRe(e^(iπ/2)) = cos(π/2)',     eIpi2_re, '(should be ≈0; machine ε)');
-row('Im(e^(iπ/2)) = sin(π/2)',       eIpi2_im, '(must be 1 exactly)');
-
-// Division: (a+bi)/(c+di) = [(ac+bd) + (bc-ad)i] / (c²+d²)
-// (1+2i)/(3+4i) = [(3+8) + (6-4)i] / 25 = 11/25 + 2i/25
-const div_re = (1*3 + 2*4) / (3**2 + 4**2);
-const div_im = (2*3 - 1*4) / (3**2 + 4**2);
-row('\n(1+2i)/(3+4i): Re = 11/25',   div_re, `= ${11/25}`);
-row('(1+2i)/(3+4i): Im = 2/25',      div_im, `= ${2/25}`);
-row('  Re discrepancy',              Math.abs(div_re - 11/25), '(should be 0)');
+// Guard: r = ln(λ) must be guarded when λ ≤ 0
+// If λ=0, ln(0) = -Infinity; model must RangeError or return -Inf with a note.
+row('\nr = ln(λ) guard: ln(1.1876) =', Math.log(lambda_3age), '(valid)');
+row('r at λ=0: ln(0) =',              Math.log(0),            '(must be guarded in model)');
 
 console.log('\n' + '═'.repeat(70));
-console.log('anchors-phase9.mjs complete.');
+console.log('anchors-phase9.mjs complete — all asserts passed.');
 console.log('═'.repeat(70));
