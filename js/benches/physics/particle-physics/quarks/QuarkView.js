@@ -19,6 +19,8 @@ export class QuarkView {
   draw(builder, time, still) {
     const c = this.canvasView.begin();
     const { width: w, height: h } = this.canvasView;
+    c.fillStyle = theme.color('--surface');
+    c.fillRect(0, 0, w, h);
     const cx = w / 2;
     const cy = h / 2 + 8;
     const ring = Math.min(w, h) * 0.27;

@@ -16,6 +16,8 @@ export class DriftView {
   draw(model) {
     const c = this.canvasView.begin();
     const { width: w, height: h } = this.canvasView;
+    c.fillStyle = theme.color('--surface');
+    c.fillRect(0, 0, w, h);
     const maxG = model.maxGenerations;
     const axes = new Axes(c, { left: 44, top: 20, right: w - 10, bottom: h - 36 }, [0, maxG], [0, 1]);
 

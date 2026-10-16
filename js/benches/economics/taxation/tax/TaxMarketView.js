@@ -18,6 +18,8 @@ export class TaxMarketView {
   draw(model, r) {
     const c = this.canvasView.begin();
     const { width: w, height: h } = this.canvasView;
+    c.fillStyle = theme.color('--surface');
+    c.fillRect(0, 0, w, h);
     const qMax = Math.max(100, r.q0 * 1.4);
     const axes = new Axes(c, { left: 44, top: 20, right: w - 12, bottom: h - 36 }, [0, qMax], [0, 100]);
 

@@ -27,6 +27,8 @@ export class FourierView {
   draw(series, phase) {
     const c = this.canvasView.begin();
     const { width: w, height: h } = this.canvasView;
+    c.fillStyle = theme.color('--surface');
+    c.fillRect(0, 0, w, h);
     const R = Math.min(h * 0.3, w * 0.14); // radius that a height of 1 maps to
     const cx = Math.min(w * 0.22, R * 1.6 + 10);
     const cy = h / 2;

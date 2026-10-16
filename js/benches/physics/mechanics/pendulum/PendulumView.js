@@ -18,6 +18,8 @@ export class PendulumView {
   draw(model, trace) {
     const c = this.canvasView.begin();
     const { width: w, height: h } = this.canvasView;
+    c.fillStyle = theme.color('--surface');
+    c.fillRect(0, 0, w, h);
     const swingHeight = h * 0.56;
 
     // Rod length on screen: the longest allowed rod (2 m) just fits.
