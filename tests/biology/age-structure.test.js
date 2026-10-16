@@ -5,8 +5,8 @@
  *
  * 2-age imprimitive: L=[[0,4],[0.5,0]]  char poly λ²=2 → ±√2; |λ₂/λ₁|=1
  * 3-age primitive: L=[[0,1,5],[0.4,0,0],[0,0.6,0]]
- *   char poly: λ³=0.4λ+1.2; λ≈1.18761471; R₀=1.6; r≈0.17195
- *   L^5 first all-positive power; Euler-Lotka holds
+ *   char poly: λ³=0.4λ+1.2; Newton root λ=1.1876147134391675; R₀=1.6
+ *   r=ln(λ)=0.17194685305198154; L^5 first all-positive power; Euler-Lotka holds
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -78,9 +78,11 @@ test('L^5 all-positive (first such power, Wielandt bound)', () => {
   assert.strictEqual(allPos, true);
 });
 
-test('3-age λ ≈ 1.18761471 ±1e-5', () => {
+test('3-age λ = Newton root 1.1876147134391675 ±1e-12 relative', () => {
   const { lambda } = m3.dominantEigen();
-  assert.ok(Math.abs(lambda / 1.18761471 - 1) < 1e-5, `lambda=${lambda}`);
+  // Newton root of λ³−0.4λ−1.2=0 (4 iterations from x₀=1.2; residual=0 in double precision)
+  const LAMBDA_NEWTON = 1.1876147134391675;
+  assert.ok(Math.abs(lambda / LAMBDA_NEWTON - 1) < 1e-12, `lambda=${lambda}, ref=${LAMBDA_NEWTON}`);
 });
 
 test('3-age char poly residual |λ³−0.4λ−1.2| < 1e-13', () => {
@@ -102,14 +104,15 @@ test('3-age R₀ = 1.6 ±1e-15', () => {
   assert.ok(Math.abs(R0 / 1.6 - 1) < 1e-15, `R₀=${R0}`);
 });
 
-test('3-age r = ln(λ): algebraic check and ≈0.17195 ±1e-4', () => {
+test('3-age r = ln(λ) ±1e-12 relative (Newton anchor)', () => {
   const { lambda } = m3.dominantEigen();
   const r = m3.intrinsicRate();
   assert.ok(r !== null, 'r should not be null');
   // Algebraic: r = ln(lambda) exactly
   assert.ok(Math.abs(r - Math.log(lambda)) < 1e-15, `r=${r} vs ln(λ)=${Math.log(lambda)}`);
-  // Order of magnitude check (power-iter λ accurate to ~1e-5; r has same abs error)
-  assert.ok(Math.abs(r - 0.17195) < 1e-4, `r=${r}`);
+  // r = ln(Newton_root); Newton root 1.1876147134391675 → r = 0.17194685305198154
+  const R_NEWTON = Math.log(1.1876147134391675);
+  assert.ok(Math.abs(r / R_NEWTON - 1) < 1e-12, `r=${r}, ref=${R_NEWTON}`);
 });
 
 test('L·w = λ·w eigenvector residual < 1e-8', () => {
