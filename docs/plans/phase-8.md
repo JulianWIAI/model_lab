@@ -15,22 +15,13 @@ Run `node tools/anchors-phase8.mjs` to reproduce all values below.
 
 ## Implementation order
 
-1. particle-in-box (no new infra; pure math)
-2. carnot (no new infra; pure math)
-3. markov-chains (needs LinAlg.powerIteration for large chains; 2-state uses closed form)
-4. drift-diffusion (needs Random.gaussianSeeded for SDE simulation)
-5. phase-plane (jacobiEigen already in LinAlg.js; only 2×2 needed here)
-6. competitive-exclusion (RK4 from Integrators.js; Lotka-Volterra ODE)
-7. pharmacokinetics (RootFinding.brent for oral t_max; RK4 for 2-compartment)
-
-## Key reuse
-
-| Module | Used by |
-|---|---|
-| `js/core/Integrators.js` (RK4) | competitive-exclusion ODE, pharmacokinetics 2-compartment |
-| `js/core/Random.js` (gaussianSeeded) | drift-diffusion SDE simulation |
-| `js/core/RootFinding.brent` | pharmacokinetics oral t_max |
-| `js/core/LinAlg.powerIteration` | markov-chains stationary distribution (large chains) |
+1. `particle-in-box`       — pure math, new `quantum` catalog field
+2. `carnot`                — pure math, existing `thermodynamics` field
+3. `markov-chains`         — power iteration, existing `probability` field
+4. `drift-diffusion`       — SDE simulation, new `decision-making` catalog field
+5. `phase-plane`           — add `LinAlg.eigen2x2`, existing `dynamics` field
+6. `competitive-exclusion` — RK4 ODE, existing `ecology` field
+7. `pharmacokinetics`      — Bateman limit + multi-dose, new `pharmacology` catalog field
 
 ---
 
@@ -38,16 +29,32 @@ Run `node tools/anchors-phase8.mjs` to reproduce all values below.
 
 | Subject | Field id | Label | Benches |
 |---|---|---|---|
-| Physics | `intro` | Introduction | particle-in-box, carnot |
-| Math | `graduate` | Graduate topics | markov-chains, phase-plane |
-| Psychology | `graduate` | Graduate topics | drift-diffusion |
-| Biology | `university` | University | competitive-exclusion, pharmacokinetics |
+| Physics | `quantum` | Quantum mechanics | particle-in-box |
+| Psychology | `decision-making` | Decision making | drift-diffusion |
+| Biology | `pharmacology` | Pharmacology | pharmacokinetics |
+
+Fields `thermodynamics`, `probability`, `dynamics`, `ecology` already exist.
 
 ---
 
-## Bench 1 — `physics/intro/particle-in-box`
+## Key reuse
+
+| Module | Used by |
+|---|---|
+| `js/core/Integrators.js` (RK4) | phase-plane, competitive-exclusion |
+| `js/core/Random.js` (normalSeeded) | drift-diffusion SDE simulation |
+| `js/core/RootFinding.brent` | pharmacokinetics oral t_max cross-check |
+| `js/core/LinAlg.js` (add eigen2x2) | phase-plane classification |
+| `js/data/constants.js` (add h, c, me) | particle-in-box |
+
+---
+
+## Bench 1 — `physics/quantum/particle-in-box`
 
 **Level:** intro
+
+**Infrastructure first:** add `quantum` field to `js/catalog.js`; add `h`, `hbar`, `me`, `eV`
+to `js/data/constants.js` with CODATA 2018 citations. `me` — *unverified* (cited, not fetched).
 
 ### Symbol table
 
@@ -62,74 +69,68 @@ Run `node tools/anchors-phase8.mjs` to reproduce all values below.
 | ⟨x⟩_n | position expectation | m |
 | ⟨x²⟩_n | second moment | m² |
 
-### Constants (CODATA 2018)
-
-| Constant | Value |
-|---|---|
-| ℏ | 1.054571817×10⁻³⁴ J·s |
-| m_e | 9.1093837015×10⁻³¹ kg |
-| eV | 1.602176634×10⁻¹⁹ J |
-
 ### Parameter domain
 
-| Parameter | Domain | Boundary tests |
+| Parameter | Domain | Behaviour at boundary |
 |---|---|---|
-| L | [0.1nm, 10nm] | L→0: E_1→∞; L→∞: E_1→0 |
-| n | {1, 2, 3, …} | n=1: ground state; n→∞: classical limit |
+| n | {1, 2, 3, …} | n < 1 → `RangeError` |
+| L | (0, ∞) m | L ≤ 0 → `RangeError` |
 
 ### Anchor → test table
 
-| Anchor | Expected value (computed) | Tolerance | Test name |
+| Anchor | Expected (from anchor script) | Tolerance | Test name |
 |---|---|---|---|
-| E_1 at L=1nm | 6.02467×10⁻²⁰ J = 0.37603 eV | 1×10⁻²⁷ J | `E_1(L=1nm) ≈ 6.0247e-20 J ±1e-27` |
-| E_2/E_1 | 4 | 0 (exact) | `E_2/E_1 = 4 exactly` |
-| E_3/E_1 | 9 | 0 (exact) | `E_3/E_1 = 9 exactly` |
-| E_2 − E_1 | 3·E_1 = 1.12809 eV | 1×10⁻⁴ eV | `E_2 - E_1 = 3E_1 in eV ±1e-4` |
+| E₁ at L=1nm | 6.02467×10⁻²⁰ J = 0.376030 eV | 1×10⁻²⁷ J | `E_1(L=1nm) in J ±1e-27` |
+| E₂/E₁ | 4 | 1×10⁻¹⁵ relative | `E_2/E_1 = 4 ±1e-15 rel` |
+| E₃/E₁ | 9 | 1×10⁻¹⁵ relative | `E_3/E_1 = 9 ±1e-15 rel` |
+| photon λ(2→1) at L=1nm | ≈ 1099 nm | 1 nm | `photon λ(2→1) ≈ 1099nm ±1nm` |
 | ∫₀ᴸ ψ₁² dx | 1 | 1×10⁻⁸ | `normalization n=1 ±1e-8 (Simpson)` |
 | ∫₀ᴸ ψ₂² dx | 1 | 1×10⁻⁸ | `normalization n=2 ±1e-8 (Simpson)` |
 | ∫₀ᴸ ψ₁·ψ₂ dx | 0 | 1×10⁻⁸ | `orthogonality ψ₁,ψ₂ ±1e-8 (Simpson)` |
-| ⟨x⟩₁ = L/2 | L/2 (exact, by symmetry) | 1×10⁻¹² | `<x>_1 = L/2 exactly` |
-| ⟨x²⟩₁ = L²(1/3−1/(2π²)) | 2.82673×10⁻¹⁹ m² at L=1nm | 1×10⁻³⁰ | `<x²>_1 = L²(1/3-1/(2π²)) ±1e-30` |
-| σ_x,1 = √(⟨x²⟩₁−L²/4) | 1.80756×10⁻¹⁰ m | 1×10⁻²² | `σ_x,1 ±1e-22` |
-| E_n level ordering | E_1 < E_2 < E_3 | — | `energies strictly increasing for n=1..5` |
+| P(0<x<L/3) n=1 | 0.195501 | 1×10⁻⁶ | `P(0<x<L/3) n=1 ±1e-6` |
+| ⟨x²⟩₁ = L²(1/3−1/(2π²)) | 2.82673×10⁻¹⁹ m² | 1×10⁻³⁰ | `<x²>_1 formula ±1e-30` |
+| E₁(2L)/E₁(L) | 0.25 | 1×10⁻¹⁵ relative | `E_1(2L)/E_1(L) = 0.25 ±1e-15 rel` |
+| Energies strictly increasing | E₁<E₂<E₃<E₄<E₅ | — | `energies strictly increasing n=1..5` |
+| n<1 throws RangeError | — | — | `n<1 → RangeError` |
 
 ### Source status
 
-Formulas from standard QM (Griffiths, "Introduction to Quantum Mechanics", §2.2).
-Constants from CODATA 2018 (cited, not fetched). 1 nm box chosen for pedagogical clarity.
+Energy formula E_n = n²π²ℏ²/(2m_e L²): *anchor derived, test planned*.
+Constants h, c exact SI 2019; m_e CODATA 2018 — *cited, not fetched* (marked unverified in code).
 
 ### View description
 
-Left panel: wavefunction ψ_n(x) and |ψ_n|² vs x. Right panel: energy level diagram
-showing E_1…E_5 as horizontal bars; selected level highlighted. Slider for n and L.
+Left panel: wavefunction ψ_n(x) and |ψ_n|² vs x (solid and filled). Right panel: energy
+level diagram E₁…E₅ as horizontal bars; selected level highlighted. Slider for n (1–5) and
+L (0.1–5 nm).
 
 ### Predict questions
 
-1. Why does E_n scale as n²? What does this imply for the spacing between levels at high n?
-2. If you double L, by what factor does E_1 change? What does this say about confinement energy?
-3. A photon is emitted when the electron drops from n=2 to n=1. Calculate the photon wavelength.
+1. Drag the L slider from 1 nm to 2 nm. By what factor does E₁ change? What does this imply about confining a particle to a smaller space?
+2. Select n=1 and n=2. Is the spacing E₂−E₁ equal to E₃−E₂? What does the pattern say about level spacing at high n?
+3. Switch to n=2. Where are the nodes of ψ₂? What is the probability of finding the electron in the left third of the box?
 
 ### Derive it
 
-1. Schrödinger equation in box: −(ℏ²/2m)(d²ψ/dx²) = Eψ, ψ(0)=ψ(L)=0.
-2. General solution: ψ=A sin(kx), k=nπ/L. Normalization gives A=√(2/L).
+1. Schrödinger equation: −(ℏ²/2m)(d²ψ/dx²) = Eψ, with ψ(0)=ψ(L)=0.
+2. General solution: ψ=A sin(kx), boundary → k=nπ/L. Normalization: A=√(2/L).
 3. E_n = ℏ²k²/(2m) = n²π²ℏ²/(2mL²).
-4. Expectation values: ⟨x⟩ = L/2 by parity; ⟨x²⟩ = L²/3 − L²/(2n²π²) from integral tables.
+4. ⟨x⟩ = L/2 by parity; ⟨x²⟩ = L²/3 − L²/(2n²π²) by direct integration.
 
 ### Research papers
 
-- Griffiths (1995) "Introduction to Quantum Mechanics": cited, not fetched.
-- CODATA 2018 constants: cited, not fetched.
+- Griffiths, D.J. (1995). *Introduction to Quantum Mechanics*, §2.2. Prentice Hall. (cited, not fetched)
+- CODATA 2018 constants: https://physics.nist.gov/cuu/Constants/ (cited, not fetched)
 
 ### Where it breaks
 
-- Real quantum dots have finite potential walls and effective mass m* ≠ m_e.
-- Coulomb interactions between electrons are ignored.
-- 3D box has degeneracies absent in 1D.
+- Infinite potential walls: real quantum dots have finite barriers and effective mass m* ≠ m_e.
+- Single non-interacting electron: Coulomb interactions between electrons ignored.
+- 1D only: 3D box has degenerate levels absent here.
 
 ---
 
-## Bench 2 — `physics/intro/carnot`
+## Bench 2 — `physics/thermodynamics/carnot`
 
 **Level:** intro
 
@@ -139,231 +140,268 @@ showing E_1…E_5 as horizontal bars; selected level highlighted. Slider for n a
 |---|---|---|
 | T_h | hot reservoir temperature | K |
 | T_c | cold reservoir temperature | K |
-| η | Carnot efficiency | — |
-| W | net work output | J |
-| Q_h | heat absorbed from hot | J |
-| COP_hp | coefficient of performance (heat pump) | — |
-| COP_ref | coefficient of performance (refrigerator) | — |
+| η | Carnot efficiency = 1−T_c/T_h | — |
+| W | net work | J |
+| Q_h | heat absorbed from hot reservoir | J |
+| Q_c | heat rejected to cold reservoir | J |
+| COP_hp | heat pump COP = T_h/(T_h−T_c) | — |
+| COP_ref | refrigerator COP = T_c/(T_h−T_c) | — |
+| ΔS | entropy change per cycle | J/K |
 
 ### Parameter domain
 
-| Parameter | Domain | Boundary tests |
+| Parameter | Domain | Behaviour at boundary |
 |---|---|---|
-| T_h | (0, ∞) K | T_h > T_c always |
-| T_c | [0, T_h) K | T_c=0: η=1; T_c=T_h: η=0 |
+| T_h | (0, ∞) K | — |
+| T_c | [0, T_h) K | T_c ≥ T_h → `RangeError` |
 
 ### Anchor → test table
 
-| Anchor | Expected value (computed) | Tolerance | Test name |
+| Anchor | Expected (from anchor script) | Tolerance | Test name |
 |---|---|---|---|
-| η(T_h=500, T_c=300) | 0.40 | 0 (exact) | `η = 0.40 exactly` |
-| η(T_h=500, T_c=0) | 1.0 | 0 (exact) | `η = 1.0 exactly at T_c=0` |
-| dη/dT_c at T_h=500 | −1/500 = −0.002 | 1×10⁻¹⁵ | `dη/dT_c = -1/T_h ±1e-15` |
-| COP_hp(T_h=300, T_c=273) | 300/27 ≈ 11.111 | 1×10⁻¹⁰ | `COP_hp = T_h/(T_h-T_c) ±1e-10` |
-| COP_ref(T_h=300, T_c=273) | 273/27 ≈ 10.111 | 1×10⁻¹⁰ | `COP_ref = T_c/(T_h-T_c) ±1e-10` |
-| η × COP_hp (same T) | 1.0 (exact) | 1×10⁻¹⁵ | `η * COP_hp = 1 exactly (same temperatures)` |
-| η < 1 for T_c > 0 | always | — | `η < 1 for 10 random T_c in (0, T_h)` |
-| η monotone in T_c | decreasing | — | `η(T_c=100) > η(T_c=200) > η(T_c=300)` |
+| η(T_h=500K, T_c=300K) | 0.40 | 1×10⁻¹⁵ | `η(500,300) = 0.4 ±1e-15` |
+| η(T_h=500K, T_c=0K) | 1.0 | 1×10⁻¹⁵ | `η(500,0) = 1 ±1e-15` |
+| COP_hp(500,300) | 2.5 | 1×10⁻¹⁰ | `COP_hp(500,300) = 2.5 ±1e-10` |
+| COP_ref(500,300) | 1.5 | 1×10⁻¹⁰ | `COP_ref(500,300) = 1.5 ±1e-10` |
+| COP_hp − COP_ref | 1 | 1×10⁻¹⁵ | `COP_hp - COP_ref = 1 ±1e-15` |
+| η × COP_hp (same T) | 1.0 | 1×10⁻¹⁵ | `η × COP_hp = 1 ±1e-15` |
+| COP_hp(T_c=0) | 1.0 | 1×10⁻¹⁵ | `COP_hp(T_c=0) = 1 ±1e-15` |
+| T-S rectangle area = W = Q_h·η | (T_h−T_c)·ΔS | 1×10⁻¹⁰ | `T-S shoelace area = W ±1e-10` |
+| η monotone decreasing in T_c | — | — | `η(T_c=100) > η(T_c=200) > η(T_c=300)` |
+| T_c ≥ T_h throws RangeError | — | — | `T_c >= T_h → RangeError` |
 
 ### Source status
 
-Second law / Carnot theorem: standard thermodynamics (Callen "Thermodynamics", Ch.4).
-Cited, not fetched.
+η = 1−T_c/T_h: *anchor derived, test planned* (follows from entropy balance).
+COP formulas exact from definition. No empirical constants.
 
 ### View description
 
-Interactive T-S (temperature-entropy) diagram showing the rectangular Carnot cycle.
-Sliders for T_h and T_c. Readouts: η, W/Q_h, COP_hp, COP_ref.
+Interactive T-S (temperature–entropy) diagram showing the rectangular Carnot cycle.
+Horizontal axis: ΔS (0 to 1 J/K). Vertical axis: T (K). Shaded W rectangle, labelled
+Q_h and Q_c. Sliders for T_h and T_c. Readouts: η, W/Q_h, COP_hp, COP_ref.
 
 ### Predict questions
 
-1. A real steam turbine achieves η = 0.33. If T_h = 600°C, what is the minimum T_c consistent with the second law?
-2. Why can't a heat pump with COP_hp = ∞ exist? What would it violate?
-3. If T_c doubles (in Kelvin), what happens to η?
+1. Set T_h = 873 K (≈ 600°C) and find the T_c that gives exactly η = 0.33. Read T_c from the slider. What is the minimum cold-reservoir temperature a real engine could achieve at this efficiency?
+2. Set T_c close to T_h (e.g., 490 K at T_h=500 K). What does COP_hp approach? Set T_c = 0. What is COP_hp now and why?
+3. Keeping T_h = 500 K, increase T_c from 100 K to 200 K (+100 K), then from 200 K to 300 K (+100 K). Is the drop in η the same both times? (Yes — η is linear in T_c.)
 
 ### Derive it
 
-1. Carnot cycle: isothermal expansion at T_h, adiabatic expansion, isothermal compression at T_c, adiabatic compression.
-2. Efficiency: η = W/Q_h = 1 − |Q_c|/Q_h = 1 − T_c/T_h (by entropy balance).
-3. COP_hp = Q_h/W = 1/η; COP_ref = Q_c/W = T_c/(T_h−T_c).
+1. Carnot cycle: isothermal expansion at T_h absorbs Q_h = T_h·ΔS; isothermal compression at T_c rejects Q_c = T_c·ΔS.
+2. Work: W = Q_h − Q_c = (T_h − T_c)·ΔS. Efficiency: η = W/Q_h = 1 − T_c/T_h.
+3. COP_hp = Q_h/W = T_h/(T_h−T_c) = 1/η; COP_ref = Q_c/W = T_c/(T_h−T_c).
+4. Identity: COP_hp = COP_ref + 1 (always, from definitions).
 
 ### Research papers
 
-- Carnot (1824) "Réflexions sur la puissance motrice du feu": cited, not fetched.
+- Carnot, S. (1824). *Réflexions sur la puissance motrice du feu*. Bachelier. (cited, not fetched)
+- Callen, H.B. (1985). *Thermodynamics and an Introduction to Thermostatistics*, Ch. 4. (cited, not fetched)
 
 ### Where it breaks
 
-- Real engines are irreversible (friction, finite temperature gradients).
-- T must be in Kelvin (absolute), not Celsius.
-- The Carnot cycle is reversible and quasi-static; real processes are neither.
+- Assumes reversible, quasi-static processes. Real engines are irreversible.
+- T must be in Kelvin. Celsius inputs will produce wrong answers.
+- T-S diagram is idealised: real working fluids have non-rectangular T-S curves.
 
 ---
 
-## Bench 3 — `math/graduate/markov-chains`
+## Bench 3 — `math/probability/markov-chains`
 
-**Level:** graduate
+**Level:** university
 
 ### Symbol table
 
 | Symbol | Meaning | Unit |
 |---|---|---|
-| P | transition matrix | — |
-| p | P(0→1) | — |
-| q | P(1→0) | — |
+| P | transition matrix (row-stochastic) | — |
+| p | P(state 0 → state 1) | — |
+| q | P(state 1 → state 0) | — |
 | π | stationary distribution | — |
 | λ₂ | second eigenvalue of P | — |
 | gap | spectral gap = 1 − |λ₂| | — |
 | t_rel | relaxation time = 1/gap | steps |
-| t_mix | mixing time | steps |
+| t_mix(ε) | first k with TV(k) ≤ ε | steps |
+| TV(k) | total variation distance after k steps | — |
 
-**IMPORTANT:** 2-state Markov chain P is NON-SYMMETRIC (unless p=q). The eigenvalue
-λ₂ = 1−p−q is computed as a CLOSED FORM, NOT via jacobiEigen (which requires
-symmetric matrices). For larger chains, use LinAlg.powerIteration on P (power iteration
-on the Markov chain directly converges to the stationary distribution).
+**Implementation note:** 2-state P is NOT symmetric (unless p=q). Eigenvalue λ₂=1−p−q is
+a closed form — do NOT use `jacobiEigen` (symmetric only). Use power iteration on Pᵀ for
+the stationary distribution; verify against the closed form.
 
 ### Parameter domain
 
-| Parameter | Domain | Boundary tests |
+| Parameter | Domain | Behaviour at boundary |
 |---|---|---|
-| p | (0, 1) | p=0: absorbing state 0; p+q=1: uniform stationary |
-| q | (0, 1) | q=0: absorbing state 1 |
-| p+q | ≤ 1 | p+q=1: λ₂=0, immediate mixing |
+| p | [0, 1] | p=0 → state 0 absorbing; p=q=0 → no unique π |
+| q | [0, 1] | q=0 → state 1 absorbing |
+| p+q | (0, 2] | p+q=0 → "no unique stationary distribution" warning |
 
-### Anchor → test table (p=0.3, q=0.4)
+### Anchor → test table (p=0.3, q=0.4 unless noted)
 
-| Anchor | Expected value (computed) | Tolerance | Test name |
+| Anchor | Expected (from anchor script) | Tolerance | Test name |
 |---|---|---|---|
-| π₀ = q/(p+q) | 4/7 ≈ 0.571429 | 1×10⁻¹⁰ | `π₀ = q/(p+q) = 4/7 ±1e-10` |
-| π₁ = p/(p+q) | 3/7 ≈ 0.428571 | 1×10⁻¹⁰ | `π₁ = p/(p+q) = 3/7 ±1e-10` |
-| λ₂ = 1−p−q | 0.3 | 1×10⁻¹⁵ | `λ₂ = 1-p-q = 0.3 (closed form) ±1e-15` |
-| spectral gap | 0.7 | 1×10⁻¹⁵ | `spectral gap = p+q = 0.7 ±1e-15` |
-| π·P = π (stationarity) | 0 residual | 1×10⁻¹⁴ | `π P = π residual ±1e-14` |
-| detailed balance π₀·p = π₁·q | 0.171429 both | 1×10⁻¹² | `detailed balance ±1e-12` |
-| t_mix(ε=0.01) ≤ bound | ≤ 7.789 | — | `t_mix bound ≤ 7.789` |
-| Power iteration converges to π | |π_iter − π|₁ < 1×10⁻¹⁰ | 1×10⁻¹⁰ | `powerIteration convergence ±1e-10` |
+| π₀ = q/(p+q) | 4/7 ≈ 0.571429 | 1×10⁻¹⁰ | `π₀ = q/(p+q) ±1e-10` |
+| π₁ = p/(p+q) | 3/7 ≈ 0.428571 | 1×10⁻¹⁰ | `π₁ = p/(p+q) ±1e-10` |
+| λ₂ = 1−p−q (closed form) | 0.3 | 1×10⁻¹⁵ | `λ₂ = 1-p-q ±1e-15` |
+| spectral gap = p+q | 0.7 | 1×10⁻¹⁵ | `gap = p+q ±1e-15` |
+| π·P = π (stationarity) | residual 0 | 1×10⁻¹⁴ | `π P = π residual ±1e-14` |
+| detailed balance π₀·p = π₁·q | equal | 1×10⁻¹² | `detailed balance ±1e-12` |
+| Exact TV(k) = |λ₂|^k·max(π₀,π₁) | TV(4) ≈ 0.00777 ≤ 0.01 | 1×10⁻¹⁰ | `TV(4) ≤ 0.01 → t_mix = 4` |
+| TV(3) > 0.01 | TV(3) ≈ 0.02590 > 0.01 | — | `TV(3) > 0.01 (t_mix not 3)` |
+| Power iteration converges to π | |π_iter − π|₁ | 1×10⁻¹⁰ | `powerIteration convergence ±1e-10` |
+| p=q=0.6 (p+q>1): λ₂ = −0.2 | −0.2 | 1×10⁻¹⁵ | `λ₂ < 0 when p+q > 1 ±1e-15` |
+| 3-state preset π·P = π | residual 0 | 1×10⁻¹⁰ | `3-state stationarity ±1e-10` |
+| 3-state second eigenvalue | 0.5 | 1×10⁻¹⁰ | `3-state λ₂ = 0.5 ±1e-10` |
+
+**TV distance formula:** TV(k) = |λ₂|^k · max(π₀, π₁) — this is the *exact* formula for
+2-state chains, not the LPW upper bound. The LPW bound ≈ 7.789 is a stated bound only.
+
+**3-state preset:** P = [[0.5,0.5,0],[0.25,0.5,0.25],[0,0.5,0.5]], π = (¼,½,¼),
+eigenvalues {1, 0.5, 0}.
+
+**Boundary cases to define:** p=q=0 → show "no unique stationary distribution" (not an error);
+p=q=1 → λ₂=−1 (periodic chain), defined and valid.
 
 ### Source status
 
-Markov chain mixing theory: Levin, Peres, Wilmer "Markov Chains and Mixing Times" (2009).
-Cited, not fetched.
+Stationarity and spectral gap: *anchor derived, test planned*.
+Mixing theory (Levin, Peres, Wilmer 2009): *cited, not fetched*.
 
 ### View description
 
-Transition diagram with animated probability flow. Line plot of π^(t) vs t converging
-to stationary distribution. Readouts: λ₂, gap, t_rel, π. Slider for p and q.
+Transition diagram with animated probability flow. Line plot of π^(t) → π vs t. Readouts:
+λ₂, gap, t_rel, exact t_mix(ε). Sliders for p, q. Toggle between 2-state and 3-state preset.
 
 ### Predict questions
 
-1. If p = q = 0.5, what is the stationary distribution? What does λ₂ = 0 mean for mixing?
-2. For a 3-state chain, can you still use the closed-form λ₂ = 1−p−q? (No — why not?)
-3. The Google PageRank algorithm is a Markov chain on web pages. What is the stationary distribution measuring?
+1. Set p=q=0.5. What is λ₂? What does λ₂=0 mean for how fast the chain mixes?
+2. Set p=0.6, q=0.6 (p+q=1.2). What sign is λ₂? Does the chain still mix? Watch the convergence plot.
+3. Use the 3-state preset. The second eigenvalue is 0.5. After 10 steps, how close is the distribution to π? (TV ≈ 0.5^10 · max(π) ≈ 0.00024.)
 
 ### Derive it
 
-1. Stationarity: πP = π → π₀ = π₀(1−p) + π₁q; π₁ = π₀p + π₁(1−q). Solve: π₀ = q/(p+q).
-2. Eigenvalues of P = [[1−p,p],[q,1−q]]: det(P−λI) = 0 → (1−p−λ)(1−q−λ) − pq = 0.
-   Roots: λ₁ = 1 (always), λ₂ = 1−p−q (closed form; no numerical solver needed).
-3. Mixing: after k steps |π^(k) − π|_TV ≤ |λ₂|^k/(2π_min).
+1. Stationarity: πP = π → π₀(1−p)+π₁q = π₀ → π₀ = q/(p+q).
+2. Eigenvalues of P: char. poly. gives λ₁=1 (always) and λ₂=1−p−q (closed form).
+3. Mixing: TV(k) = |λ₂|^k · max(π₀,π₁); t_mix(ε) = smallest k with TV(k) ≤ ε.
 
 ### Research papers
 
-- Levin, Peres, Wilmer (2009): cited, not fetched.
-- Markov (1906) original paper: cited, not fetched.
+- Levin, D.A., Peres, Y. & Wilmer, E.L. (2009). *Markov Chains and Mixing Times*. AMS. (cited, not fetched)
+- Markov, A.A. (1906). Extension of the law of large numbers to dependent events. (cited, not fetched)
 
 ### Where it breaks
 
-- Non-symmetric P: jacobiEigen cannot be used (requires symmetric matrix). Use closed form.
-- Periodic chains (λ₂ = −1): mixing time analysis requires |λ₂| not λ₂.
-- Lazy chains: P' = (I+P)/2 breaks periodicity, λ₂' = (1+λ₂)/2 ≥ 0.
+- Non-symmetric P: jacobiEigen requires symmetric input; use closed form or power iteration.
+- Periodic chains (λ₂=−1): absolute value |λ₂| determines mixing, not λ₂.
+- For n > 2 states: λ₂ must be found numerically (no simple closed form).
 
 ---
 
-## Bench 4 — `psychology/graduate/drift-diffusion`
+## Bench 4 — `psychology/decision-making/drift-diffusion`
 
-**Level:** graduate
+**Level:** university
+
+**Infrastructure first:** add `decision-making` field to `psychology` in `js/catalog.js`.
 
 ### Symbol table
 
 | Symbol | Meaning | Unit |
 |---|---|---|
 | μ | drift rate | units/s |
-| σ | noise (diffusion) | units/√s |
-| a | boundary (half-range) | units |
+| σ | noise amplitude | units/√s |
+| a | absorbing boundary (half-range) | units |
 | t₀ | non-decision time | s |
-| P_upper | probability of upper boundary hit | — |
-| RT | mean response time | s |
+| P+ | P(upper boundary hit) | — |
+| E[T] | mean first-passage time (excluding t₀) | s |
+| RT | mean response time = E[T]+t₀ | s |
 
 ### Parameter domain
 
-| Parameter | Domain | Boundary tests |
+| Parameter | Domain | Behaviour at boundary |
 |---|---|---|
-| μ | (−∞, ∞) | μ=0: P=0.5; μ→∞: P→1 |
-| a | (0, ∞) | a→0: RT→t₀; a→∞: P→Heaviside(μ) |
-| σ | (0, ∞) | σ→0: deterministic drift |
-| t₀ | [0, ∞) | t₀=0: RT = mean first-passage time only |
+| σ | (0, ∞) | σ ≤ 0 → `RangeError` |
+| a | (0, ∞) | a ≤ 0 → `RangeError` |
+| μ | (−∞, ∞) | μ=0 exact formula used |
+| t₀ | [0, ∞) | — |
 
 ### Anchor → test table (μ=1, a=1, σ=1, t₀=0.3 unless noted)
 
-| Anchor | Expected value (computed) | Tolerance | Test name |
+| Anchor | Expected (from anchor script) | Tolerance | Test name |
 |---|---|---|---|
-| P(upper) | 1/(1+exp(−2)) ≈ 0.880797 | 1×10⁻⁶ | `P_upper(μ=1,a=1,σ=1) ±1e-6` |
-| RT_mean | tanh(1) + 0.3 ≈ 1.06159 s | 1×10⁻⁶ | `RT_mean ±1e-6` |
-| P(upper) at μ=0 | 0.5 (exact) | 1×10⁻¹⁵ | `P_upper(μ=0) = 0.5 exactly` |
-| P(upper) at μ<0 | < 0.5 | — | `P_upper monotone in μ` |
-| Simulated P vs formula | within 3σ | 3×sqrt(P(1-P)/5000) ≈ 0.0138 | `simulation N=5000 within 3σ ±0.014` |
-| RT_mean > t₀ | always | — | `RT_mean > t₀ for μ=1,a=1,σ=1` |
+| P+ (μ=1,a=1,σ=1) | 1/(1+e⁻²) ≈ 0.880797 | 1×10⁻⁶ | `P_upper(1,1,1) ±1e-6` |
+| E[T]+t₀ | (a/μ)tanh(μa/σ²)+t₀ ≈ 1.06159 s | 1×10⁻⁶ | `RT_mean ±1e-6` |
+| P+ (μ=0) | 0.5 | 1×10⁻¹⁵ | `P_upper(μ=0) = 0.5 ±1e-15` |
+| E[T] (μ=0) | a²/σ² = 1 (at a=σ=1) | 1×10⁻¹⁰ | `E[T](μ=0) = a²/σ² ±1e-10` |
+| Continuity: lim_{μ→0} E[T] | → a²/σ² | 1×10⁻⁴ | `E[T](μ=1e-8) ≈ a²/σ² ±1e-4` |
+| σ ≤ 0 → RangeError | — | — | `σ<=0 → RangeError` |
+| Simulation P+ vs formula (N=5000, seed=42) | within 3σ̂ ≈ 0.0138 | 3√(P+(1−P+)/5000) | `simulation P+ within 3σ̂` |
+| dt-halving convergence | |P+_dt − P+_dt/2| < |P+_dt/2 − P+_dt/4| | — | `dt-halving: P+ converges monotone` |
+| RT_mean > t₀ | always | — | `RT_mean > t₀` |
 
-**Simulation note:** Use `Random.gaussianSeeded(42)` for reproducible SDE trials.
-σ of P̂ with N=5000 = √(0.8808·0.1192/5000) ≈ 0.00458; 3σ tolerance = 0.0138 (R1).
+**μ=0 continuity:** E[T] = (a/μ)tanh(μa/σ²) → a²/σ² as μ→0 (L'Hôpital). Use this limit
+directly in code when |μ| < ε to avoid 0/0.
+
+**BGK note:** Broadie-Glasserman-Kou boundary correction ≈ 0.5826σ√dt. The dt-halving test
+(not the BGK constant) is the primary check. Report the estimated bias in a readout.
 
 ### Source status
 
-Ratcliff (1978) "A theory of memory retrieval": cited, not fetched.
-Bogacz et al. (2006) "The physics of optimal decision making": cited, not fetched.
+P+ and E[T] from backward Kolmogorov equation: *anchor derived, test planned*.
+BGK correction — *cited, not fetched* (Broadie, Glasserman & Kou 1997).
 
 ### View description
 
 Left: RT distribution histogram for upper/lower boundary responses. Right: drift path
-animation showing simulated SDE trajectory with boundaries. Sliders for μ, a, σ, t₀.
+animation of a single simulated SDE trajectory with boundary lines. Sliders: μ, a, σ, t₀.
+Readout: P+, E[T], RT, dt-bias estimate.
 
 ### Predict questions
 
-1. Why does the model predict a right-skewed RT distribution even for constant drift μ?
-2. How does increasing a (cautiousness) affect the speed-accuracy tradeoff?
-3. What does the non-decision time t₀ represent, and how could it be measured independently?
+1. Increase a from 1 to 2 with μ=1, σ=1. Does P+ change? Does mean RT change? What does this say about the speed-accuracy trade-off?
+2. Set μ=0. What is P+ and mean RT? Now slowly increase μ to 2. How do P+ and RT change together?
+3. Double σ from 1 to 2, keeping μ and a fixed. What happens to P+? Why does more noise hurt accuracy?
 
 ### Derive it
 
-1. Fokker-Planck for Ornstein-Uhlenbeck with absorbing boundaries at ±a.
-2. P(upper) = 1/(1+exp(−2μa/σ²)) — from balance of exponential factors at boundaries.
-3. ⟨T⟩ = (a/μ)tanh(μa/σ²) — from Green's function of the FP equation.
+1. Ẋ = μ + σṄ (Wiener process with drift). Absorbing boundaries at ±a.
+2. Backward Kolmogorov for P+(x): (σ²/2)P+'' + μP+' = 0. General solution P+(x) = A + B·e^{−2μx/σ²}; BC gives P+(0) = 1/(1+e^{−2μa/σ²}).
+3. For E[T]: (σ²/2)T'' + μT' = −1. Solution T(0) = (a/μ)tanh(μa/σ²).
+4. μ=0 limit: (a/μ)tanh(μa/σ²) → a²/σ² via L'Hôpital.
 
 ### Research papers
 
-- Ratcliff (1978): cited, not fetched.
-- Bogacz et al. (2006): cited, not fetched.
+- Ratcliff, R. (1978). A theory of memory retrieval. *Psychological Review*, 85(2), 59–108. https://doi.org/10.1037/0033-295X.85.2.59
+- Bogacz, R., Brown, E., Moehlis, J., Holmes, P. & Cohen, J.D. (2006). The physics of optimal decision making. *Psychological Review*, 113(4), 700–765. https://doi.org/10.1037/0033-295X.113.4.700
+- Broadie, M., Glasserman, P. & Kou, S.G. (1997). A continuity correction for discrete barrier options. *Mathematical Finance*, 7(4), 325–349. (BGK; cited, not fetched)
 
 ### Where it breaks
 
-- Real RT distributions have heavier tails than the DDM predicts.
-- Drift μ varies trial-to-trial in empirical data (variability model needed).
-- Collapse boundaries (a decreasing over time) improve fit but complicate analytics.
+- Equal-variance, constant-drift assumption. Real RT distributions have heavier tails.
+- Drift varies trial-to-trial in empirical data (variability model not included).
+- Collapsing boundaries improve fit but have no closed-form solution included here.
 
 ---
 
-## Bench 5 — `math/graduate/phase-plane`
+## Bench 5 — `math/dynamics/phase-plane`
 
-**Level:** graduate
+**Level:** university
+
+**Infrastructure first:** add `LinAlg.eigen2x2(A)` to `js/core/LinAlg.js`. Returns
+`{ lambda: [λ₁,λ₂], real: [re₁,re₂], imag: [im₁,im₂], repeated: bool, defective: bool }`.
+Uses τ=tr(A), Δ=det(A), disc=τ²−4Δ. Real eigenvalues when disc≥0; complex when disc<0.
+Defective flag: repeated eigenvalue AND A ≠ λI (i.e., at least one off-diagonal non-zero).
 
 ### Symbol table
 
 | Symbol | Meaning | Unit |
 |---|---|---|
 | A | 2×2 system matrix | — |
-| τ | trace = tr(A) | — |
-| Δ | determinant = det(A) | — |
-| λ₁, λ₂ | eigenvalues of A | 1/time |
-| stability | qualitative classification | enum |
+| τ | trace = a+d | — |
+| Δ | determinant = ad−bc | — |
+| disc | τ²−4Δ | — |
+| λ₁, λ₂ | eigenvalues | 1/time |
+| μ | nonlinear gain parameter | 1/(unit²·time) |
 
 ### Classification table
 
@@ -371,59 +409,69 @@ animation showing simulated SDE trajectory with boundaries. Sliders for μ, a, �
 |---|---|
 | Δ < 0 | Saddle |
 | τ = 0, Δ > 0 | Center |
-| τ < 0, Δ > 0, τ² > 4Δ | Stable node |
-| τ > 0, Δ > 0, τ² > 4Δ | Unstable node |
-| τ < 0, Δ > 0, τ² < 4Δ | Stable spiral |
-| τ > 0, Δ > 0, τ² < 4Δ | Unstable spiral |
-| Δ = 0 | Degenerate (zero eigenvalue) |
+| disc < 0, τ < 0 | Stable spiral |
+| disc < 0, τ > 0 | Unstable spiral |
+| disc > 0, τ < 0, Δ > 0 | Stable node |
+| disc > 0, τ > 0, Δ > 0 | Unstable node |
+| disc = 0 (τ²=4Δ) | Star node (if A=λI) or Improper node (defective) |
+| Δ = 0, τ ≠ 0 | Degenerate (zero eigenvalue) |
+| τ = Δ = 0 | Fully degenerate (nilpotent) |
 
 ### Anchor → test table
 
-| Anchor | Expected value (computed) | Tolerance | Test name |
+| Anchor | Expected (from anchor script) | Tolerance | Test name |
 |---|---|---|---|
-| A=[[-1,0],[0,-2]]: τ=−3,Δ=2 → stable node; λ=−1,−2 | τ=−3 exact | 1×10⁻¹⁵ | `stable node trace=-3 ±1e-15` |
-| A=[[0,-1],[1,0]]: τ=0,Δ=1 → center; λ=±i | τ=0 exact | 1×10⁻¹⁵ | `center trace=0 ±1e-15` |
-| A=[[-1,-1],[1,-1]]: τ=−2,Δ=2 → stable spiral; λ=−1±i | τ²−4Δ=−4 < 0 | 1×10⁻¹⁵ | `stable spiral discriminant=-4 ±1e-15` |
-| A=[[1,0],[0,-1]]: Δ=−1 → saddle | Δ=−1 exact | 1×10⁻¹⁵ | `saddle determinant=-1 ±1e-15` |
-| A=[[1,0],[0,2]]: τ=3,Δ=2 → unstable node | τ=3 exact | 1×10⁻¹⁵ | `unstable node trace=3 ±1e-15` |
-| Hartman-Grobman: non-center/non-degenerate → same type as linearization | — | — | `classify agrees with eigenvalue signs for 20 cases` |
-| Continuous τ,Δ→0 boundaries correctly handled | — | — | `boundary cases: τ=0 → center; Δ=0 → degenerate` |
+| A=[[-1,0],[0,-2]]: τ=−3, Δ=2, λ=−1,−2 → stable node | τ=−3 | 1×10⁻¹⁵ | `stable node τ=-3 ±1e-15` |
+| A=[[0,-1],[1,0]]: τ=0, Δ=1, λ=±i → center | Δ=1 | 1×10⁻¹⁵ | `center Δ=1 ±1e-15` |
+| A=[[-1,-1],[1,-1]]: disc=−4 → stable spiral | disc=−4 | 1×10⁻¹⁵ | `stable spiral disc=-4 ±1e-15` |
+| A=[[1,0],[0,-1]]: Δ=−1 → saddle | Δ=−1 | 1×10⁻¹⁵ | `saddle Δ=-1 ±1e-15` |
+| A=[[1,0],[0,2]]: τ=3, Δ=2 → unstable node | τ=3 | 1×10⁻¹⁵ | `unstable node τ=3 ±1e-15` |
+| A=[[2,0],[0,2]]: disc=0, A=λI → star | repeated=true, defective=false | — | `star: repeated non-defective` |
+| RK4 orbit |x(2π)| for A=[[-1,-1],[1,-1]] | e^{-2π} ≈ 0.00186744 | 1×10⁻⁶ | `spiral |x(2π)| = e^{-2π} ±1e-6` |
+| RK4 orbit |x(2π)| for A=[[0,-1],[1,0]] | 1.0 | 1×10⁻⁵ | `center |x(2π)| = 1 ±1e-5` |
+| Nonlinear r(1): r₀/√(1−2μr₀²t), μ=−1, r₀=1 | 1/√3 ≈ 0.577350 | 1×10⁻⁶ | `nonlinear r(1) = 1/√3 ±1e-6` |
+| Τ=Δ=0 classification | "fully degenerate" | — | `τ=Δ=0 → fully degenerate` |
+
+**RK4 checks use 10 000 steps over [0, 2π] with Integrators.rk4.**
 
 ### Source status
 
-Strogatz (1994) "Nonlinear Dynamics and Chaos" §5.2: cited, not fetched.
+Classification from τ-Δ diagram: *anchor derived, test planned* (Strogatz §5.2).
+Nonlinear r(t) exact: *anchor derived, test planned*. `eigen2x2` closed form: exact.
 
 ### View description
 
-τ-Δ plane (trace–determinant diagram) with parabola τ²=4Δ and axes. A point indicating
-current A moves as sliders change. Phase portrait panel (quiver plot of flow field).
+Left: τ-Δ plane (trace–determinant diagram) with parabola τ²=4Δ and stability region labels.
+Draggable point for current A. Right: phase portrait (quiver field + RK4 trajectories from
+multiple ICs). Nonlinear toggle activates ẋ = Ax + μ·r²·x presets.
 
 ### Predict questions
 
-1. A 2×2 matrix with all positive entries — can it have a stable fixed point?
-2. If τ = 0 exactly (center), is the equilibrium stable? (Lyapunov-stable but not asymptotically so.)
-3. How does the Hartman-Grobman theorem break down at centers? (Nonlinear terms determine stability.)
+1. Move the operating point into the saddle region (Δ<0). Do trajectories spiral in or diverge? Start from several initial conditions — do they all go the same direction?
+2. Move to τ=0, Δ>0 (center). Does the orbit close exactly? Now nudge τ slightly negative — what happens to the spiral?
+3. Activate the nonlinear preset with μ=−0.5 (stable). Does the orbit spiral in or converge to a limit cycle? Change μ to +0.5 — what happens?
 
 ### Derive it
 
-1. ẋ = Ax; ansatz x = e^{λt}v → (A−λI)v = 0 → char. poly.: λ²−τλ+Δ = 0.
-2. Discriminant τ²−4Δ: negative → complex eigenvalues (spiral/center); positive → real (node/saddle).
-3. Sign of real part Re(λ) = τ/2 determines stability.
+1. ẋ = Ax; ansatz x = e^{λt}v → characteristic equation λ²−τλ+Δ = 0.
+2. Roots: λ = (τ ± √(τ²−4Δ))/2. Sign of Re(λ) = τ/2 determines stability.
+3. disc > 0: two real eigenvalues (node or saddle); disc < 0: complex conjugate pair (spiral or center).
+4. Nonlinear radial: ṙ = μr³ → dr/r³ = μ dt → r(t) = r₀/√(1−2μr₀²t).
 
 ### Research papers
 
-- Strogatz (1994): cited, not fetched.
-- Hartman (1960), Grobman (1959): cited, not fetched.
+- Strogatz, S.H. (1994). *Nonlinear Dynamics and Chaos*, §5.2. Addison-Wesley. (cited, not fetched)
+- Hartman, P. (1960). A lemma in the theory of structural stability. *Proceedings AMS*, 11(4), 610–620. (cited, not fetched)
 
 ### Where it breaks
 
-- Centers (τ=0) are structurally unstable: any perturbation breaks the exact symmetry.
-- Hartman-Grobman does not apply to centers or degenerate equilibria.
-- Nonlinear terms near the origin change spiral vs center classification.
+- Centers (τ=0) are structurally unstable: any nonlinear term can make them spiral.
+- Hartman-Grobman does not apply to non-hyperbolic fixed points (τ=0 or Δ=0).
+- This bench shows only 2D linear systems; 3D systems can have chaotic behaviour.
 
 ---
 
-## Bench 6 — `biology/university/competitive-exclusion`
+## Bench 6 — `biology/ecology/competitive-exclusion`
 
 **Level:** university
 
@@ -431,141 +479,174 @@ current A moves as sliders change. Phase portrait panel (quiver plot of flow fie
 
 | Symbol | Meaning | Unit |
 |---|---|---|
-| N₁, N₂ | species 1, 2 population | individuals |
+| N₁, N₂ | populations | individuals |
 | r₁, r₂ | intrinsic growth rates | 1/time |
 | K₁, K₂ | carrying capacities | individuals |
-| α₁₂ | interspecific competition of sp2 on sp1 | — |
-| α₂₁ | interspecific competition of sp1 on sp2 | — |
-| N₁*, N₂* | coexistence equilibrium | individuals |
+| α₁₂ | effect of sp2 on sp1 (per capita) | — |
+| α₂₁ | effect of sp1 on sp2 (per capita) | — |
+| N₁*, N₂* | interior equilibrium | individuals |
 
 ### Parameter domain
 
-| Parameter | Domain | Boundary tests |
+| Parameter | Domain | Notes |
 |---|---|---|
-| α₁₂, α₂₁ | [0, ∞) | 0 = no competition; 1 = symmetric |
-| K₁, K₂ | (0, ∞) | coexistence iff α₁₂ < K₁/K₂ AND α₂₁ < K₂/K₁ |
+| K₁, K₂ | (0, ∞) | — |
+| α₁₂, α₂₁ | [0, ∞) | 0 = no competition |
+| r₁, r₂ | (0, ∞) | — |
 
 ### Anchor → test table
 
-| Anchor | Expected value (computed) | Tolerance | Test name |
+| Anchor | Expected (from anchor script) | Tolerance | Test name |
 |---|---|---|---|
-| Coexistence N₁* (K=100, α₁₂=α₂₁=0.5) | 66.667 | 1×10⁻¹⁰ | `coexistence N₁* = 200/3 ±1e-10` |
-| Coexistence N₂* (same) | 66.667 | 1×10⁻¹⁰ | `coexistence N₂* = 200/3 ±1e-10` |
-| α₁₂<K₁/K₂ AND α₂₁<K₂/K₁ → coexist | true | — | `coexistence condition check` |
-| α₁₂<K₁/K₂ AND α₂₁>K₂/K₁ → sp1 wins | sp2 → 0 | — | `exclusion sp1 wins` |
-| α₁₂>K₁/K₂ AND α₂₁>K₂/K₁ → bistable | IC-dependent | — | `bistability: 2 outcomes from different ICs` |
-| RK4 trajectory N₁(t=100)≈N₁* | within 1% of N₁* | 0.01 N₁* | `RK4 converges to coexistence ±1%` |
+| N₁* (K=100, α₁₂=α₂₁=0.5) | 200/3 ≈ 66.667 | 1×10⁻¹⁰ | `coexistence N₁* = 200/3 ±1e-10` |
+| N₂* (same) | 200/3 ≈ 66.667 | 1×10⁻¹⁰ | `coexistence N₂* = 200/3 ±1e-10` |
+| Counterexample N₂* (α₁₂=0.5, α₂₁=1.5) | −200 (negative → sp1 wins) | 1×10⁻¹⁰ | `counterexample N₂* < 0 ±1e-10` |
+| Jacobian eigenvalues at coexistence | −1 and −1/3 | 1×10⁻¹⁰ | `Jacobian λ = -1 and -1/3 ±1e-10` |
+| sp2-wins: α₁₂=1.5, α₂₁=0.5 → N₁*<0 | N₁* = −200 | 1×10⁻¹⁰ | `sp2 wins: N₁* = -200 ±1e-10` |
+| α₁₂=α₂₁=1 (parallel nullclines) from IC=(10,20) | N₁→100/3, N₂→200/3 | 1% | `α=1 parallel nullclines ±1%` |
+| RK4 trajectory at t=100 ≈ coexistence equil. | within 1% of N* | 0.01·N* | `RK4 convergence to coexist ±1%` |
+| Coexistence iff N*>0 AND 1−α₁₂α₂₁>0 | combined condition | — | `coexistence condition check` |
+
+**Counterexample:** K₁=K₂=100, α₁₂=0.5, α₂₁=1.5: product α₁₂α₂₁=0.75<1 so the product
+criterion alone says "coexistence possible", but N₂*=(K₂−α₂₁K₁)/(1−α₁₂α₂₁)=(100−150)/0.25=−200<0.
+Species 1 wins. Both conditions (N*>0 AND product<1) are required.
+
+**α=1 parallel nullclines:** when α₁₂=α₂₁=1 and K₁=K₂=K, nullclines are identical; the
+system conserves N₁/(N₁+N₂) along trajectories (r₁=r₂ assumed). IC=(10,20): ratio 1:2,
+so steady state is (K/3, 2K/3) = (33.33, 66.67).
+
+**Outcomes to implement:** coexistence, sp1-wins, sp2-wins, bistable (α₁₂α₂₁>1, both N*>0).
 
 ### Source status
 
-Lotka-Volterra competition: Gause (1934) "The Struggle for Existence". Cited, not fetched.
-Hardin (1960) "The Competitive Exclusion Principle", Science. Cited, not fetched.
+Lotka-Volterra equations: *anchor derived, test planned*.
+Gause (1934), Hardin (1960): *cited, not fetched*.
 
 ### View description
 
-Phase portrait (N₁ vs N₂) with nullclines, equilibria, and RK4 trajectories from
-multiple initial conditions. Color-coded outcomes: coexistence (both persist),
-exclusion (one goes to 0), bistability (outcome depends on IC).
+Phase portrait (N₁ vs N₂): nullclines, equilibria (open/closed circles), RK4 trajectories
+from multiple ICs. Outcome banner. Sliders for α₁₂, α₂₁, K₁, K₂, r₁, r₂.
 
 ### Predict questions
 
-1. If α₁₂ = α₂₁ = 1 and K₁ = K₂, what is the stability of the coexistence equilibrium?
-2. The competitive exclusion principle says two species cannot occupy the same niche indefinitely. What condition translates this formally?
-3. If species 1 is a superior competitor (α₂₁ >> 1) but species 2 has a higher K₂, can they coexist?
+1. Set α₁₂=α₂₁=0.5 and K₁=K₂=100. Both species coexist. Now increase α₂₁ to 1.5. What happens to species 2? Where is the new equilibrium?
+2. Set α₁₂=α₂₁=1. Where do the nullclines intersect? Start from (10,20) and (20,10) — do both trajectories end at the same place?
+3. Set α₁₂=1.5, α₂₁=1.5 (both > 1, K equal). Start near (90,10) and near (10,90). Do both ICs give the same outcome?
 
 ### Derive it
 
-1. dN₁/dt = r₁N₁(1 − N₁/K₁ − α₁₂N₂/K₁); nullcline: N₁ = K₁ − α₁₂N₂.
-2. Similarly for N₂. Intersection of nullclines = coexistence equilibrium.
-3. N₁* = (K₁ − α₁₂K₂)/(1 − α₁₂α₂₁); N₂* = (K₂ − α₂₁K₁)/(1 − α₁₂α₂₁).
-4. Stability: Jacobian at N* has det > 0, tr < 0 iff 1−α₁₂α₂₁ > 0 (same coexistence condition).
+1. dN₁/dt = r₁N₁(1−N₁/K₁−α₁₂N₂/K₁). Nullcline: N₁ = K₁−α₁₂N₂.
+2. Similarly for N₂. Intersection: N₁* = (K₁−α₁₂K₂)/(1−α₁₂α₂₁); N₂* = (K₂−α₂₁K₁)/(1−α₁₂α₂₁).
+3. Coexistence requires N₁*>0 AND N₂*>0. Both require K₁>α₁₂K₂ AND K₂>α₂₁K₁ (mutual invasibility).
+4. Jacobian at coexistence: τ = −r₁N₁*/K₁ − r₂N₂*/K₂ < 0; Δ = (r₁r₂N₁*N₂*/K₁K₂)(1−α₁₂α₂₁) > 0 iff product < 1.
 
 ### Research papers
 
-- Gause (1934): cited, not fetched.
-- Hardin (1960): cited, not fetched.
+- Gause, G.F. (1934). *The Struggle for Existence*. Williams & Wilkins. (cited, not fetched)
+- Hardin, G. (1960). The competitive exclusion principle. *Science*, 131(3409), 1292–1297. https://doi.org/10.1126/science.131.3409.1292
 
 ### Where it breaks
 
-- Real competition is often indirect (via shared resources), not the Lotka-Volterra simplification.
-- Ignores spatial structure, stochasticity, and environmental fluctuations.
-- For n > 2 species: coexistence conditions are much more complex.
+- Real competition is indirect (shared resources), not the direct Lotka-Volterra coupling.
+- Ignores spatial structure, demographic stochasticity, environmental fluctuations.
+- For n > 2 species the exclusion/coexistence conditions are far more complex.
 
 ---
 
-## Bench 7 — `biology/university/pharmacokinetics`
+## Bench 7 — `biology/pharmacology/pharmacokinetics`
 
 **Level:** university
+
+**Infrastructure first:** add `pharmacology` field to `biology` in `js/catalog.js`.
 
 ### Symbol table
 
 | Symbol | Meaning | Unit |
 |---|---|---|
 | C(t) | plasma concentration | mg/L |
-| C₀ | initial concentration (IV) | mg/L |
-| k_e | elimination rate constant | 1/h |
-| t_{1/2} | half-life | h |
-| AUC | area under the curve | mg·h/L |
+| C₀ | initial IV concentration = D/V_d | mg/L |
+| k_e | elimination rate | 1/h |
+| t_{½} | half-life = ln2/k_e | h |
+| AUC | ∫₀^∞ C dt (IV: C₀/k_e; oral: FD/(V_d k_e)) | mg·h/L |
 | V_d | volume of distribution | L |
 | k_a | absorption rate (oral) | 1/h |
 | F | bioavailability | — |
 | D | dose | mg |
-| t_max | time to peak (oral) | h |
-| C_max | peak concentration (oral) | mg/L |
+| t_max | time to peak concentration | h |
+| C_max | peak concentration | mg/L |
+| τ | dosing interval | h |
+| R | accumulation ratio = 1/(1−e^{−k_e τ}) | — |
 
 ### Parameter domain
 
-| Parameter | Domain | Boundary tests |
+| Parameter | Domain | Behaviour at boundary |
 |---|---|---|
-| k_e | (0, ∞) | k_e→0: drug never clears; k_e→∞: instantaneous elimination |
-| k_a | (k_e, ∞) | k_a=k_e: Bateman undefined (use limit); k_a → ∞: IV-like |
-| t_{1/2} = ln2/k_e | — | verify t_{1/2} for any k_e |
+| k_e | (0, ∞) | k_e ≤ 0 → `RangeError` |
+| k_a | (0, ∞) | k_a ≤ 0 → `RangeError`; k_a = k_e → use limit |
+| V_d | (0, ∞) | — |
 
-### Anchor → test table
+### Anchor → test table (k_e=0.1, C₀=100, V_d=10, k_a=1, F=1, D=100 unless noted)
 
-| Anchor | Expected value (computed) | Tolerance | Test name |
+| Anchor | Expected (from anchor script) | Tolerance | Test name |
 |---|---|---|---|
-| C(t=5h) IV, C₀=100, k_e=0.1 | 100·e⁻⁰·⁵ ≈ 60.653 mg/L | 1×10⁻⁸ | `C(5h) = 60.653 mg/L ±1e-8` |
-| t_{1/2} = ln2/0.1 | 6.9315 h | 1×10⁻¹⁰ | `t_half = 6.9315 h ±1e-10` |
-| AUC = C₀/k_e | 1000 mg·h/L | 1×10⁻⁶ | `AUC = C₀/ke = 1000 ±1e-6` |
-| t_max (oral, k_a=1, k_e=0.1) | ln(10)/0.9 ≈ 2.5584 h | 1×10⁻¹⁰ | `t_max ±1e-10` |
-| dC/dt = 0 at t_max | 0 | 1×10⁻¹⁰ | `dC/dt ≈ 0 at t_max ±1e-10` |
-| AUC oral = F·D/(V_d·k_e) | 100 mg·h/L (F=1,D=100,V_d=10,k_e=0.1) | 1×10⁻⁶ | `AUC_oral ±1e-6` |
-| C(t) IV: strictly decreasing | for 10 t-values | — | `C(t) strictly decreasing for t>0` |
+| IV C(5h) | 100·e^{-0.5} ≈ 60.653 mg/L | 1×10⁻⁸ | `IV C(5h) ≈ 60.653 ±1e-8` |
+| t_{½} = ln2/k_e | 6.9315 h | 1×10⁻¹⁰ | `t_half = ln2/ke ±1e-10` |
+| AUC_IV = C₀/k_e | 1000 mg·h/L | 1×10⁻⁶ | `AUC_IV = C0/ke ±1e-6` |
+| C₀ = D/V_d | 10 mg/L (D=100, V_d=10) | 1×10⁻¹⁵ | `C0 = D/Vd ±1e-15` |
+| t_max (oral) = ln(k_a/k_e)/(k_a−k_e) | ≈ 2.5584 h | 1×10⁻¹⁰ | `t_max ±1e-10` |
+| dC/dt at t_max | ≈ 0 | 1×10⁻⁷ | `dC/dt ≈ 0 at t_max ±1e-7` |
+| AUC_oral = FD/(V_d k_e) | 100 mg·h/L | 1×10⁻⁶ | `AUC_oral = FD/(Vd ke) ±1e-6` |
+| AUC_oral/AUC_IV = F | 0.1 (F=1, AUC_oral=100, AUC_IV=1000) | 1×10⁻¹⁰ | `AUC ratio = F ±1e-10` |
+| k_a = k_e limit: C → FDk_e·t·e^{-k_e t}/V_d | continuous at k_a=k_e | 1×10⁻⁶ | `ka=ke limit continuous ±1e-6` |
+| Flip-flop: k_e·C(t;k_a,k_e) = k_a·C(t;k_e,k_a) | residual ≈ 0 | 1×10⁻¹⁰ | `flip-flop symmetry ±1e-10` |
+| Accumulation ratio R (t_{½}=24h, τ=12h) | 1/(1−e^{-ln2/2}) = 2+√2 ≈ 3.4142 | 1×10⁻⁶ | `accumulation ratio = 2+√2 ±1e-6` |
+| IV C(t) strictly decreasing | for t=0..5 half-lives | — | `IV C strictly decreasing` |
+
+**k_a = k_e limit:** use L'Hôpital: as k_a→k_e, C → (F·D·k_e·t·e^{-k_e t})/V_d.
+Implement with expm1 form to avoid catastrophic cancellation: when |k_a−k_e| < ε, use
+the limit formula directly.
+
+**Flip-flop:** k_e·C(t; k_a, k_e) = k_a·C(t; k_e, k_a) — this is an algebraic identity
+of the Bateman function. Provides an independent test of both orderings.
+
+**Bateman attribution:** the two-exponential oral PK formula is widely attributed to
+Bateman (1910), but the original paper has not been fetched for this bench. Mark as
+*cited, not fetched* in code and SOURCES.md.
 
 ### Source status
 
-Rowland & Tozer "Clinical Pharmacokinetics" (1995): cited, not fetched.
-Bateman (1910) original: cited, not fetched.
+IV formula exact: *anchor derived, test planned*. Bateman oral formula: *cited, not fetched*.
+Accumulation ratio R: *anchor derived, test planned*.
 
 ### View description
 
-Semi-log plot of C(t) vs t for IV bolus and oral Bateman. Readouts: t_{1/2}, AUC, t_max, C_max.
-Sliders: k_e, k_a, dose D, F. Toggle between 1-compartment and oral. Optional 2-compartment overlay.
+Semi-log plot of C(t) vs t for IV bolus and oral Bateman (both overlaid). Readouts:
+t_{½}, AUC, t_max, C_max, R (multi-dose). Sliders: k_e, k_a, D, F. Toggle: IV / oral /
+multi-dose (steady-state trough/peak).
 
 ### Predict questions
 
-1. If k_a = k_e, what happens to the Bateman formula? (It becomes indeterminate; real drugs always have k_a ≠ k_e.)
-2. A drug with t_{1/2} = 24h is given every 12h. After many doses, what is the accumulation ratio?
-3. Why is a semi-log plot useful for pharmacokinetics?
+1. Set k_e=0.1 (t_{½}=6.9h) and τ=12h in multi-dose mode. Read the accumulation ratio R. Now set t_{½}=24h with τ=12h. What is R now? (Answer readable from the readout: R=2+√2.)
+2. In oral mode, set k_a very close to k_e (e.g., k_a=0.101, k_e=0.1). Does C_max change smoothly, or does the model blow up?
+3. Set k_a=1, k_e=0.1. Now swap them: k_a=0.1, k_e=1. Does the area under the curve (AUC) change? Does C_max change? (AUC unchanged; C_max and t_max change.)
 
 ### Derive it
 
-1. IV: dC/dt = −k_e C → C(t) = C₀·e^{−k_e·t}; t_{1/2} = ln2/k_e.
-2. Oral (1-compartment Bateman): dA/dt = −k_a A; dC/dt = k_a F D/(V_d) · e^{−k_a t} − k_e C.
-3. Solution: C(t) = (k_a F D)/(V_d(k_a−k_e)) · (e^{−k_e t} − e^{−k_a t}).
-4. t_max: set dC/dt=0 → k_a e^{−k_a t} = k_e e^{−k_e t} → t_max = ln(k_a/k_e)/(k_a−k_e).
+1. IV: dC/dt = −k_e C → C(t) = C₀·e^{-k_e t}; AUC = C₀/k_e; t_{½} = ln2/k_e.
+2. Oral (1-compartment): dA/dt = −k_a A (gut); dC/dt = k_a A(t)/V_d − k_e C. Solve: C(t) = (k_a FD)/(V_d(k_a−k_e))·(e^{-k_e t}−e^{-k_a t}).
+3. t_max: set dC/dt=0 → k_a e^{-k_a t} = k_e e^{-k_e t} → t_max = ln(k_a/k_e)/(k_a−k_e).
+4. Multi-dose at steady state: C_trough = C₀·e^{-k_e τ}/(1−e^{-k_e τ}); R = C_peak/C₀_singledose = 1/(1−e^{-k_e τ}).
 
 ### Research papers
 
-- Rowland & Tozer (1995): cited, not fetched.
-- Bateman (1910): cited, not fetched.
+- Rowland, M. & Tozer, T.N. (1995). *Clinical Pharmacokinetics*, 3rd ed. Williams & Wilkins. (cited, not fetched)
+- Bateman, H. (1910). The solution of a system of differential equations occurring in the theory of radioactive transformations. *Proceedings of the Cambridge Philosophical Society*, 15, 423–427. (attribution unverified — cited, not fetched)
 
 ### Where it breaks
 
-- 1-compartment assumes instantaneous mixing in blood. Real drugs have multi-compartment kinetics.
-- Non-linear elimination (Michaelis-Menten): C(t) ≠ monoexponential at high doses.
-- Protein binding, active transport, and enterohepatic circulation all complicate the model.
+- 1-compartment assumes instantaneous mixing. Real drugs distribute into multiple compartments.
+- Non-linear (Michaelis-Menten) elimination at high doses: C(t) is not monoexponential.
+- Protein binding, active transport, enterohepatic circulation not modelled.
 
 ---
 
@@ -573,19 +654,13 @@ Sliders: k_e, k_a, dose D, F. Toggle between 1-compartment and oral. Optional 2-
 
 | Bench | Expected tests |
 |---|---|
-| particle-in-box | ~10 |
-| carnot | ~8 |
-| markov-chains | ~8 |
-| drift-diffusion | ~7 |
-| phase-plane | ~8 |
+| particle-in-box | ~12 |
+| carnot | ~10 |
+| markov-chains | ~12 |
+| drift-diffusion | ~9 |
+| phase-plane | ~10 |
 | competitive-exclusion | ~8 |
-| pharmacokinetics | ~8 |
-| **Total** | **~57 new tests** |
+| pharmacokinetics | ~11 |
+| **Total** | **~72 new tests** |
 
-Projected total after Phase 8: 614 + 57 ≈ **671 tests**.
-
----
-
-## STOP
-
-Phase 8 plan is complete. Do NOT build Phase 8 here. Return to user.
+Projected total after Phase 8: 614 + 72 ≈ **686 tests**.
