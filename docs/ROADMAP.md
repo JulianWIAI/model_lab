@@ -392,14 +392,15 @@ Graduate: 2 original (options-pricing, butler-volmer) + 6 new ★ + 9 elevated �
 | 6 | integrate-and-fire ✓ | Neuroscience | university |
 | 6 | rescorla-wagner ✓ | Psychology | intro |
 | 6 | forgetting | Psychology | intro |
-| **7** | wave-interference | Physics | intro |
-| 7 | standing-waves | Physics | intro |
-| 7 | synapse-kinetics | Neuroscience | intro |
-| 7 | eigenvectors | Math | university |
-| 7 | nash-equilibria | Economics | university |
-| 7 | prisoner-dilemma | Psychology | intro |
-| 7 | bayes | Math | intro |
-| 7 | information-theory | Math | university |
+| **7** | wave-interference ✓ | Physics | university |
+| 7 | standing-waves ✓ | Physics | university |
+| 7 | synapse-kinetics ✓ | Neuroscience | university |
+| 7 | eigenvectors ✓ | Math | university |
+| 7 | nash-equilibria ✓ | Economics | university |
+| 7 | prisoner-dilemma ✓ | Psychology | university |
+| 7 | bayes ✓ | Math | university |
+| 7 | information-theory ✓ | Math | university |
+| **[infra]** | LinAlg.js ✓ | — | — |
 | **[infra]** | Random.gaussian() | — | — |
 | **8** | particle-in-box | Physics | intro |
 | 8 | carnot | Physics | intro |

@@ -380,3 +380,39 @@ The following items were noted as uncertain during implementation and have not b
 15. **ΔHf°(H₂O, l) = −285.83 kJ/mol** — same secondary source; same verification needed.
 16. **ΔHf°(C₂H₅OH, l) = −277.69 kJ/mol** — same secondary source; same verification needed.
 17. **VSEPR real angles (H₂O 104.5°, NH₃ 107°, SO₂ 119°, SF₄ 173°/101°, ClF₃ 87°)** — attributed to NIST CCCBDB but not fetched during implementation. Verify against NIST CCCBDB or primary microwave spectroscopy papers.
+
+---
+
+## Phase 7 sources
+
+### Wave interference
+- Formula Δy=λL/d derived from path-difference approximation. Paraxial (y≪L).
+- Young (1804) citation in bench marked **unverified** — the 1804 paper may be the double-slit source but the specific reference has not been verified.
+
+### Standing waves
+- Formulas f_n=nv/(2L) and f_m=mv/(4L) derived from boundary conditions. Algebraically exact.
+- v_air at 20°C ≈ 343 m/s — marked **unverified**; value depends on humidity and temperature.
+
+### Synapse kinetics
+- Alpha function h(t)=A(t/τ)e^{-t/τ} is phenomenological. Peak at t=τ is algebraically exact.
+- halfDecayTime≈3.146τ computed by Brent root-finding on x·e^{-x}=e^{-2}; verified in anchors-phase7.mjs.
+
+### Nash equilibria
+- Nash (1950, unverified) — "Equilibrium Points in n-Person Games", PNAS 36:48. Existence of NE guaranteed by Brouwer's fixed-point theorem.
+- Nash (1951) — "Non-Cooperative Games" cited in bench.
+
+### Prisoner's Dilemma
+- Axelrod (1984) "The Evolution of Cooperation" cited as **unverified**.
+- Friedman (1971) "A Non-cooperative Equilibrium for Supergames" cited as **unverified**.
+- All formulas (δ*, pvCooperate, pvDefect, TFT threshold) are algebraically derived from first principles in anchors-phase7.mjs.
+
+### Bayes
+- Lanczos approximation (g=7, n=9 coefficients) from Numerical Recipes §6.1 / public domain.
+- regularizedIncompleteBeta via Lentz continued fraction (Numerical Recipes §6.4).
+- Γ(1/2)=√π: standard reflection formula identity.
+- B(2,3)=1/12: Γ(2)Γ(3)/Γ(5)=1·2/24=1/12. Algebraically exact.
+
+### Information theory
+- Shannon (1948) "A Mathematical Theory of Communication", Bell Syst. Tech. J. 27:379.
+- All entropy/KL/Shannon-Hartley formulas are the standard definitions.
+- KL values verified in anchors-phase7.mjs.

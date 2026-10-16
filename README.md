@@ -63,6 +63,14 @@ Each bench also has two deeper layers: **Derive it** (where the equations come f
 | Math | Logistic map | Bifurcation diagram, cobweb; R₁=1+√5, Feigenbaum δ; Lyapunov λ(r=4)=ln 2 |
 | Neuroscience | Integrate-and-fire | ISI=t_ref+τ_m·ln[(V_∞−V_reset)/(V_∞−V_th)]; f-I curve; rheobase; logarithmic divergence at I_th |
 | Psychology | Rescorla–Wagner | ΔV_i=α_i·β·(λ−ΣV); acquisition, extinction, blocking, overshadowing, overexpectation, conditioned inhibition |
+| Physics | Wave interference | Young's double slit; I(y)=I₀cos²(πdy/λL); Δy=λL/d; first dark at Δy/2; ratio red/violet=1.75 |
+| Physics | Standing waves | String/open f_n=nv/(2L); closed pipe f_m=mv/(4L) odd-only; node positions; animated harmonics |
+| Neuroscience | Synapse kinetics | Alpha function h(t)=A(t/τ)e^{-t/τ}; peak at t=τ; halfDecayTime≈3.146τ; charge=Aτ |
+| Math | Eigenvectors | Jacobi eigensolver + power iteration; unit circle→ellipse; trace=Σλ; det=Πλ; tanθ_n=(λ₂/λ₁)^n |
+| Economics | Nash equilibria | 2×2 game best-response diagram; Matching Pennies, Battle of Sexes, Prisoner's Dilemma; mixed NE via indifference |
+| Psychology | Prisoner's dilemma | Grim trigger δ*=(T-R)/(T-P); PV cooperation vs defection; TFT threshold; isPD validation |
+| Math | Bayes | Beta-Binomial conjugate; Lanczos lnΓ; regularized incomplete beta (Lentz CF); credible interval |
+| Math | Information theory | Shannon entropy (bits); KL divergence; Shannon-Hartley C=B·log₂(1+SNR); binary entropy H₂(p) |
 
 ## Running tests
 
