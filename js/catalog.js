@@ -885,6 +885,19 @@ export const catalog = [
                 (m) => m.CompoundGrowthBench,
               ),
           },
+          {
+            id: 'solow',
+            navLabel: 'Solow growth',
+            level: 'university',
+            keywords: [
+              'Solow', 'growth', 'capital', 'steady state', 'golden rule', 'Cobb-Douglas',
+              'depreciation', 'savings rate', 'convergence', 'macroeconomics',
+            ],
+            load: () =>
+              import('./benches/economics/macroeconomics/solow/SolowBench.js').then(
+                (m) => m.SolowBench,
+              ),
+          },
         ],
       },
       {
