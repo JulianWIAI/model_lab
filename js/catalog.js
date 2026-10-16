@@ -701,6 +701,19 @@ export const catalog = [
                 (m) => m.IntegrateAndFireBench,
               ),
           },
+          {
+            id: 'cable-equation',
+            navLabel: 'Cable equation',
+            level: 'university',
+            keywords: [
+              'cable equation', 'dendrite', 'space constant', 'lambda', 'input resistance',
+              'passive', 'membrane resistance', 'Rall', 'axial resistivity', 'time constant',
+            ],
+            load: () =>
+              import('./benches/neuroscience/electrophysiology/cable-equation/CableEquationBench.js').then(
+                (m) => m.CableEquationBench,
+              ),
+          },
         ],
       },
     ],
