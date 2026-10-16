@@ -291,3 +291,35 @@ export function eigen2x2(A) {
 
   return { real, imag, repeated, defective };
 }
+
+/**
+ * isPrimitive — test whether a square non-negative matrix M is primitive.
+ *
+ * A non-negative matrix is primitive if and only if M^k has ALL strictly positive
+ * entries for some k.  By the Wielandt bound, such a k exists (if M is primitive)
+ * with k ≤ (n−1)² + 1.
+ *
+ * Returns true  if M^k > 0 entry-wise for some k ≤ (n−1)²+1.
+ * Returns false otherwise (matrix is imprimitive: periodic or reducible).
+ *
+ * Used by Leslie-matrix models (age-structure) and DeGroot opinion models to detect
+ * whether power iteration will converge to a unique limit.
+ *
+ * @param {number[][]} M  square non-negative matrix (n×n)
+ * @returns {boolean}
+ * @throws {RangeError} if M is not square
+ */
+export function isPrimitive(M) {
+  const n = M.length;
+  if (n === 0) return false;
+  for (const row of M) {
+    if (row.length !== n) throw new RangeError('isPrimitive: matrix must be square');
+  }
+  const maxPow = (n - 1) * (n - 1) + 1;
+  let Mk = M.map(row => [...row]);
+  for (let p = 1; p <= maxPow; p++) {
+    if (Mk.every(row => row.every(x => x > 0))) return true;
+    if (p < maxPow) Mk = matMul(Mk, M);
+  }
+  return false;
+}
