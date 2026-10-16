@@ -9,7 +9,7 @@
  *
  * Flags (all preserved from repaired checker):
  *   BLANK            — inkFraction < 0.05% (canvas is empty)
- *   SOLID            — topColorPct > 90%   (informational only, not a fail)
+ *   DARK_FILL        — topColorPct > 90% AND dominant RGB all < 20 (black-screen bug)
  *   SURFACE_MISMATCH — dominant RGB > 40 from --panel token (CSS token bug)
  *   CONSOLE_ERR      — any JS console error during the viewport test
  *   DASHES           — visible readout span still shows '–'
@@ -193,7 +193,7 @@ async function analyseCanvas(page, surfaceRgb) {
   return page.evaluate((surfaceRgb) => {
     const canvas = document.querySelector('canvas');
     const EMPTY = (error) => ({
-      error, bgPct: 0, topColorPct: 0, solid: false, blank: false,
+      error, bgPct: 0, topColorPct: 0, dark_fill: false, blank: false,
       topColor: null, dominantRgb: null, inkFraction: 0,
       surfaceMismatch: false, surfaceRgb, colorCount: 0,
     });
@@ -214,7 +214,7 @@ async function analyseCanvas(page, surfaceRgb) {
     }
     if (counts.size === 0) return {
       error: 'all transparent', bgPct: 100, topColorPct: 100,
-      solid: true, blank: true, topColor: null,
+      dark_fill: false, blank: true, topColor: null,
       dominantRgb: null, inkFraction: 0, surfaceMismatch: false, surfaceRgb, colorCount: 0,
     };
 
@@ -236,8 +236,10 @@ async function analyseCanvas(page, surfaceRgb) {
     }
     const inkFraction = inkCount / total;
 
-    // solid: informational only — high topColorPct is normal for sparse charts
-    const solid = topColorPct > 90;
+    // dark_fill: fires only when >90% pixels are very dark (R<20, G<20, B<20).
+    // Catches accidental black-canvas bugs without firing on legitimate sparse charts.
+    const dark_fill = topColorPct > 90 &&
+      dominantRgb.r < 20 && dominantRgb.g < 20 && dominantRgb.b < 20;
     // blank: almost no ink pixels
     const blank = inkFraction < 0.0005;
 
@@ -253,7 +255,7 @@ async function analyseCanvas(page, surfaceRgb) {
     }
 
     return {
-      bgPct: topColorPct, topColorPct, solid, blank, topColor,
+      bgPct: topColorPct, topColorPct, dark_fill, blank, topColor,
       dominantRgb, inkFraction, surfaceMismatch, surfaceRgb,
       colorCount: counts.size, error: null,
     };
@@ -325,9 +327,10 @@ async function testBench(page, baseUrl, subjectId, benchId, navLabel, vpList) {
       });
 
       const consoleErr = consoleErrors.length > 0;
-      // SOLID (>90% surface) is NOT a fail — sparse charts are legitimately high.
+      // DARK_FILL replaces SOLID: fires only when canvas is >90% very dark pixels.
       // SURFACE_MISMATCH is the correct detector for CSS-token bugs.
-      const isFail = pixelInfo.surfaceMismatch || pixelInfo.blank || consoleErr || hasDashes;
+      const isFail = pixelInfo.surfaceMismatch || pixelInfo.blank || consoleErr || hasDashes
+        || pixelInfo.dark_fill;
 
       // Screenshot: only on failure (or all viewports when --sheet requested)
       let screenshotPath = null;
@@ -346,7 +349,7 @@ async function testBench(page, baseUrl, subjectId, benchId, navLabel, vpList) {
         fail: isFail,
       });
 
-      // SOLID is informational only — removed from failureTypes
+      if (pixelInfo.dark_fill)       result.failureTypes.push(`DARK_FILL@${theme}/${width}`);
       if (pixelInfo.blank)           result.failureTypes.push(`BLANK@${theme}/${width}`);
       if (pixelInfo.surfaceMismatch) result.failureTypes.push(`SURFACE_MISMATCH@${theme}/${width}`);
       if (hasDashes)                 result.failureTypes.push(`DASHES@${theme}/${width}`);
@@ -563,7 +566,7 @@ for (const r of results.filter(r => !r.pass)) {
 
 // ── Per-viewport × category flag table ───────────────────────────────────────
 const VIEWPORTS_ALL = ['light/1280', 'light/400', 'dark/1280', 'dark/400'];
-const CATS          = ['blank', 'solid', 'surface_mismatch', 'console_err', 'readout_dash', 'no_canvas'];
+const CATS          = ['blank', 'dark_fill', 'surface_mismatch', 'console_err', 'readout_dash', 'no_canvas'];
 const vpCounts      = {};
 for (const vp of VIEWPORTS_ALL) vpCounts[vp] = Object.fromEntries(CATS.map(c => [c, 0]));
 
@@ -573,7 +576,7 @@ for (const r of results) {
     if (!vpCounts[vp]) continue;
     const pi = s.pixelInfo ?? {};
     if (pi.blank)                                    vpCounts[vp]['blank']++;
-    if (pi.solid)                                    vpCounts[vp]['solid']++;
+    if (pi.dark_fill)                                vpCounts[vp]['dark_fill']++;
     if (pi.surfaceMismatch)                          vpCounts[vp]['surface_mismatch']++;
     if (pi.error === 'no canvas')                    vpCounts[vp]['no_canvas']++;
     if ((s.consoleErrorsAtCapture ?? []).length > 0) vpCounts[vp]['console_err']++;
@@ -592,7 +595,7 @@ for (const cat of CATS) {
 }
 
 // ── All-benches × 4-viewports detail table ────────────────────────────────────
-console.log('\nAll benches × viewports (B=blank S=solid M=surface_mismatch E=console_err D=dash N=no_canvas):');
+console.log('\nAll benches × viewports (B=blank X=dark_fill M=surface_mismatch E=console_err D=dash N=no_canvas):');
 const HDR  = ['light/1280', 'light/400', 'dark/1280', 'dark/400'];
 const CW2  = 14;
 console.log('  ' + 'bench'.padEnd(32) + HDR.map(v => v.padEnd(CW2)).join(''));
@@ -605,7 +608,7 @@ for (const r of results) {
     const pi = s.pixelInfo ?? {};
     let flags = '';
     if (pi.blank)                                    flags += 'B';
-    if (pi.solid)                                    flags += 'S';
+    if (pi.dark_fill)                                flags += 'X';
     if (pi.surfaceMismatch)                          flags += 'M';
     if ((s.consoleErrorsAtCapture ?? []).length > 0) flags += 'E';
     if (s.hasDashes)                                 flags += 'D';

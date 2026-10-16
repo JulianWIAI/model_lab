@@ -87,3 +87,87 @@ test('nonlinear r(1) = 1/√3 ±1e-6 (μ=-1, r₀=1, t=1)', () => {
   assert.ok(Math.abs(r1 - expected) < 1e-6,
     `r(1)=${r1}, expected=${expected}`);
 });
+
+// ── Phase-plane classification labels ──────────────────────────────────────
+
+test('classification: stable node for [[-1,0],[0,-2]]', () => {
+  const m = new PhasePlaneModel({ A: [[-1, 0], [0, -2]] });
+  assert.strictEqual(m.classification, 'Stable node');
+});
+
+test('classification: unstable node for [[1,0],[0,2]]', () => {
+  const m = new PhasePlaneModel({ A: [[1, 0], [0, 2]] });
+  assert.strictEqual(m.classification, 'Unstable node');
+});
+
+test('classification: stable spiral for [[-1,-1],[1,-1]]', () => {
+  const m = new PhasePlaneModel({ A: [[-1, -1], [1, -1]] });
+  assert.strictEqual(m.classification, 'Stable spiral');
+});
+
+test('classification: unstable spiral for [[1,-1],[1,1]]', () => {
+  // τ=2>0, Δ=2>0, disc=4-8=-4<0 → unstable spiral
+  const m = new PhasePlaneModel({ A: [[1, -1], [1, 1]] });
+  assert.strictEqual(m.classification, 'Unstable spiral');
+});
+
+test('classification: center for [[0,-1],[1,0]]', () => {
+  const m = new PhasePlaneModel({ A: [[0, -1], [1, 0]] });
+  assert.strictEqual(m.classification, 'Center');
+});
+
+test('classification: saddle for [[1,0],[0,-1]]', () => {
+  const m = new PhasePlaneModel({ A: [[1, 0], [0, -1]] });
+  assert.strictEqual(m.classification, 'Saddle');
+});
+
+test('classification: stable star node for [[2,0],[0,2]] (reflected sign)', () => {
+  // [[2,0],[0,2]] → τ=4>0 → unstable
+  const m = new PhasePlaneModel({ A: [[-2, 0], [0, -2]] });
+  assert.strictEqual(m.classification, 'Stable star node');
+});
+
+// ── dt-halving convergence for spiral ─────────────────────────────────────
+
+test('spiral dt-halving: |x(2π)| converges as dt halves (A=[[-1,-1],[1,-1]])', () => {
+  const tMax = 2 * Math.PI;
+  const err1 = Math.abs(orbitNorm([[-1,-1],[1,-1]], [1,0], tMax, tMax/1000) - Math.exp(-tMax));
+  const err2 = Math.abs(orbitNorm([[-1,-1],[1,-1]], [1,0], tMax, tMax/2000) - Math.exp(-tMax));
+  const err3 = Math.abs(orbitNorm([[-1,-1],[1,-1]], [1,0], tMax, tMax/4000) - Math.exp(-tMax));
+  // RK4 is O(dt^4): err ratio ~16
+  assert.ok(err1 > err2, `error not decreasing: err1=${err1}, err2=${err2}`);
+  assert.ok(err2 > err3, `error not decreasing: err2=${err2}, err3=${err3}`);
+});
+
+// ── dt-halving convergence for nonlinear case ─────────────────────────────
+
+test('nonlinear r(1) dt-halving: convergence to 1/√3 (μ=-1, r₀=1)', () => {
+  // Run orbit r = radial component at t=1
+  const expected = 1 / Math.sqrt(3);
+  function orbitR(dt) {
+    const m = new PhasePlaneModel({ A: [[0, -1], [1, 0]], mu: -1 });
+    const orbit = m.orbit([1, 0], 1, dt);
+    const last = orbit[orbit.length - 1];
+    return Math.hypot(last.x, last.y);
+  }
+  const e1 = Math.abs(orbitR(1e-2) - expected);
+  const e2 = Math.abs(orbitR(5e-3) - expected);
+  const e3 = Math.abs(orbitR(2.5e-3) - expected);
+  assert.ok(e1 > e2, `e1=${e1} should > e2=${e2}`);
+  assert.ok(e2 > e3, `e2=${e2} should > e3=${e3}`);
+});
+
+// ── Vector-field test ──────────────────────────────────────────────────────
+
+test('vectorField: every point satisfies dx=A*x (μ=0)', () => {
+  const A = [[-1, 2], [3, -4]];
+  const m = new PhasePlaneModel({ A, mu: 0 });
+  const pts = m.vectorField(2, 6);
+  // At each point (x,y), dx = A[0][0]*x + A[0][1]*y, dy = A[1][0]*x + A[1][1]*y
+  for (const { x, y, dx, dy } of pts) {
+    const exDx = A[0][0] * x + A[0][1] * y;
+    const exDy = A[1][0] * x + A[1][1] * y;
+    assert.ok(Math.abs(dx - exDx) < 1e-12, `dx mismatch at (${x},${y}): dx=${dx}, expected=${exDx}`);
+    assert.ok(Math.abs(dy - exDy) < 1e-12, `dy mismatch at (${x},${y}): dy=${dy}, expected=${exDy}`);
+  }
+});

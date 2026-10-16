@@ -25,6 +25,8 @@ export class CarnotModel {
   }
 
   set Tc(val) {
+    if (!Number.isFinite(val)) throw new RangeError(`T_c must be finite; got ${val}`);
+    if (val < 0) throw new RangeError(`T_c must be ≥ 0 K (absolute zero); got ${val} K`);
     if (typeof this._Th !== 'undefined' && val >= this._Th) {
       throw new RangeError(`T_c must be < T_h (${this._Th} K); got ${val} K`);
     }
@@ -33,6 +35,7 @@ export class CarnotModel {
   get Tc() { return this._Tc; }
 
   set Th(val) {
+    if (!Number.isFinite(val)) throw new RangeError(`T_h must be finite; got ${val}`);
     if (val <= 0) throw new RangeError(`T_h must be positive; got ${val}`);
     this._Th = val;
     // Re-validate Tc if already set

@@ -98,3 +98,26 @@ test('Accumulation R(τ=t½) with t½=24h, τ=12h: R = 2+√2 ±1e-6', () => {
   const expected = 2 + Math.SQRT2;
   assert.ok(Math.abs(R - expected) <= 1e-6, `R=${R}, expected=${expected}`);
 });
+
+// ── RangeError validation ────────────────────────────────────────────────────
+
+test('ke ≤ 0 → RangeError', () => {
+  assert.throws(() => new PharmacokineticsModel({ ke: 0    }), RangeError);
+  assert.throws(() => new PharmacokineticsModel({ ke: -0.1 }), RangeError);
+});
+
+test('ka ≤ 0 → RangeError', () => {
+  assert.throws(() => new PharmacokineticsModel({ ka: 0    }), RangeError);
+  assert.throws(() => new PharmacokineticsModel({ ka: -1   }), RangeError);
+});
+
+test('Vd ≤ 0 → RangeError', () => {
+  assert.throws(() => new PharmacokineticsModel({ Vd: 0    }), RangeError);
+  assert.throws(() => new PharmacokineticsModel({ Vd: -5   }), RangeError);
+});
+
+test('F outside (0,1] → RangeError', () => {
+  assert.throws(() => new PharmacokineticsModel({ F: 0    }), RangeError);
+  assert.throws(() => new PharmacokineticsModel({ F: -0.1 }), RangeError);
+  assert.throws(() => new PharmacokineticsModel({ F: 1.01 }), RangeError);
+});

@@ -38,6 +38,10 @@ export class CompetitiveExclusionModel {
    * @param {number} [opts.r2=1]    intrinsic growth rate sp2
    */
   constructor({ K1 = 100, K2 = 100, a12 = 0.5, a21 = 0.5, r1 = 1, r2 = 1 } = {}) {
+    if (K1 <= 0) throw new RangeError(`K1 must be > 0; got ${K1}`);
+    if (K2 <= 0) throw new RangeError(`K2 must be > 0; got ${K2}`);
+    if (a12 < 0) throw new RangeError(`a12 must be ≥ 0; got ${a12}`);
+    if (a21 < 0) throw new RangeError(`a21 must be ≥ 0; got ${a21}`);
     this.K1  = K1;  this.K2  = K2;
     this.a12 = a12; this.a21 = a21;
     this.r1  = r1;  this.r2  = r2;

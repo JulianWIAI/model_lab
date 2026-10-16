@@ -58,3 +58,41 @@ test('T_c >= T_h → RangeError', () => {
   assert.throws(() => new CarnotModel({ Th: 500, Tc: 500 }), RangeError);
   assert.throws(() => new CarnotModel({ Th: 500, Tc: 600 }), RangeError);
 });
+
+// ── New tests for Phase 8b ──────────────────────────────────────────────────
+
+test('T_c,max for η=0.33, T_h=873.15 K: T_c = T_h·(1−η) ≈ 585.0 K ±0.2', () => {
+  // Formula: T_c = T_h·(1−η) = 873.15·0.67 = 585.0105 K
+  const Th = 873.15;
+  const eta = 0.33;
+  const Tc = Th * (1 - eta);
+  assert.ok(Math.abs(Tc - 585.0) < 0.2, `T_c=${Tc}`);
+  // Cross-check: build model and verify eta round-trips
+  const m = new CarnotModel({ Th, Tc, dS: 1 });
+  assert.ok(Math.abs(m.eta - eta) < 1e-10, `m.eta=${m.eta}, expected=${eta}`);
+});
+
+test('Clausius equality: Q_h/T_h = Q_c/T_c = dS ±1e-10', () => {
+  const m = new CarnotModel({ Th: 600, Tc: 300, dS: 2 });
+  assert.ok(Math.abs(m.Qh / m.Th - m.dS) < 1e-10, `Qh/Th=${m.Qh / m.Th}`);
+  assert.ok(Math.abs(m.Qc / m.Tc - m.dS) < 1e-10, `Qc/Tc=${m.Qc / m.Tc}`);
+});
+
+test('W = Q_h − Q_c ±1e-10', () => {
+  const m = new CarnotModel({ Th: 700, Tc: 350, dS: 3 });
+  assert.ok(Math.abs(m.W - (m.Qh - m.Qc)) < 1e-10, `W=${m.W}, Qh-Qc=${m.Qh - m.Qc}`);
+});
+
+test('T_c < 0 → RangeError (absolute zero)', () => {
+  assert.throws(() => new CarnotModel({ Th: 500, Tc: -1 }), RangeError);
+});
+
+test('T_h ≤ 0 → RangeError', () => {
+  assert.throws(() => new CarnotModel({ Th: 0,    Tc: 300 }), RangeError);
+  assert.throws(() => new CarnotModel({ Th: -100, Tc: 300 }), RangeError);
+});
+
+test('NaN inputs → RangeError', () => {
+  assert.throws(() => new CarnotModel({ Th: NaN, Tc: 300 }), RangeError);
+  assert.throws(() => new CarnotModel({ Th: 500, Tc: NaN }), RangeError);
+});

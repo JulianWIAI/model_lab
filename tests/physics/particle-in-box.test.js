@@ -81,11 +81,44 @@ test('P(0<x<L/3) n=1 ≈ 0.195501 ±1e-6', () => {
   assert.ok(Math.abs(P - expected) < 1e-6, `P=${P}, expected=${expected}`);
 });
 
-test('<x²>_1 = L²(1/3−1/(2π²)) ±1e-30', () => {
-  const m  = new ParticleInBoxModel({ L: L1NM, n: 1 });
-  const x2 = m.x2Expectation(1);
+test('<x²>_1 = L²(1/3−1/(2π²)) ±1e-12 rel', () => {
+  // L=1nm → x2≈2.837e-19 m²; absolute 1e-30 is fine but relative is clearer
+  const m        = new ParticleInBoxModel({ L: L1NM, n: 1 });
+  const x2       = m.x2Expectation(1);
   const expected = L1NM ** 2 * (1 / 3 - 1 / (2 * Math.PI ** 2));
-  assert.ok(Math.abs(x2 - expected) < 1e-30, `x2=${x2}, expected=${expected}`);
+  assert.ok(Math.abs(x2 - expected) / expected < 1e-12,
+    `rel err=${Math.abs(x2 - expected) / expected}`);
+});
+
+test('<x²>_2 = L²(1/3−1/(8π²)) ±1e-12 rel', () => {
+  const m        = new ParticleInBoxModel({ L: L1NM, n: 2 });
+  const x2       = m.x2Expectation(2);
+  const expected = L1NM ** 2 * (1 / 3 - 1 / (8 * Math.PI ** 2));
+  assert.ok(Math.abs(x2 - expected) / expected < 1e-12,
+    `rel err=${Math.abs(x2 - expected) / expected}`);
+});
+
+test('<x²>_3 = L²(1/3−1/(18π²)) ±1e-12 rel', () => {
+  const m        = new ParticleInBoxModel({ L: L1NM, n: 3 });
+  const x2       = m.x2Expectation(3);
+  const expected = L1NM ** 2 * (1 / 3 - 1 / (18 * Math.PI ** 2));
+  assert.ok(Math.abs(x2 - expected) / expected < 1e-12,
+    `rel err=${Math.abs(x2 - expected) / expected}`);
+});
+
+test('P(0<x<L/3) n=2 = 1/3 + √3/(8π) ±1e-6 (Simpson N=1000)', () => {
+  // Exact: 1/3 − sin(4π/3)/(4π) = 1/3 + √3/(8π) ≈ 0.40225
+  const m        = new ParticleInBoxModel({ L: L1NM, n: 2 });
+  const P        = m.cdf(L1NM / 3, 2);
+  const expected = 1 / 3 + Math.sqrt(3) / (8 * Math.PI);
+  assert.ok(Math.abs(P - expected) < 1e-6, `P=${P}, expected=${expected}`);
+});
+
+test('P(0<x<L/3) n=3 = 1/3 exactly ±1e-6 (Simpson N=1000)', () => {
+  // Exact: 1/3 − sin(2π)/(6π) = 1/3 − 0 = 1/3 (sin(2π)=0)
+  const m = new ParticleInBoxModel({ L: L1NM, n: 3 });
+  const P = m.cdf(L1NM / 3, 3);
+  assert.ok(Math.abs(P - 1 / 3) < 1e-6, `P=${P}, expected=1/3`);
 });
 
 test('E_1(2L)/E_1(L) = 0.25 ±1e-15 rel', () => {

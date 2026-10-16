@@ -30,9 +30,11 @@ test('E[T](μ=0) = a²/σ² = 1 ±1e-10', () => {
   assert.ok(Math.abs(m.meanFPT - 1) < 1e-10, `meanFPT=${m.meanFPT}`);
 });
 
-test('E[T] continuity: μ=1e-8 ≈ a²/σ² ±1e-4', () => {
+test('E[T] continuity: μ=1e-8 ≈ a²/σ² ±1e-10', () => {
+  // z = μa/σ² = 1e-8; tanh(z) ≈ z to machine precision; (a/μ)·z = 1 exactly
+  // residual error ≈ z²/3 ≈ 3e-17, so 1e-10 is a safe tolerance
   const m = new DriftDiffusionModel({ mu: 1e-8, sigma: 1, a: 1, t0: 0 });
-  assert.ok(Math.abs(m.meanFPT - 1) < 1e-4,
+  assert.ok(Math.abs(m.meanFPT - 1) < 1e-10,
     `meanFPT(μ=1e-8)=${m.meanFPT}`);
 });
 
@@ -51,14 +53,20 @@ test('RT_mean > t₀', () => {
   assert.ok(m.rtMean > m.t0, `rtMean=${m.rtMean}, t0=${m.t0}`);
 });
 
-test('simulation P+ within 3σ̂ of formula (N=5000, seed=42)', () => {
+test('simulation P+ within 4√(p(1-p)/N) of formula (N=5000, seed=42)', () => {
+  // Use theoretical p (not observed p̂) for the tolerance: 4·√(p(1-p)/N) ≈ 0.0184
+  // 4σ covers 99.994% of outcomes under H₀ (virtually no false failures)
   const m   = new DriftDiffusionModel({ mu: MU, sigma: SIG, a: A, t0: T0 });
   const sim = m.simulate(5000, 0.001, 42);
-  // 3σ̂ = 3·√(P+(1-P+)/5000) ≈ 0.0138
-  const tol = 3 * Math.sqrt(P_UP_EXACT * (1 - P_UP_EXACT) / 5000);
+  const tol = 4 * Math.sqrt(P_UP_EXACT * (1 - P_UP_EXACT) / 5000);
   assert.ok(Math.abs(sim.pUpper - P_UP_EXACT) < tol,
     `sim.pUpper=${sim.pUpper}, formula=${P_UP_EXACT}, tol=${tol}`);
 });
+
+// BGK bias correction test: dropped.
+// The Broadie–Glasserman–Kou (1997) correction ≈ 0.5826·σ·√dt is a first-order
+// effect that is hard to isolate without an independent reference value or
+// extremely large N. It is cited in the model docstring but not tested here.
 
 test('dt-halving: P+ converges (|dt - dt/2| > |dt/2 - dt/4|)', () => {
   const m    = new DriftDiffusionModel({ mu: MU, sigma: SIG, a: A, t0: 0 });

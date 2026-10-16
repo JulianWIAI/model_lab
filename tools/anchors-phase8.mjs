@@ -348,12 +348,14 @@ row('\nSp2 wins (α₁₂=1.5,α₂₁=0.5) N₁*',  N1sC, '= -200 (N₁<0 → s
 sec('7. PHARMACOKINETICS (1-compartment IV + oral Bateman)');
 
 // IV: C(t) = C₀·e^{-ke·t}; AUC = C₀/ke; t½ = ln2/ke
-const ke=0.1, C0_pk=100, Vd=10;
+// Parameters match model defaults: D=100 mg, Vd=10 L, ke=0.1 /h → C₀=D/Vd=10 mg/L
+const ke=0.1, D_pk=100, Vd=10;
+const C0_pk = D_pk / Vd;   // = 10 mg/L  (NOT 100 — Vd=10 divides D)
 const t_half_pk = Math.LN2 / ke;
 const AUC_IV = C0_pk / ke;
 row('IV t½ = ln2/ke',                     t_half_pk, 'h  (= 6.9315)');
-row('IV AUC = C₀/ke',                     AUC_IV,    'mg·h/L');
-row('IV C(5h)',                            C0_pk*Math.exp(-ke*5), 'mg/L  (≈ 60.653)');
+row('IV AUC = C₀/ke',                     AUC_IV,    'mg·h/L  (= 100 at C₀=10, ke=0.1)');
+row('IV C(5h)',                            C0_pk*Math.exp(-ke*5), 'mg/L  (≈ 6.0653)');
 
 // Oral Bateman: C(t) = (ka·F·D)/(Vd·(ka-ke))·(e^{-ke·t} - e^{-ka·t})
 // t_max = ln(ka/ke)/(ka-ke)

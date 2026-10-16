@@ -25,6 +25,8 @@ export class MarkovModel {
    * @param {number} [opts.q=0.4]  P(1→0)
    */
   constructor({ p = 0.3, q = 0.4 } = {}) {
+    if (!Number.isFinite(p) || p < 0 || p > 1) throw new RangeError(`p must be in [0,1]; got ${p}`);
+    if (!Number.isFinite(q) || q < 0 || q > 1) throw new RangeError(`q must be in [0,1]; got ${q}`);
     this.p = p;
     this.q = q;
   }

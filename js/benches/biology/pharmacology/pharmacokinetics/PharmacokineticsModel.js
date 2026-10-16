@@ -39,6 +39,8 @@ export class PharmacokineticsModel {
   constructor({ ke = 0.1, ka = 1.0, D = 100, Vd = 10, F = 1, iv = true } = {}) {
     if (ke <= 0) throw new RangeError(`ke must be > 0; got ${ke}`);
     if (ka <= 0) throw new RangeError(`ka must be > 0; got ${ka}`);
+    if (Vd <= 0) throw new RangeError(`Vd must be > 0; got ${Vd}`);
+    if (F <= 0 || F > 1) throw new RangeError(`F must be in (0,1]; got ${F}`);
     this.ke = ke;
     this.ka = ka;
     this.D  = D;
