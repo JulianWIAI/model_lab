@@ -820,6 +820,19 @@ export const catalog = [
                 (m) => m.InformationTheoryBench,
               ),
           },
+          {
+            id: 'random-walk',
+            navLabel: 'Random walk',
+            level: 'intro',
+            keywords: [
+              'random walk', 'Brownian motion', 'diffusion', 'mean squared displacement',
+              "gambler's ruin", 'absorption', 'stochastic', 'Pólya', 'recurrence',
+            ],
+            load: () =>
+              import('./benches/math/probability/random-walk/RandomWalkBench.js').then(
+                (m) => m.RandomWalkBench,
+              ),
+          },
         ],
       },
       {
