@@ -659,6 +659,16 @@ export const catalog = [
                 (m) => m.SynapseKineticsBench,
               ),
           },
+          {
+            id: 'stdp',
+            navLabel: 'STDP',
+            level: 'university',
+            keywords: ['STDP', 'Hebbian', 'plasticity', 'LTP', 'LTD', 'synapse', 'spike timing', 'Song 2000', 'neuroscience'],
+            load: () =>
+              import('./benches/neuroscience/synaptic/stdp/STDPBench.js').then(
+                (m) => m.STDPBench,
+              ),
+          },
         ],
       },
       {
