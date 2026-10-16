@@ -1043,6 +1043,16 @@ export const catalog = [
                 (m) => m.RescorlaWagnerBench,
               ),
           },
+          {
+            id: 'opinion-dynamics',
+            navLabel: 'Opinion dynamics',
+            level: 'university',
+            keywords: ['DeGroot', 'opinion dynamics', 'consensus', 'Markov chain', 'stationary distribution', 'left eigenvector', 'social learning', 'network'],
+            load: () =>
+              import('./benches/psychology/learning/opinion-dynamics/OpinionDynamicsBench.js').then(
+                (m) => m.OpinionDynamicsBench,
+              ),
+          },
         ],
       },
     ],
