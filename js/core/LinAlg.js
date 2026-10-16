@@ -248,3 +248,46 @@ export function jacobiEigen(A, opts = {}) {
     vectors: pairs.map(p => p.vector),
   };
 }
+
+/**
+ * eigen2x2 — closed-form eigenvalues of a 2×2 matrix A.
+ *
+ * Uses τ = tr(A) = a+d, Δ = det(A) = ad−bc, disc = τ²−4Δ.
+ *
+ * Returns:
+ *   { real: [re₁, re₂], imag: [im₁, im₂], repeated: bool, defective: bool }
+ *
+ * - real eigenvalues when disc ≥ 0
+ * - complex conjugate pair when disc < 0:  re = τ/2, im = ±√(−disc)/2
+ * - repeated: disc === 0 exactly (within ε=1e-12·|τ|)
+ * - defective: repeated eigenvalue AND A ≠ λI (at least one off-diagonal ≠ 0)
+ *
+ * Works for any 2×2 matrix (need NOT be symmetric).
+ *
+ * @param {number[][]} A  2×2 matrix [[a,b],[c,d]]
+ * @returns {{ real: number[], imag: number[], repeated: boolean, defective: boolean }}
+ */
+export function eigen2x2(A) {
+  const tau  = A[0][0] + A[1][1];
+  const det  = A[0][0] * A[1][1] - A[0][1] * A[1][0];
+  const disc = tau * tau - 4 * det;
+
+  // Threshold for "disc ≈ 0": use relative to τ², min absolute 1e-28
+  const eps  = Math.max(1e-28, 1e-12 * tau * tau);
+  const repeated = Math.abs(disc) < eps;
+
+  let real, imag;
+  if (disc >= 0) {
+    const sqD = Math.sqrt(disc);
+    real = [(tau + sqD) / 2, (tau - sqD) / 2];
+    imag = [0, 0];
+  } else {
+    real = [tau / 2, tau / 2];
+    imag = [Math.sqrt(-disc) / 2, -Math.sqrt(-disc) / 2];
+  }
+
+  // Defective: repeated eigenvalue but A ≠ λI (off-diagonal entries non-zero)
+  const defective = repeated && (Math.abs(A[0][1]) > 1e-14 || Math.abs(A[1][0]) > 1e-14);
+
+  return { real, imag, repeated, defective };
+}

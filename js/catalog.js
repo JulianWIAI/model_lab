@@ -688,6 +688,19 @@ export const catalog = [
         name: 'Dynamical Systems',
         benches: [
           {
+            id: 'phase-plane',
+            navLabel: 'Phase plane',
+            level: 'university',
+            keywords: [
+              'phase plane', 'dynamical systems', 'eigenvalues', 'stability',
+              'trace', 'determinant', 'spiral', 'saddle', 'node', 'center',
+            ],
+            load: () =>
+              import('./benches/math/dynamics/phase-plane/PhasePlaneBench.js').then(
+                (m) => m.PhasePlaneBench,
+              ),
+          },
+          {
             id: 'ode-explorer',
             navLabel: 'ODE explorer',
             level: 'intro',
