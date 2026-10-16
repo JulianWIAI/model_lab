@@ -5,11 +5,19 @@
  *   - Opens it at 1280px and 400px, light and dark theme (4 screenshots)
  *   - Checks for console errors, failed network requests
  *   - Checks if any readout span still shows "–"
- *   - Analyses canvas pixels for SOLID flag (>90% one colour)
+ *   - Analyses canvas pixels for BLANK, SOLID, and SURFACE_MISMATCH flags
  *   - Writes tools/out/smoke.json
  *   - Creates tools/out/contact-sheet.png (grid of thumbnails, red border on failures)
  *
  * Run from repo root: node tools/smoke.mjs
+ *
+ * CI approach: add a step that runs `npm run smoke && node -e "
+ *   const r = JSON.parse(require('fs').readFileSync('tools/out/smoke.json'));
+ *   const failed = r.filter(b => !b.pass);
+ *   if (failed.length) { console.error(failed.map(b=>b.benchId)); process.exit(1); }
+ * "` after `npm test`. The smoke test requires Playwright and Chromium (already in
+ * tools/node_modules); run `node tools/node_modules/.bin/playwright install chromium`
+ * in the CI setup step.
  */
 
 import http from 'node:http';
@@ -79,15 +87,59 @@ for (const subject of catalog) {
 
 console.log(`Found ${allBenches.length} benches in catalog.`);
 
+// ── RGB helpers ───────────────────────────────────────────────────────────────
+
+/**
+ * Parse a CSS hex colour string "#RRGGBB" or "#RGB" to {r,g,b}.
+ * Returns null if unparseable.
+ */
+function parseHexRgb(hex) {
+  if (!hex) return null;
+  const s = hex.trim();
+  const m6 = s.match(/^#([0-9a-fA-F]{6})$/);
+  if (m6) {
+    const n = parseInt(m6[1], 16);
+    return { r: (n >> 16) & 0xFF, g: (n >> 8) & 0xFF, b: n & 0xFF };
+  }
+  const m3 = s.match(/^#([0-9a-fA-F]{3})$/);
+  if (m3) {
+    const [, rgb] = m3;
+    return {
+      r: parseInt(rgb[0] + rgb[0], 16),
+      g: parseInt(rgb[1] + rgb[1], 16),
+      b: parseInt(rgb[2] + rgb[2], 16),
+    };
+  }
+  return null;
+}
+
+/**
+ * Euclidean RGB distance.
+ */
+function euclideanRgbDistance(c1, c2) {
+  const dr = c1.r - c2.r;
+  const dg = c1.g - c2.g;
+  const db = c1.b - c2.b;
+  return Math.sqrt(dr * dr + dg * dg + db * db);
+}
+
 // ── Pixel analysis helper (runs in page context) ──────────────────────────────
-async function analyseCanvas(page) {
-  return page.evaluate(() => {
+async function analyseCanvas(page, surfaceRgb) {
+  return page.evaluate((surfaceRgb) => {
     const canvas = document.querySelector('canvas');
-    if (!canvas) return { error: 'no canvas', bgPct: 0, topColorPct: 0, solid: false, topColor: null };
+    if (!canvas) return {
+      error: 'no canvas', bgPct: 0, topColorPct: 0, solid: false, blank: false,
+      topColor: null, dominantRgb: null, inkFraction: 0,
+      surfaceMismatch: false, surfaceRgb,
+    };
 
     const w = canvas.width;
     const h = canvas.height;
-    if (!w || !h) return { error: 'zero-size canvas', bgPct: 0, topColorPct: 0, solid: false, topColor: null };
+    if (!w || !h) return {
+      error: 'zero-size canvas', bgPct: 0, topColorPct: 0, solid: false, blank: false,
+      topColor: null, dominantRgb: null, inkFraction: 0,
+      surfaceMismatch: false, surfaceRgb,
+    };
 
     const ctx = canvas.getContext('2d');
     const data = ctx.getImageData(0, 0, w, h).data;
@@ -105,7 +157,11 @@ async function analyseCanvas(page) {
       counts.set(key, (counts.get(key) ?? 0) + 1);
     }
 
-    if (counts.size === 0) return { error: 'all transparent', bgPct: 100, topColorPct: 100, solid: true, topColor: null };
+    if (counts.size === 0) return {
+      error: 'all transparent', bgPct: 100, topColorPct: 100,
+      solid: true, blank: true, topColor: null,
+      dominantRgb: null, inkFraction: 0, surfaceMismatch: false, surfaceRgb,
+    };
 
     // Most common colour = background candidate
     let topColor = null;
@@ -114,22 +170,54 @@ async function analyseCanvas(page) {
       if (v > topCount) { topCount = v; topColor = k; }
     }
 
-    const bgPct = topCount / total * 100;
+    const topColorPct = topCount / total * 100;
+    const bgPct = topColorPct;
 
-    // Second most common non-bg colour
-    let secondCount = 0;
-    for (const [k, v] of counts) {
-      if (k !== topColor && v > secondCount) secondCount = v;
+    // dominantRgb: the center of the most common bucket
+    const [dr, dg, db] = topColor.split(',').map(Number);
+    // Bucket center: the & 0xF0 value is the bucket floor; center = floor + 8
+    const dominantRgb = { r: dr + 8, g: dg + 8, b: db + 8 };
+
+    // inkFraction: fraction of pixels where ANY channel differs from dominant by > 20
+    // "dominant" here means the top bucket's floor values (dr, dg, db)
+    let inkCount = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      const a = data[i+3];
+      if (a < 16) continue;
+      const pixR = data[i];
+      const pixG = data[i+1];
+      const pixB = data[i+2];
+      if (Math.abs(pixR - dr) > 20 ||
+          Math.abs(pixG - dg) > 20 ||
+          Math.abs(pixB - db) > 20) {
+        inkCount++;
+      }
+    }
+    const inkFraction = inkCount / total;
+
+    // solid: topColorPct > 90 (NOT the old colorCount <= 2 shortcut)
+    const solid = topColorPct > 90;
+
+    // blank: inkFraction < 0.0005 (< 0.05% of pixels differ from background)
+    const blank = inkFraction < 0.0005;
+
+    // surfaceMismatch: euclidean distance between dominantRgb and expected surfaceRgb > 40
+    let surfaceMismatch = false;
+    if (surfaceRgb) {
+      const dist = Math.sqrt(
+        (dominantRgb.r - surfaceRgb.r) ** 2 +
+        (dominantRgb.g - surfaceRgb.g) ** 2 +
+        (dominantRgb.b - surfaceRgb.b) ** 2
+      );
+      surfaceMismatch = dist > 40;
     }
 
-    const topColorPct = bgPct;
-    // solid = canvas has ≤2 distinct colours after 4-bit quantisation.
-    // A real chart or animation always has 3+ colours (background + axis + data);
-    // ≤2 means the canvas was never drawn or drew a plain background only.
-    const solid = counts.size <= 2;
-
-    return { bgPct, topColorPct, solid, topColor, colorCount: counts.size, error: null };
-  });
+    return {
+      bgPct, topColorPct, solid, blank, topColor,
+      dominantRgb, inkFraction, surfaceMismatch, surfaceRgb,
+      colorCount: counts.size, error: null,
+    };
+  }, surfaceRgb);
 }
 
 // ── Per-bench test ───────────────────────────────────────────────────────────
@@ -184,6 +272,14 @@ async function testBench(page, baseUrl, subjectId, benchId, navLabel) {
         document.documentElement.setAttribute('data-theme', t);
       }, theme);
 
+      // Get the computed --panel colour for this theme (the canvas surface token).
+      // We read this once per theme, before taking screenshots.
+      const surfaceCssRaw = await page.evaluate(() =>
+        getComputedStyle(document.documentElement).getPropertyValue('--panel').trim()
+      );
+      // Parse hex → {r,g,b}. If not a hex (e.g. a var() that didn't resolve), fall back to null.
+      const surfaceRgb = parseHexRgb(surfaceCssRaw);
+
       for (const width of WIDTHS) {
         const height = width === 400 ? 700 : 800;
         await page.setViewportSize({ width, height });
@@ -198,8 +294,8 @@ async function testBench(page, baseUrl, subjectId, benchId, navLabel) {
         // Extra 1s for animation
         await new Promise(r => setTimeout(r, 1000));
 
-        // Canvas pixel analysis
-        const pixelInfo = await analyseCanvas(page);
+        // Canvas pixel analysis — pass surfaceRgb into page context
+        const pixelInfo = await analyseCanvas(page, surfaceRgb);
 
         // Check for readout dashes — scope to the active (visible) bench only to
         // avoid false positives from earlier interactive benches kept in the DOM.
@@ -214,27 +310,13 @@ async function testBench(page, baseUrl, subjectId, benchId, navLabel) {
         const screenshotPath = path.join(OUT_DIR, `${benchId}-${theme}-${width}.png`);
         await page.screenshot({ path: screenshotPath });
 
-        // Capture thumbnail (120x90) via page.evaluate on the screenshot
-        const thumbBase64 = await page.evaluate(async ({ width: vw, height: vh }) => {
-          const canvas = document.createElement('canvas');
-          canvas.width = 120;
-          canvas.height = 90;
-          const ctx = canvas.getContext('2d');
-          // draw a scaled version of the current viewport
-          const blob = await new Promise(res => {
-            const el = document.createElement('canvas');
-            el.width = vw; el.height = vh;
-            // We can't easily snapshot DOM to canvas in page context, return null
-            res(null);
-          });
-          return null;
-        }, { width, height: width === 400 ? 700 : 800 });
-
-        // Use Playwright's screenshot and resize externally
+        // Capture thumbnail
         const thumbPath = path.join(OUT_DIR, `thumb-${benchId}-${theme}-${width}.png`);
         await page.screenshot({ path: thumbPath, clip: { x: 0, y: 0, width: Math.min(width, 1280), height: Math.min(width === 400 ? 700 : 800, 800) } });
 
-        const isFail = pixelInfo.solid || (consoleErrors.length > 0) || hasDashes;
+        const consoleErr = consoleErrors.length > 0;
+        const isFail = pixelInfo.solid || pixelInfo.blank || consoleErr ||
+                       hasDashes || pixelInfo.surfaceMismatch;
 
         result.screenshots.push({
           theme, width,
@@ -243,11 +325,17 @@ async function testBench(page, baseUrl, subjectId, benchId, navLabel) {
           pixelInfo,
           hasDashes,
           consoleErrorsAtCapture: [...consoleErrors],
+          surfaceRgb,
+          dominantRgb: pixelInfo.dominantRgb,
+          inkFraction: pixelInfo.inkFraction,
+          surfaceMismatch: pixelInfo.surfaceMismatch,
           fail: isFail,
         });
 
-        if (pixelInfo.solid) result.failureTypes.push(`SOLID@${theme}/${width}`);
-        if (hasDashes)       result.failureTypes.push(`DASHES@${theme}/${width}`);
+        if (pixelInfo.solid)          result.failureTypes.push(`SOLID@${theme}/${width}`);
+        if (pixelInfo.blank)          result.failureTypes.push(`BLANK@${theme}/${width}`);
+        if (pixelInfo.surfaceMismatch) result.failureTypes.push(`SURFACE_MISMATCH@${theme}/${width}`);
+        if (hasDashes)                result.failureTypes.push(`DASHES@${theme}/${width}`);
       }
     }
   } catch (err) {
@@ -506,16 +594,16 @@ for (const r of results.filter(r => !r.pass)) {
   console.log(`  ${r.subjectId}/${r.benchId} — ${r.failureTypes.join(', ')}`);
 }
 
-// ── Per-viewport failure counts ───────────────────────────────────────────────
-// Categories:
-//   blank        – pixelInfo.error === 'all transparent' (zero-content canvas)
-//   solid        – pixelInfo.solid (colorCount ≤ 2, monochrome)
-//   black-fill   – top colour is pure black AND bgPct > 90 (dark blank bug)
-//   console-err  – any JS errors present at time of screenshot
-//   readout-dash – a visible readout span still shows '–'
-//   no-canvas    – pixelInfo.error === 'no canvas' (element missing)
+// ── Per-viewport × category flag table ───────────────────────────────────────
+// Categories (updated):
+//   blank          – inkFraction < 0.0005 (< 0.05% non-background pixels)
+//   solid          – topColorPct > 90 (> 90% of pixels are the dominant colour)
+//   surface_mismatch – dominantRgb differs from --panel by > 40 RGB distance
+//   console_err    – any JS errors present at time of screenshot
+//   readout_dash   – a visible readout span still shows '–'
+//   no_canvas      – pixelInfo.error === 'no canvas' (element missing)
 const VIEWPORTS = ['light/1280', 'light/400', 'dark/1280', 'dark/400'];
-const CATS      = ['blank', 'solid', 'black-fill', 'console-err', 'readout-dash', 'no-canvas'];
+const CATS      = ['blank', 'solid', 'surface_mismatch', 'console_err', 'readout_dash', 'no_canvas'];
 const counts    = {};
 for (const vp of VIEWPORTS) counts[vp] = Object.fromEntries(CATS.map(c => [c, 0]));
 
@@ -524,25 +612,44 @@ for (const r of results) {
     const vp = `${s.theme}/${s.width}`;
     if (!counts[vp]) continue;
     const pi = s.pixelInfo ?? {};
-    if (pi.error === 'all transparent')                    counts[vp]['blank']++;
-    if (pi.error === 'no canvas')                          counts[vp]['no-canvas']++;
+    if (pi.blank)                                          counts[vp]['blank']++;
     if (pi.solid)                                          counts[vp]['solid']++;
-    // black-fill: near-pure-black background, bgPct > 90, AND very few colours
-    // (≤ 5 colours means no real content was drawn; more colours = dark-bg chart)
-    if (pi.topColor === '0,0,0' && (pi.bgPct ?? 0) > 90 && (pi.colorCount ?? 0) <= 5)
-      counts[vp]['black-fill']++;
-    if ((s.consoleErrorsAtCapture ?? []).length > 0)       counts[vp]['console-err']++;
-    if (s.hasDashes)                                       counts[vp]['readout-dash']++;
+    if (pi.surfaceMismatch)                                counts[vp]['surface_mismatch']++;
+    if (pi.error === 'no canvas')                          counts[vp]['no_canvas']++;
+    if ((s.consoleErrorsAtCapture ?? []).length > 0)       counts[vp]['console_err']++;
+    if (s.hasDashes)                                       counts[vp]['readout_dash']++;
   }
 }
 
 const COL_W = 12;
 console.log('\nPer-viewport failure counts:');
-console.log('  ' + 'category'.padEnd(14) + VIEWPORTS.map(v => v.padEnd(COL_W)).join(''));
-console.log('  ' + '─'.repeat(14 + COL_W * VIEWPORTS.length));
+console.log('  ' + 'category'.padEnd(16) + VIEWPORTS.map(v => v.padEnd(COL_W)).join(''));
+console.log('  ' + '─'.repeat(16 + COL_W * VIEWPORTS.length));
 for (const cat of CATS) {
   const row = VIEWPORTS.map(vp => String(counts[vp][cat]).padEnd(COL_W)).join('');
   const anyNonZero = VIEWPORTS.some(vp => counts[vp][cat] > 0);
   const marker = anyNonZero ? ' ◄' : '';
-  console.log('  ' + cat.padEnd(14) + row + marker);
+  console.log('  ' + cat.padEnd(16) + row + marker);
+}
+
+// ── All-benches × 4-viewports detail table ────────────────────────────────────
+console.log('\nAll benches × 4 viewports (B=blank S=solid M=surface_mismatch E=console_err D=dash N=no_canvas):');
+const HDR_COLS = ['light/1280', 'light/400', 'dark/1280', 'dark/400'];
+const COL_W2 = 14;
+console.log('  ' + 'bench'.padEnd(30) + HDR_COLS.map(v => v.padEnd(COL_W2)).join(''));
+console.log('  ' + '─'.repeat(30 + COL_W2 * HDR_COLS.length));
+for (const r of results) {
+  const cells = r.screenshots.map(s => {
+    const pi = s.pixelInfo ?? {};
+    let flags = '';
+    if (pi.blank)          flags += 'B';
+    if (pi.solid)          flags += 'S';
+    if (pi.surfaceMismatch) flags += 'M';
+    if ((s.consoleErrorsAtCapture ?? []).length > 0) flags += 'E';
+    if (s.hasDashes)       flags += 'D';
+    if (pi.error === 'no canvas') flags += 'N';
+    return (flags || 'ok').padEnd(COL_W2);
+  });
+  const rowLabel = `${r.subjectId}/${r.benchId}`.padEnd(30);
+  console.log('  ' + rowLabel + cells.join(''));
 }
