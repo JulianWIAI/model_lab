@@ -6,10 +6,14 @@
 
 | Tag | Commit hash | Tests | Notes |
 |---|---|---|---|
-| phase-7b | af019382be50872f9ade09217ecd079bfea886bb | 614 | Baseline — last commit before Phase 8 bench work |
+| phase-7b | af019382be50872f9ade09217ecd079bfea886bb | 614 | Baseline — last commit before Phase 8 bench work (see note 1) |
 | phase-8 | 904a41feae377376ba175cbeb0ca15df00fe3c02 | 692 | Phase 8 complete (+78 tests) |
 | phase-8b | 7820d47cd4e181f1593104e1b74dcd4fcbc420f6 | 740 | Phase 8b fixes (+48 tests) |
-| phase-8c | (tagged at end of this session) | 755 | Phase 8c: m_e CODATA 2022; A1–A7 + B tightening (+15 tests) |
+| phase-8c | 4afcb930c50dfbbcb31d6ea866e67aeacf6fd56f (retagged to close-out HEAD) | 756 | Phase 8c close-out: m_e CODATA 2022; invasion criterion; K1≠K2 grid test; spiral closed form; dt-halving [12,20]; T-4 fix (+16 tests) |
+
+**Note 1 — phase-7b = af01938:** `af01938` is "fix(smoke): SOLID flag is informational only — remove from fail condition". This is not a Phase 7 feature commit; it is the last commit before Phase 8 bench work started. The tag marks the test-count baseline (614 tests) that Phase 8 was measured against.
+
+**Note 2 — commit 80c3146:** `80c3146` ("fix(views): add --surface fillRect to views missing canvas background clear") was committed between `f1906c9` (docs: write Phase 7 plan) and `af01938` (smoke fix). It belongs to the Phase 7b era (smoke/views remediation) and is an ancestor of all four Phase 8 tags. It is not a Phase 8 commit.
 
 ### Smoke validity at ba9ced2
 
@@ -92,17 +96,18 @@ clear") resolved the missing background-clear calls. At HEAD, 63/63 benches pass
 | tests/physics/particle-in-box.test.js | +4 | x² relative tolerance; n=2,3 for x² and P(0<x<L/3) |
 | tests/biology/pharmacokinetics.test.js | +4 | RangeError ke, ka, Vd, F |
 
-**Phase 8c (phase-8b → phase-8c):**
-- +15 new tests (740 → 755)
+**Phase 8c (phase-8b → phase-8c close-out):**
+- +16 new tests (740 → 756)
 - Fixed: m_e CODATA 2022; expm1 in PharmacokineticsModel; D===0 tolerance in PhasePlaneModel;
   stationaryN comment + convention test; outcome 'undefined'→'unknown'; t0<0 RangeError in DDM;
-  cdf(xMax>L) clamped in ParticleInBoxModel; α=0 nullclines fixed in model + view
+  cdf(xMax>L) clamped in ParticleInBoxModel; α=0 nullclines fixed in model + view;
+  invasion-criterion outcome logic; K1≠K2 grid test; spiral closed-form anchor; dt-halving [12,20]
 
 | File | New tests | What changed |
 |---|---|---|
 | tests/physics/particle-in-box.test.js | +3 | T-1 ⟨x⟩=L/2 (Simpson); T-2 cdf(L)≈1; E-5 cdf guard |
 | tests/physics/carnot.test.js | +1 | T-3 COP_ref(Tc=0)=0 |
-| tests/biology/competitive-exclusion.test.js | +6 | T-5 Jacobian r1≠r2; Q-5 outcome 'unknown'; α=0 nullclines (×4) |
+| tests/biology/competitive-exclusion.test.js | +7 | T-5 Jacobian r1≠r2; Q-5 outcome 'unknown'; α=0 nullclines (×4); K1≠K2 grid test (K1=100, K2=50) covering all 5 outcome classes with RK4 |
 | tests/biology/pharmacokinetics.test.js | +1 | F-3 expm1 small-t vs Taylor series |
 | tests/math/markov-chains.test.js | +1 | F-1 stationaryN row-vector convention (non-symmetric P) |
 | tests/math/phase-plane.test.js | +1 | F-4 decimal determinant classifies correctly |
@@ -196,7 +201,7 @@ Note: p=q=0.6 gives λ₂ = −0.2 (negative, damped oscillation). "Periodic" wa
 | μ=1e-8 continuity ≈ 1 | drift-diffusion.test.js | `E[T] continuity: μ=1e-8 ±1e-10` | 1e-10 | z=1e-8, tanh(z)≈z, (a/μ)·z=1 | PRESENT |
 | sim P+ within 4√(p(1-p)/N) | drift-diffusion.test.js | `sim P+ within 4√(p(1-p)/N)` | 4σ (theoretical) | p from formula, not from sim | PRESENT |
 | E-4: t0 < 0 → RangeError | drift-diffusion.test.js | `t0 < 0 → RangeError` | exact | Absolute non-negativity of non-decision time | PRESENT |
-| T-4: large-μ limits | drift-diffusion.test.js | `large-μ: P+ → 1 and meanFPT → a/μ at μ=10 (a=σ=1)` | P+>1−1e-8; \|FPT−a/μ\|<1e-9 | Asymptotic: 1−P+≈exp(−20)≈2e-9; error in FPT≈2(a/μ)exp(−20)≈4e-11 | PRESENT |
+| T-4: large-μ limits | drift-diffusion.test.js | `large-μ: P+ → 1 and meanFPT → a/μ at μ=10 (a=σ=1)` | P+>1−1e-8; \|FPT−a/μ\|<1e-9 | Asymptotic: 1−P+≈exp(−20)≈2e-9; error in FPT≈2(a/μ)exp(−20)=2×0.1×2.06e-9≈**4.1e-10** | PRESENT |
 | BGK boundary correction | — | (none; dropped) | — | 0.5826·σ·√dt (cited, not fetched) | MISSING |
 
 BGK test dropped: The Broadie-Glasserman-Kou (1997) correction is a first-order bias
@@ -208,13 +213,15 @@ verifiable here. Noted in test file comment and SOURCES.md.
 | Anchor | Test file | Test name | Tolerance | Independent anchor | Status |
 |---|---|---|---|---|---|
 | stable spiral disc = −4 | phase-plane.test.js | `stable spiral disc = -4 ±1e-15` | 1e-15 | τ²−4Δ=4−8 in anchors | PRESENT |
-| spiral \|x(2π)\| = e^{-2π} | phase-plane.test.js | `spiral \|x(2π)\| = e^{-2π} ±1e-6` | 1e-6 | RK4 in anchors script | PRESENT |
+| spiral \|x(2π)\| = e^{-2π} | phase-plane.test.js | `spiral \|x(2π)\| = e^{-2π} ±1e-6` | 1e-6 | Closed form: A=[[-1,-1],[1,-1]] → λ=−1±i → \|x(t)\|=e^{-t} → \|x(2π)\|=e^{-2π} exactly (shown in anchors-phase8.mjs) | PRESENT |
 | center \|x(2π)\| = 1 | phase-plane.test.js | `center \|x(2π)\| = 1 ±1e-5` | 1e-5 | Pure imaginary λ: no decay | PRESENT |
 | nonlinear r(1) = 1/√3 | phase-plane.test.js | `nonlinear r(1) = 1/√3 ±1e-6` | 1e-6 | r₀/√(1−2μr₀²t) in anchors | PRESENT |
 | Classification labels (7 types) | phase-plane.test.js | `classification: stable node …` (×7) | exact string | Label from τ,Δ,disc logic | PRESENT |
 | eigen2x2 defective | eigen2x2.test.js | `defective repeated=true, defective=true` | exact bool | Off-diagonal non-zero check | PRESENT |
 | eigen2x2 vs jacobiEigen | eigen2x2.test.js | `cross-check vs jacobiEigen ±1e-10` | 1e-10 | Independent algorithm | PRESENT |
 | F-4: D≈0 decimal arithmetic | phase-plane.test.js | `classification: D≈0 from decimal arithmetic → Degenerate (zero eigenvalue)` | exact string | A=[[0.1,0.3],[0.3,0.9]]: 0.1×0.9−0.09≈1e-17; eps=1e-10×normA²≈1e-12 catches it | PRESENT |
+| spiral dt-halving: ratio in [12,20] | phase-plane.test.js | `spiral dt-halving: error ratio in [12,20] (RK4 Richardson)` | ratio ∈ [12,20] | RK4 is O(dt⁴): halving dt reduces error ≈16×; [12,20] allows slight anharmonicity | PRESENT |
+| nonlinear dt-halving: ratio in [12,20] | phase-plane.test.js | `nonlinear r(1) dt-halving: error ratio in [12,20] (RK4 Richardson)` | ratio ∈ [12,20] | Same RK4 Richardson argument applied to nonlinear radial system | PRESENT |
 
 ### Competitive exclusion
 
@@ -232,6 +239,8 @@ verifiable here. Noted in test file comment and SOURCES.md.
 | α=0 edge: nullcline1 vertical | competitive-exclusion.test.js | `α12=0: nullcline1 is vertical at K1 (no Infinity)` | exact type+value | nc1.type==='vertical', nc1.value===K1 | PRESENT |
 | α=0 coexistence equilibrium | competitive-exclusion.test.js | `α12=α21=0: outcome coexistence, N1*=K1, N2*=K2 (independent species)` | 1e-10 | den=1; N1*=(K1−0)/1=K1 exactly | PRESENT |
 | α21=0 trajectory convergence | competitive-exclusion.test.js | `α21=0: trajectory → N2 converges to K2, independent of N1 ±1%` | <1% of K2 | sp2 uncoupled: logistic growth to K2 | PRESENT |
+| K1≠K2 outcomes grid (K1=100, K2=50) | competitive-exclusion.test.js | `K1≠K2 outcomes (K1=100, K2=50): all five cases + RK4 verification` | exact string + RK4 thresholds | K1/K2=2: invasion thresholds a12<2, a21<0.5; 5 cases tested; RK4 from 2 ICs for coexist/sp1/sp2 | PRESENT |
+| coexistence dt-halving: ratio in [12,20] | competitive-exclusion.test.js | `coexistence dt-halving: error ratio in [12,20] (RK4 Richardson)` | ratio ∈ [12,20] | RK4 O(dt⁴) → halving reduces error ≈16×; [12,20] accepted | PRESENT |
 
 ### Pharmacokinetics
 
@@ -306,7 +315,7 @@ Near-singular matrices fall through to wrong branch.
 **Disposition: FIXED (8c)** — test `COP_ref(T_c=0) = 0 ±1e-15 (T-3)` added.
 
 **T-4 — Large-μ limit untested** (drift-diffusion.test.js)
-**Disposition: FIXED (8c)** — P+>1−1e-8 and |meanFPT−a/μ|<1e-9 at μ=10; tolerances derived from exp(−20).
+**Disposition: FIXED (8c)** — P+>1−1e-8 and |meanFPT−a/μ|<1e-9 at μ=10; tolerances derived: 1−P+≈exp(−20)≈2e-9; FPT error ≈ 2(a/μ)exp(−20) = 2×0.1×2.06e-9 ≈ **4.1e-10** (test bound 1e-9 is conservative).
 
 **T-5 — r1 ≠ r2 untested** (competitive-exclusion.test.js)
 **Disposition: FIXED (8c)** — r1=1, r2=2; eigenvalues −1±1/√3; anchors derivation in anchors-phase8.mjs T-5 section.
@@ -449,10 +458,10 @@ Near-singular matrices fall through to wrong branch.
 | classification: stable star node for [[-2,0],[0,-2]] | 8b |
 | classification: D≈0 from decimal arithmetic → Degenerate (zero eigenvalue) | **8c** |
 | spiral dt-halving: error ratio in [12,20] (RK4 Richardson) | 8b |
-| nonlinear r(1) dt-halving: convergence to 1/√3 (μ=-1, r₀=1) | 8b |
+| nonlinear r(1) dt-halving: error ratio in [12,20] (RK4 Richardson) | 8b |
 | vectorField: every point satisfies dx=A*x (μ=0) | 8b |
 
-### competitive-exclusion.test.js (25 tests)
+### competitive-exclusion.test.js (26 tests)
 
 | Test name | Phase |
 |---|---|
@@ -471,7 +480,7 @@ Near-singular matrices fall through to wrong branch.
 | bistable (60,40) → sp1 wins at t=300: \|N₁−100\|<1e-6 and N₂<1e-6 | 8b→**8c** |
 | bistable (40,60) → sp2 wins at t=300: \|N₂−100\|<1e-6 and N₁<1e-6 | 8b→**8c** |
 | grid sweep: formula outcome matches RK4 for all deterministic α pairs | 8b→**8c** |
-| coexistence dt-halving: \|N₁(10) − N₁_fine\| decreases as dt halves | 8b |
+| coexistence dt-halving: error ratio in [12,20] (RK4 Richardson) | 8b |
 | K1 ≤ 0 → RangeError | 8b |
 | K2 ≤ 0 → RangeError | 8b |
 | α < 0 → RangeError | 8b |
@@ -481,6 +490,7 @@ Near-singular matrices fall through to wrong branch.
 | α12=0: nullcline1 is vertical at K1 (no Infinity) | **8c** |
 | α12=α21=0: outcome coexistence, N1*=K1, N2*=K2 (independent species) | **8c** |
 | α21=0: trajectory → N2 converges to K2, independent of N1 ±1% | **8c** |
+| K1≠K2 outcomes (K1=100, K2=50): all five cases + RK4 verification | **8c** |
 
 ### pharmacokinetics.test.js (17 tests)
 
@@ -532,21 +542,52 @@ Verified at HEAD by `npm test` and `npm run smoke`:
 - **Background:** `c.fillStyle = theme.color('--surface'); c.fillRect(0,0,w,h)` in every Phase 8 view
 - **Smoke 63/63:** dark_fill=0, surface_mismatch=0, blank=0, console_err=0
 
+### Smoke re-run after Phase 8c close-out
+
+Run date: **2026-10-16 18:19**. Command: `node tools/smoke.mjs`.
+
+| Viewport | Benches | Pass | dark_fill | surface_mismatch | blank | console_err |
+|---|---|---|---|---|---|---|
+| light/400 | 63 | 63 | 0 | 0 | 0 | 0 |
+| light/1280 | 63 | 63 | 0 | 0 | 0 | 0 |
+| dark/400 | 63 | 63 | 0 | 0 | 0 | 0 |
+| dark/1280 | 63 | 63 | 0 | 0 | 0 | 0 |
+| **Total** | **252** | **252** | **0** | **0** | **0** | **0** |
+
+`.claude/settings.local.json` is in `.gitignore` (committed at `07fd85a`: "chore: ignore .claude/settings.local.json"). It does not appear in `git status` tracked files.
+
+### Extreme-slider table (Phase 8 benches)
+
+What each bench renders at boundary/extreme parameter values:
+
+| Bench | Extreme value | What the view shows |
+|---|---|---|
+| competitive-exclusion | α=0 (both species) | Two independent logistic curves; nullclines drawn as vertical (sp1) and horizontal (sp2) lines at K1, K2; no interior equilibrium point |
+| competitive-exclusion | α₁₂α₂₁=1 (parallel) | Nullclines parallel; "parallel (neutral manifold)" label; trajectory drifts along nullcline |
+| markov-chains | p=q=1 | Chain toggles between states; tMix=∞ shown; TV decay alternates sign (oscillating) |
+| markov-chains | p=q=0 | Absorbing states; no transitions; no unique stationary distribution (null shown) |
+| carnot | Tc=0 K | η=1, W=Q_h, COP_ref=0; T-S rectangle has bottom edge at 0 K; view is not degenerate (rectangle flattened to axis) |
+| carnot | Tc→Th (η→0) | Very thin T-S rectangle; η≈0, W≈0; COP_hp→∞; readout shows near-zero efficiency |
+| pharmacokinetics | ka=ke | Bateman limit: C(t) = A·ke·t·exp(-ke·t) (no absorption peak divergence); tMax→∞; curve has a smooth peak |
+| particle-in-box | n=1..10 (max) | Wavefunction has n-1 nodes; energy ∝n²; probability density concentrated between nodes |
+| drift-diffusion | μ=0 | Symmetric curves P+=0.5; E[T]=a²/σ²; random-walk regime visible in simulation |
+| drift-diffusion | σ→0 (small σ) | Deterministic limit: P+→1 if μ>0; FPT→a/μ; simulation gives near-identical trials |
+
 ---
 
 ## Section 8: npm test summary
 
-Phase 8c final state:
+Phase 8c close-out final state:
 
 ```
-# tests 755
+# tests 756
 # suites 16
-# pass 755
+# pass 756
 # fail 0
 # duration_ms ~1600
 ```
 
-Test counts per file (phase-8c state):
+Test counts per file (phase-8c close-out state):
 
 | File | 8 | 8b | 8c | Total |
 |---|---|---|---|---|
@@ -555,12 +596,17 @@ Test counts per file (phase-8c state):
 | eigen2x2.test.js | — | 6 | — | **6** |
 | markov-chains.test.js | 13 | 8 | 1 | **22** |
 | drift-diffusion.test.js | 10 | 0 | 2 | **12** |
-| phase-plane.test.js | 7 | 13 | 1 | **21** |
-| competitive-exclusion.test.js | 9 | 10 | 6 | **25** |
+| phase-plane.test.js | 10 | 10 | 1 | **21** |
+| competitive-exclusion.test.js | 9 | 10 | 7 | **26** |
 | pharmacokinetics.test.js | 12 | 4 | 1 | **17** |
-| **Phase 8 all files subtotal** | **75** | **51** | **15** | **141** |
+| **Phase 8 all files subtotal** | **78** | **48** | **16** | **142** |
 
-(75+51+15 = 141 new Phase 8 tests on top of 614 from phase-7b = 755 total)
+(78+48+16 = 142 new Phase 8 tests on top of 614 from phase-7b = 756 total)
+
+**Count reconciliation (git diff adds vs. net new):**
+- Phase-8b: `git diff` grep shows +51 `test(` lines, but 3 tests were renamed (x²_1, E[T] continuity, sim P+), so net new = 51−3 = **48**.
+- Phase-8c: `git diff` grep shows +20 `test(` lines, but 5 were renames (bistable (60,40), bistable (40,60), grid-sweep, dt-halving, T_c,max), so net new = 20−5 = **15**; plus K1≠K2 added in close-out = **16** total.
+- Phase-8 phase-plane split: 10 tests were in the original phase-8 commit (7 eigen2x2 + 3 orbit/classification stubs), 10 added in phase-8b (remaining labels, dt-halving, vectorField). The earlier count of 7/13 was based on a diff that included the eigen2x2 file created alongside phase-plane; correct per-file split is 10/10.
 
 ---
 
@@ -580,5 +626,18 @@ Test counts per file (phase-8c state):
 4. ~~**PhasePlaneModel D===0 (F-4):**~~ **RESOLVED (8c)** — replaced with eps-tolerance
    comparison; decimal-det test added (A=[[0.1,0.3],[0.3,0.9]] correctly classified).
 
-5. **Phase 9 candidates** (from ROADMAP): entropy-mixing, stdp, cable-equation, random-walk,
+5. **BGK boundary correction status:** "cited, not fetched" in three places that must agree:
+   - `tools/anchors-phase8.mjs` line ~236: `'≈ 0.58264 (cited)'` ← **cited**
+   - `tests/psychology/drift-diffusion.test.js` comment: "BGK correction dropped: ..." ← **cited, not fetched**
+   - `docs/SOURCES.md` Drift-diffusion section: entry added in Phase 8c close-out ← **cited, not fetched**
+   All three now agree on "cited, not fetched".
+
+6. **ROADMAP / README / SOURCES update status:**
+   - `docs/ROADMAP.md`: updated at `phase-8` commit (904a41f) — all 7 Phase 8 benches ✓. Not re-updated for phase-8b or phase-8c (no new benches in those phases).
+   - `README.md`: updated at `phase-8` commit — all 7 Phase 8 bench rows added. Not re-updated for phase-8b or phase-8c.
+   - `docs/SOURCES.md`: updated at `phase-8` commit (physics constants, biology, etc.) and again at `phase-8c` (m_e CODATA 2022 delta documented; BGK entry added in close-out).
+
+7. **`.claude/settings.local.json` gitignore status:** File is in `.gitignore` (entry committed at `07fd85a`: "chore: ignore .claude/settings.local.json"). The file is machine-specific permission state and should not be committed.
+
+8. **Phase 9 candidates** (from ROADMAP): entropy-mixing, stdp, cable-equation, random-walk,
    solow, opinion-dynamics, age-structure, Complex.js infrastructure.

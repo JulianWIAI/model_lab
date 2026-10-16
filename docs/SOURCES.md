@@ -444,7 +444,9 @@ The following items were noted as uncertain during implementation and have not b
 - P(upper boundary) = 1/(1+e^{-2μa/σ²}): solution to Fokker-Planck boundary problem.
 - E[T] = (a/μ)·tanh(μa/σ²): exact mean first-passage time.
 - μ=0 limit: L'Hôpital → E[T] = a²/σ². Verified in anchors-phase8.mjs.
+- BGK boundary correction constant 0.5826 = −ζ(½)/√(2π): corrects discrete-monitoring bias for barrier-crossing simulations. Not tested here (isolating it requires very large N and reference values not independently verifiable here). Verified in `tools/anchors-phase8.mjs` via zeta-function identity.
 - Ratcliff, R. (1978) "A theory of memory retrieval", *Psychological Review*, 85(2), 59–108 — cited, not fetched.
+- Broadie, M., Glasserman, P., & Kou, S.G. (1997) "A continuity correction for discrete barrier options", *Mathematical Finance*, 7(4), 325–348 — BGK boundary correction — cited, not fetched.
 
 ### Phase plane
 - eigen2x2: closed-form eigenvalues via characteristic polynomial; disc = τ²−4Δ. Algebraically exact.

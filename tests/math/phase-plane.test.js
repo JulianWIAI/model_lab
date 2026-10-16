@@ -156,8 +156,9 @@ test('spiral dt-halving: error ratio in [12,20] (RK4 Richardson)', () => {
 
 // ── dt-halving convergence for nonlinear case ─────────────────────────────
 
-test('nonlinear r(1) dt-halving: convergence to 1/√3 (μ=-1, r₀=1)', () => {
-  // Run orbit r = radial component at t=1
+test('nonlinear r(1) dt-halving: error ratio in [12,20] (RK4 Richardson)', () => {
+  // RK4 is O(dt⁴): halving dt reduces error by ~16; accept [12,20].
+  // Exact: r(1) = 1/√(1-2μr₀²t) = 1/√3 (μ=-1, r₀=1, t=1)
   const expected = 1 / Math.sqrt(3);
   function orbitR(dt) {
     const m = new PhasePlaneModel({ A: [[0, -1], [1, 0]], mu: -1 });
@@ -165,11 +166,15 @@ test('nonlinear r(1) dt-halving: convergence to 1/√3 (μ=-1, r₀=1)', () => {
     const last = orbit[orbit.length - 1];
     return Math.hypot(last.x, last.y);
   }
-  const e1 = Math.abs(orbitR(1e-2) - expected);
-  const e2 = Math.abs(orbitR(5e-3) - expected);
-  const e3 = Math.abs(orbitR(2.5e-3) - expected);
-  assert.ok(e1 > e2, `e1=${e1} should > e2=${e2}`);
-  assert.ok(e2 > e3, `e2=${e2} should > e3=${e3}`);
+  const e1  = Math.abs(orbitR(1e-2)   - expected);
+  const e2  = Math.abs(orbitR(5e-3)   - expected);
+  const e3  = Math.abs(orbitR(2.5e-3) - expected);
+  const r12 = e1 / e2;
+  const r23 = e2 / e3;
+  assert.ok(r12 >= 12 && r12 <= 20,
+    `err ratio (dt→dt/2) = ${r12.toFixed(2)}, expected [12,20] (RK4 ~16)`);
+  assert.ok(r23 >= 12 && r23 <= 20,
+    `err ratio (dt/2→dt/4) = ${r23.toFixed(2)}, expected [12,20] (RK4 ~16)`);
 });
 
 // ── Vector-field test ──────────────────────────────────────────────────────

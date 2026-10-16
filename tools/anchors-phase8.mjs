@@ -270,7 +270,9 @@ for (const { A, label, expected } of cases) {
 }
 
 // RK4 verification: A=[[-1,-1],[1,-1]], x0=(1,0)
-// Exact: x(t) = e^{-t}(cos t, sin t), |x(2π)| = e^{-2π}
+// Exact closed form: x(t) = e^{-t}(cos t, sin t)  →  |x(t)| = e^{-t}
+//   (real eigenvalues: τ=-2, Δ=2, λ=-1±i; Re(λ)=-1 gives e^{-t} decay)
+// Therefore |x(2π)| = e^{-2π} exactly (tMax = 2π).
 function rk4Step(f, x, t, dt) {
   const k1 = f(x,t), k2 = f(x.map((v,i)=>v+dt/2*k1[i]), t+dt/2);
   const k3 = f(x.map((v,i)=>v+dt/2*k2[i]), t+dt/2);
@@ -349,6 +351,30 @@ row('N₂ →',                                  N2_par, 'K×(N₂₀/S)');
 const a12c=1.5, a21c=0.5, N1sC=(K1-a12c*K2)/(1-a12c*a21c), N2sC=(K2-a21c*K1)/(1-a12c*a21c);
 row('\nSp2 wins (α₁₂=1.5,α₂₁=0.5) N₁*',  N1sC, '= -200 (N₁<0 → sp2 wins)');
 
+// ── K1≠K2 case: K1=100, K2=50 ─────────────────────────────────────────────
+// K1/K2 = 2, K2/K1 = 0.5
+// Mutual invasibility: sp1 invades iff a12 < K1/K2=2; sp2 invades iff a21 < K2/K1=0.5
+const K1b=100, K2b=50;
+row('\nK1=100, K2=50: K1/K2', K1b/K2b, '= 2  (sp1 invasion threshold for a12)');
+row('K2/K1',                  K2b/K1b, '= 0.5 (sp2 invasion threshold for a21)');
+
+// case 1: coexistence (a12=1<2, a21=0.3<0.5)
+const co_N1 = (K1b - 1*K2b)/(1-1*0.3), co_N2 = (K2b - 0.3*K1b)/(1-1*0.3);
+row('\nCoexist (a12=1,a21=0.3) N1*',  co_N1, '> 0');
+row('Coexist N2*',                    co_N2, '> 0');
+
+// case 2: sp1-wins (a12=1<2, a21=0.8≥0.5): sp2 cannot invade
+row('\nSp1-wins (a12=1,a21=0.8): sp1 invades?', 1 < K1b/K2b ? 'yes(a12<2)':'no', 'sp2 invades?', 0.8 < K2b/K1b ? 'yes':'no(a21=0.8≥0.5)');
+
+// case 3: sp2-wins (a12=3≥2, a21=0.3<0.5): sp1 cannot invade
+row('Sp2-wins (a12=3,a21=0.3): sp1 invades?', 3 < K1b/K2b ? 'yes':'no(a12=3≥2)', '');
+
+// case 4: bistable (a12=3≥2, a21=0.8≥0.5): neither invades
+row('Bistable (a12=3,a21=0.8): neither invades', 3>=2 && 0.8>=0.5 ? 'correct':'error', '');
+
+// case 5: parallel (a12*a21=1): a12=2, a21=0.5 → 2×0.5=1
+row('Parallel (a12=2,a21=0.5): a12*a21', 2*0.5, '= 1 ✓');
+
 // ═══════════════════════════════════════════════════════════════════════
 // 7. PHARMACOKINETICS
 // ═══════════════════════════════════════════════════════════════════════
@@ -426,21 +452,21 @@ const N2s_t5 = (K2_t5 - a21_t5*K1_t5)/den_t5; // = 200/3
 row('N1* (K=100, a12=a21=0.5)', N1s_t5, '= 200/3 ≈ 66.667');
 row('N2*', N2s_t5, '= 200/3 ≈ 66.667');
 
-// Jacobian: J[i][j] with ri
-const J11 = -r1_t5 * N1s_t5 / K1_t5;          // -2/3
-const J12 = -r1_t5 * a12_t5 * N1s_t5 / K1_t5; // -1/3
-const J21 = -r2_t5 * a21_t5 * N2s_t5 / K2_t5; // -2/3
-const J22 = -r2_t5 * N2s_t5 / K2_t5;          // -4/3
-row('J11 = -r1·N1*/K1', J11, '= -2/3');
-row('J12 = -r1·a12·N1*/K1', J12, '= -1/3');
-row('J21 = -r2·a21·N2*/K2', J21, '= -2/3');
-row('J22 = -r2·N2*/K2', J22, '= -4/3');
+// Jacobian: J[i][j] with ri  (use _t5 suffix to avoid conflict with CE section above)
+const Jt5_11 = -r1_t5 * N1s_t5 / K1_t5;          // -2/3
+const Jt5_12 = -r1_t5 * a12_t5 * N1s_t5 / K1_t5; // -1/3
+const Jt5_21 = -r2_t5 * a21_t5 * N2s_t5 / K2_t5; // -2/3
+const Jt5_22 = -r2_t5 * N2s_t5 / K2_t5;          // -4/3
+row('J11 = -r1·N1*/K1', Jt5_11, '= -2/3');
+row('J12 = -r1·a12·N1*/K1', Jt5_12, '= -1/3');
+row('J21 = -r2·a21·N2*/K2', Jt5_21, '= -2/3');
+row('J22 = -r2·N2*/K2', Jt5_22, '= -4/3');
 
-const tau_t5  = J11 + J22;                       // -2
-const det_t5  = J11*J22 - J12*J21;               // 8/9 - 2/9 = 2/3
-const disc_t5 = tau_t5**2 - 4*det_t5;            // 4 - 8/3 = 4/3
-const lam1_t5 = (tau_t5 + Math.sqrt(disc_t5))/2; // -1 + 1/√3
-const lam2_t5 = (tau_t5 - Math.sqrt(disc_t5))/2; // -1 - 1/√3
+const tau_t5  = Jt5_11 + Jt5_22;                       // -2
+const det_t5  = Jt5_11*Jt5_22 - Jt5_12*Jt5_21;        // 8/9 - 2/9 = 2/3
+const disc_t5 = tau_t5**2 - 4*det_t5;                  // 4 - 8/3 = 4/3
+const lam1_t5 = (tau_t5 + Math.sqrt(disc_t5))/2;       // -1 + 1/√3
+const lam2_t5 = (tau_t5 - Math.sqrt(disc_t5))/2;       // -1 - 1/√3
 row('\nτ = J11+J22', tau_t5, '= -2 (exact)');
 row('Δ = det(J)', det_t5, '= 2/3 (exact)');
 row('disc = τ²-4Δ', disc_t5, '= 4/3 (exact)');

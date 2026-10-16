@@ -56,14 +56,18 @@ export class CompetitiveExclusionModel {
   }
 
   /**
-   * Qualitative outcome based on single-species equilibrium stability.
+   * Qualitative outcome via mutual-invasibility criterion (valid for all K1, K2).
    *
-   * (K1, 0) is stable (sp1-wins) iff a21 > K2/K1   [sp2 cannot invade sp1's niche]
-   * (0, K2) is stable (sp2-wins) iff a12 > K1/K2   [sp1 cannot invade sp2's niche]
+   * sp1 invades (0,K2) iff a12 < K1/K2   → sp1 can grow when rare in sp2's territory
+   * sp2 invades (K1,0) iff a21 < K2/K1   → sp2 can grow when rare in sp1's territory
    *
-   * This avoids the sign-of-N* pitfall when α₁₂·α₂₁ > 1 and the interior
-   * equilibrium is in a mixed-sign quadrant (e.g. a12=0.75, a21=1.5, K=K:
-   * N1*<0 but sp1 wins because a21>1 yet a12<1).
+   * coexistence = both invade; sp1-wins = only sp1 invades; sp2-wins = only sp2;
+   * bistable = neither invades (both single-species equilibria locally stable).
+   *
+   * This is equivalent to the single-species equilibrium stability check but
+   * avoids the N*-sign pitfall: when α₁₂·α₂₁ > 1 the interior N* can be in a
+   * mixed-sign quadrant even though exactly one species wins (e.g. K=K,
+   * a12=0.75, a21=1.5: N1*<0 but sp1 wins because a12<1 and a21>1).
    *
    * @returns {'coexistence'|'sp1-wins'|'sp2-wins'|'bistable'|'parallel'|'unknown'}
    */
@@ -71,12 +75,14 @@ export class CompetitiveExclusionModel {
     const { a12, a21, K1, K2 } = this;
     const prod = a12 * a21;
     if (Math.abs(1 - prod) < 1e-12) return 'parallel';
-    // Single-species equilibrium stability (invasion criterion)
-    const sp1stable = a21 > K2 / K1;  // (K1,0) stable: sp2 invasion rate < 0
-    const sp2stable = a12 > K1 / K2;  // (0,K2) stable: sp1 invasion rate < 0
-    if (!sp1stable && !sp2stable) return 'coexistence';
-    if ( sp1stable && !sp2stable) return 'sp1-wins';
-    if (!sp1stable &&  sp2stable) return 'sp2-wins';
+    // Mutual-invasibility criterion (Chesson 1990 / Lotka-Volterra theory):
+    //   sp1 can invade (0,K2) iff r1(1 − a12·K2/K1) > 0  ⟺  a12 < K1/K2
+    //   sp2 can invade (K1,0) iff r2(1 − a21·K1/K2) > 0  ⟺  a21 < K2/K1
+    const sp1invades = a12 < K1 / K2;  // sp1 can invade sp2's equilibrium
+    const sp2invades = a21 < K2 / K1;  // sp2 can invade sp1's equilibrium
+    if ( sp1invades &&  sp2invades) return 'coexistence';
+    if ( sp1invades && !sp2invades) return 'sp1-wins';
+    if (!sp1invades &&  sp2invades) return 'sp2-wins';
     return 'bistable';
   }
 

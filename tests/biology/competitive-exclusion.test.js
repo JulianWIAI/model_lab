@@ -160,17 +160,20 @@ test('grid sweep: formula outcome matches RK4 for all deterministic α pairs', (
 
 // ── dt-halving convergence ─────────────────────────────────────────────────
 
-test('coexistence dt-halving: |N₁(10) − N₁_fine| decreases as dt halves', () => {
-  // At t=100 all step sizes reach machine-precision of equilibrium — use t=10 (transient)
-  // Reference: fine-step integration with dt=0.001 (4000 steps at this tMax)
+test('coexistence dt-halving: error ratio in [12,20] (RK4 Richardson)', () => {
+  // RK4 is O(dt⁴): halving dt reduces error by factor ~16; accept [12,20].
+  // At t=100 all step sizes reach machine-precision — use t=10 (transient).
+  // Reference: fine-step dt=0.001.
   const m = new CompetitiveExclusionModel({ K1: 100, K2: 100, a12: 0.5, a21: 0.5 });
   function n1(dt) { return m.trajectory([10, 10], 10, dt).pop().N1; }
-  const ref = n1(0.001);
-  const e1 = Math.abs(n1(0.4) - ref);
-  const e2 = Math.abs(n1(0.2) - ref);
-  const e3 = Math.abs(n1(0.1) - ref);
-  assert.ok(e1 > e2, `error not decreasing: e1=${e1}, e2=${e2}`);
-  assert.ok(e2 > e3, `error not decreasing: e2=${e2}, e3=${e3}`);
+  const ref  = n1(0.001);
+  const e1   = Math.abs(n1(0.4) - ref);
+  const e2   = Math.abs(n1(0.2) - ref);
+  const e3   = Math.abs(n1(0.1) - ref);
+  const r12  = e1 / e2;
+  const r23  = e2 / e3;
+  assert.ok(r12 >= 12 && r12 <= 20, `ratio12=${r12.toFixed(2)}, expected [12,20] (RK4 ~16)`);
+  assert.ok(r23 >= 12 && r23 <= 20, `ratio23=${r23.toFixed(2)}, expected [12,20] (RK4 ~16)`);
 });
 
 // ── T-5: Jacobian eigenvalues for r1≠r2 ────────────────────────────────────
@@ -237,6 +240,53 @@ test('α21=0: trajectory → N2 converges to K2, independent of N1 ±1%', () => 
   const traj = m.trajectory([50, 10], 200, 0.5);
   const last = traj[traj.length - 1];
   assert.ok(Math.abs(last.N2 - 80) < 0.8, `N2=${last.N2}, expected≈80`);
+});
+
+// ── K1≠K2 outcome grid: K1=100, K2=50 ────────────────────────────────────
+// K1/K2 = 2, K2/K1 = 0.5; invasion criteria become a12 < 2 and a21 < 0.5.
+// All five outcomes exercised; non-bistable cases verified with long-run RK4
+// from two initial conditions.
+//
+// Independent derivation in tools/anchors-phase8.mjs (K1≠K2 section).
+
+test('K1≠K2 outcomes (K1=100, K2=50): all five cases + RK4 verification', () => {
+  const K1 = 100, K2 = 50;
+  // Threshold: sp1 invades iff a12 < K1/K2=2; sp2 invades iff a21 < K2/K1=0.5
+
+  // 1. Coexistence: both invade (a12=1<2, a21=0.3<0.5)
+  const mCo = new CompetitiveExclusionModel({ K1, K2, a12: 1, a21: 0.3 });
+  assert.strictEqual(mCo.outcome, 'coexistence');
+  for (const ic of [[10, 5], [40, 20]]) {
+    const { N1, N2 } = mCo.trajectory(ic, 300, 0.5).pop();
+    assert.ok(N1 > 1 && N2 > 1,
+      `coexist from ${ic}: N1=${N1.toFixed(2)}, N2=${N2.toFixed(2)}`);
+  }
+
+  // 2. sp1-wins: sp1 invades (a12=1<2), sp2 does not (a21=0.8≥0.5)
+  const mS1 = new CompetitiveExclusionModel({ K1, K2, a12: 1, a21: 0.8 });
+  assert.strictEqual(mS1.outcome, 'sp1-wins');
+  for (const ic of [[10, 5], [40, 20]]) {
+    const { N1, N2 } = mS1.trajectory(ic, 400, 0.5).pop();
+    assert.ok(N1 > 1 && N2 < 1,
+      `sp1-wins from ${ic}: N1=${N1.toFixed(2)}, N2=${N2.toFixed(2)}`);
+  }
+
+  // 3. sp2-wins: sp2 invades (a21=0.3<0.5), sp1 does not (a12=3≥2)
+  const mS2 = new CompetitiveExclusionModel({ K1, K2, a12: 3, a21: 0.3 });
+  assert.strictEqual(mS2.outcome, 'sp2-wins');
+  for (const ic of [[10, 5], [40, 20]]) {
+    const { N1, N2 } = mS2.trajectory(ic, 400, 0.5).pop();
+    assert.ok(N2 > 1 && N1 < 1,
+      `sp2-wins from ${ic}: N1=${N1.toFixed(2)}, N2=${N2.toFixed(2)}`);
+  }
+
+  // 4. bistable: neither invades (a12=3≥2, a21=0.8≥0.5)
+  const mBi = new CompetitiveExclusionModel({ K1, K2, a12: 3, a21: 0.8 });
+  assert.strictEqual(mBi.outcome, 'bistable');
+
+  // 5. equality boundary / parallel nullclines: a12*a21=1 (slopes equal)
+  const mPar = new CompetitiveExclusionModel({ K1, K2, a12: 2, a21: 0.5 });
+  assert.strictEqual(mPar.outcome, 'parallel');
 });
 
 // ── RangeError validation ──────────────────────────────────────────────────
