@@ -59,6 +59,13 @@ Rules that keep this scalable:
 - **R6 Status words.** Per bench, "formulas" and "data" are separate. "checked by independent test" is allowed only once the test exists and passes.
 - **R7 Reports.** No claim without evidence. Corrections are reported as a table: anchor → file → test name.
 - **R8 Anchor disagreements.** If an anchor in the prompt looks wrong, stop and report the discrepancy before implementing.
+- **R9 Visual checks.** `npm run smoke` is the visual regression check.
+  - Before each bench commit: `npm run smoke -- --bench <id>`; the catalog entry is part of that commit.
+  - Any commit touching `js/core`, `js/ui`, theme tokens, or CSS: full `npm run smoke`.
+  - End of a phase: full run; put the counts per failure type in the phase report.
+  - The full run must finish in under 3 minutes (measured: ~10–12 s at 56 benches). If it is slower, fix the speed before building anything else.
+  - `tests/theme-tokens.test.js` and `tests/no-hardcoded-colours.test.js` run in `npm test`.
+  - Never claim a visual result without a smoke run or a screenshot. If no browser is available, write "not run in a browser".
 
 ## Every bench must have
 
@@ -71,6 +78,9 @@ Rules that keep this scalable:
 
 ```
 npm test                        # runs node --test on tests/ (no dependencies)
+npm run smoke                   # visual regression: 56 benches × 4 viewports (~10 s)
+npm run smoke -- --bench <id>   # single bench (light/1280 + dark/400 only)
+npm run smoke -- --sheet        # also writes per-subject contact-sheet PNGs
 python -m http.server 8000      # serve locally, then open http://localhost:8000
 ```
 
