@@ -142,3 +142,79 @@ test('overdamped: RK4 vs closed-form < 1e-7 rel', () => {
     `overdamped RK4=${Vc_rk4}, formula=${Vc_formula}, err=${Math.abs(Vc_rk4 - Vc_formula)}`,
   );
 });
+
+// --- Critical damping regime ---
+// R_crit = 2√(L/C) = 20√10 ≈ 63.246 Ω for L=1mH, C=1µF
+const R_crit = 2 * Math.sqrt(L / C);  // 20√10
+
+test('critical: V_C(0) = 0', () => {
+  const mc = new LCOscillatorModel({ R: R_crit, L, C });
+  assert.strictEqual(mc.stepResponseVc(0), 0);
+});
+
+test('I(0) = 0 in all three damping regimes (from simulate initial point)', () => {
+  // simulate() always starts with {t:0, Vc:0, I:0}; assert this holds for all regimes
+  const underdamped = new LCOscillatorModel({ R, L, C });
+  const critical = new LCOscillatorModel({ R: R_crit, L, C });
+  const overdamped = new LCOscillatorModel({ R: 200, L: 1e-3, C: 1e-6 });
+  assert.strictEqual(underdamped.simulate(1e-4, 10)[0].I, 0);
+  assert.strictEqual(critical.simulate(1e-4, 10)[0].I, 0);
+  assert.strictEqual(overdamped.simulate(1e-4, 10)[0].I, 0);
+});
+
+test('critical: V_C(1/α) = 1 − 2/e = 0.26424111765711533 ±1e-12 abs', () => {
+  // V_C(t) = 1 − (1 + α·t)·e^{−α·t}; at t=1/α: V_C = 1 − 2·e^{−1} = 1 − 2/e
+  const mc = new LCOscillatorModel({ R: R_crit, L, C });
+  const alpha = mc.alpha();
+  const t = 1 / alpha;
+  const expected = 1 - 2 / Math.E;  // 0.26424111765711533
+  assert.ok(
+    Math.abs(mc.stepResponseVc(t) - expected) < 1e-12,
+    `V_C(1/α)=${mc.stepResponseVc(t)}, expected=${expected}`,
+  );
+});
+
+test('critical: step response is continuous at R_crit ±1e-6 rel — |ΔV_C| < 1e-8 abs', () => {
+  // Near-critical regimes should give nearly identical V_C at t = 1/ω₀
+  const eps = 1e-6;
+  const t = 1 / (R_crit / (2 * L));  // t = 1/α_crit = 1/ω₀
+  const mUnder = new LCOscillatorModel({ R: R_crit * (1 - eps), L, C });
+  const mOver  = new LCOscillatorModel({ R: R_crit * (1 + eps), L, C });
+  const diff = Math.abs(mUnder.stepResponseVc(t) - mOver.stepResponseVc(t));
+  assert.ok(diff < 1e-6, `|V_C_under − V_C_over| = ${diff}`);
+});
+
+// --- Frequency response ---
+
+test('peak gain |H_C(ωC)| = ω₀²/(2α·ωd) = 10/√9.75 ±1e-10 rel', () => {
+  // H_C(ωC) = ω₀²/(2α·√(ω₀²−α²)); for our params = 10/√9.75 = 3.2025630761...
+  const m = new LCOscillatorModel({ R, L, C });
+  const wC = m.omegaVcPeak();
+  const gain = m.frequencyResponse(wC);
+  const expected = 10 / Math.sqrt(9.75);  // ω₀²/(2α·ωd), independent derivation
+  assert.ok(
+    Math.abs(gain / expected - 1) < 1e-10,
+    `gain=${gain}, expected=${expected}`,
+  );
+});
+
+test('half-power frequencies: ω₂−ω₁ = R/L and ω₁×ω₂ = ω₀² (bisection, ±1e-6 abs)', () => {
+  // Half-power for current response: |ωL − 1/(ωC)| = R
+  // Lower ω₁: 1/(ωC) − ωL = R  →  fLo(ω)=0
+  // Upper ω₂: ωL − 1/(ωC) = R  →  fHi(ω)=0
+  // Properties (exact): ω₂−ω₁ = R/L,  ω₁·ω₂ = ω₀² = 1/LC
+  const m  = new LCOscillatorModel({ R, L, C });
+  const w0 = m.omega0();
+  const fLo = (w) => 1 / (w * C) - w * L - R;
+  const fHi = (w) => w * L - 1 / (w * C) - R;
+  // Bisect ω₁ in (1, ω₀)
+  let lo = 1, hi = w0, mid;
+  for (let i = 0; i < 100; i++) { mid = (lo + hi) / 2; if (fLo(mid) > 0) lo = mid; else hi = mid; }
+  const w1 = (lo + hi) / 2;
+  // Bisect ω₂ in (ω₀, 10·ω₀)
+  lo = w0; hi = 10 * w0;
+  for (let i = 0; i < 100; i++) { mid = (lo + hi) / 2; if (fHi(mid) < 0) lo = mid; else hi = mid; }
+  const w2 = (lo + hi) / 2;
+  assert.ok(Math.abs(w2 - w1 - R / L) < 1e-6,      `w2−w1=${w2-w1}, R/L=${R/L}`);
+  assert.ok(Math.abs(w1 * w2 - w0 * w0) < 1e-6,    `w1×w2=${w1*w2}, w0²=${w0*w0}`);
+});
