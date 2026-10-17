@@ -88,7 +88,7 @@ export class WilsonCowanModel {
       state[0] = Math.max(0, Math.min(1, state[0]));
       state[1] = Math.max(0, Math.min(1, state[1]));
       t += dt;
-      if (k % 10 === 0) traj.push({t, E: state[0], I: state[1]});
+      if (k % 10 === 0 || k === n - 1) traj.push({t, E: state[0], I: state[1]});
     }
     return traj;
   }

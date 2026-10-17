@@ -33,8 +33,9 @@ test('Default: 3 fixed points with correct stability types AND positions', () =>
   const types = fps.map(fp => m.stability(fp.E, fp.I).type);
   assert.ok(types.includes('stable-node') || types.includes('stable-spiral'));
   assert.ok(types.includes('saddle'));
-  // Check positions ±1e-4 (exact values from Newton iteration on default params)
-  const tol = 1e-4;
+  // FP found by Newton's method with tolerance ~1e-12 (loop breaks when |f1|,|f2| < 1e-12);
+  // position accurate to ~1e-9 after convergence. Assert ±1e-6 (1000× safety margin).
+  const tol = 1e-6;
   // FP0: stable-node near (0.00254, 0.000568)
   assert.ok(Math.abs(fps[0].E - 0.00254328616) < tol, `FP0.E=${fps[0].E}`);
   assert.ok(Math.abs(fps[0].I - 0.00056779451) < tol, `FP0.I=${fps[0].I}`);
@@ -75,8 +76,11 @@ test('Saddle test: perturbation grows > 0.1', () => {
 });
 
 test('Saddle instability: perturbation along unstable eigenvector grows exponentially', () => {
-  // For default params, saddle at ~(0.578, 0.155), lambda+ ≈ 1.506
-  // Perturb ε along unstable eigenvector v+; at t=0.1, dist ≈ ε·e^{λ+·t}
+  // For default params, saddle at ~(0.578, 0.155), λ₊ ≈ 1.506.
+  // Perturb ε=0.001 along unstable eigenvector v₊; after t=0.1:
+  //   expected distance = ε·e^{λ₊·t} ≈ 0.001·e^{1.506·0.1} ≈ 0.001·1.1626 ≈ 1.163e-3.
+  // Assert actual deviation > 0.5×expected (50% lower bound, ~3× SE equivalent).
+  // Assert actual deviation < 2.0×expected (upper bound for nonlinear corrections).
   const m = new WilsonCowanModel();
   const fps = m.fixedPoints().sort((a,b) => a.E - b.E);
   const fp = fps.find(fp => m.stability(fp.E, fp.I).type === 'saddle');
@@ -212,30 +216,31 @@ test('Nullclines: 10 points verified +/-1e-6', () => {
   assert.ok(checked >= 5, `Only checked ${checked} E-nullcline points`);
 });
 
-test('dt-halving: RK4 is 4th-order accurate (limit-cycle preset)', () => {
-  // Use limit-cycle preset (wEE=8.5) to keep trajectory in non-trivial dynamics
-  // With dt ratio of 4, RK4 should give error ratio of 4^4=256; allow range [8, 32]
+test('dt-halving: RK4 is 4th-order on Hopf-point preset (ratio in [12,20])', () => {
+  // Bug in previous version: run(E0,I0,tMax,dt) recorded only every 10th step, so the last
+  // recorded state was at t = floor((n-1)/10)*10 + 1)*dt — different for each dt. The "error"
+  // was therefore a finite-difference of the trajectory (ratio ~4 ≈ derivative ratio), not a
+  // truncation error ratio.  Fix: run() now also records the final step (k===n-1), so all
+  // three runs end at the same physical time T_end regardless of step size.
+  //
+  // Hopf-point preset: wEE=8, tr=0, det=2, ω=√2; period 2π/√2≈4.44.
+  // T_end=0.5 ≈ 11% of period — short enough that nonlinear accumulation is negligible.
+  // dt/2 halving: dt1=0.02→dt2=0.01; RK4 local error O(dt^5); global error O(dt^4);
+  // ratio = (dt1/dt2)^4 = 2^4 = 16, expected range [12, 20].
   const m = new WilsonCowanModel({
-    wEE: 8.5, wEI: 4, wIE: 12, wII: 0,
+    wEE: 8, wEI: 4, wIE: 12, wII: 0,
     tauE: 1, tauI: 1, PE: 2, PI: -2,
     rE: 0, rI: 0, kappa: 1, thetaS: 4,
   });
-  const E0 = 0.3, I0 = 0.3, tMax = 1;
-  // Reference with very fine dt
-  const ref  = m.run(E0, I0, tMax, 0.0001);
+  const E0 = 0.45, I0 = 0.45, T_end = 0.5;
+  const dt1 = 0.02, dt2 = 0.01, dtRef = 0.0001;
+  const ref   = m.run(E0, I0, T_end, dtRef);
+  const traj1 = m.run(E0, I0, T_end, dt1);
+  const traj2 = m.run(E0, I0, T_end, dt2);
   const eRef = ref[ref.length - 1].E;
-  const traj1 = m.run(E0, I0, tMax, 0.02);
-  const traj2 = m.run(E0, I0, tMax, 0.005);
-  const e1 = traj1[traj1.length - 1].E;
-  const e2 = traj2[traj2.length - 1].E;
-  const err1 = Math.abs(e1 - eRef);
-  const err2 = Math.abs(e2 - eRef);
+  const err1 = Math.abs(traj1[traj1.length - 1].E - eRef);
+  const err2 = Math.abs(traj2[traj2.length - 1].E - eRef);
   const ratio = err1 / err2;
-  // RK4: global error O(dt^4) so 4× dt reduction → ~4^4=256× smaller error asymptotically.
-  // In practice on this limit-cycle trajectory, accumulated non-linear effects reduce
-  // the observed ratio to [2, 32]. Verify err1 >> err2 at minimum factor 2.
-  assert.ok(err1 > err2 * 2,
-    `dt-halving: err(dt=0.02)=${err1.toExponential(3)}, err(dt=0.005)=${err2.toExponential(3)}, ratio=${ratio.toFixed(2)} < 2`);
-  assert.ok(ratio < 32,
-    `dt-halving: ratio=${ratio.toFixed(2)} > 32 (unexpected for RK4 on non-constant dynamics)`);
+  assert.ok(ratio > 12 && ratio < 20,
+    `RK4 dt-halving: err(dt=0.02)=${err1.toExponential(3)}, err(dt=0.01)=${err2.toExponential(3)}, ratio=${ratio.toFixed(2)} expected [12,20]`);
 });
