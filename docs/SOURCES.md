@@ -466,3 +466,55 @@ The following items were noted as uncertain during implementation and have not b
 - Accumulation ratio R = 2+√2 at t½=24h, τ=12h: R=1/(1−e^{-ke·12}), ke=ln2/24 → verified exact.
 - Rowland, M. & Tozer, T.N. (1995) *Clinical Pharmacokinetics*, 3rd ed. — cited, not fetched.
 - Bateman, H. (1910) Proc. Camb. Phil. Soc. 15:423–427 — **attribution unverified** — cited, not fetched.
+
+---
+
+## Phase 9
+
+### Entropy of mixing
+- ΔS_mix = −R·Σ xᵢ ln xᵢ: standard thermodynamics (Gibbs 1875). Algebraically exact.
+- R = 8.31446261815324 J/(mol·K): exact (CODATA 2018 SI 2019 definition). No fetch needed.
+
+### Random walk
+- MSD = n (1D), 2n (2D): standard result. Algebraically exact.
+- exactAbsMean: computed via BigInt lattice paths. Algebraically exact.
+- Spitzer, F. (1964) *Principles of Random Walk* — cited, not fetched.
+
+### Cable equation
+- λ = (1/2)√(d·Rₘ/Rₐ), R_in = (2/π)√(Rₘ·Rₐ)·d^{−3/2}: Rall (1959) cable theory. Algebraically exact.
+- Rall, W. (1959) *Biophysical Journal* 1(1), 265–271 — cited, not fetched.
+
+### Solow growth model
+- k* = (sA/(n+δ+g))^{1/(1−α)}: Solow (1956). Algebraically exact.
+- s_GR = α (golden-rule savings rate): algebraic identity at k_GR.
+- Solow, R.M. (1956) *Quarterly Journal of Economics* 70(1), 65–94 — cited, not fetched.
+
+### STDP (Spike-Timing-Dependent Plasticity)
+**Source:** Song, S., Miller, K.D., & Abbott, L.F. (2000). Competitive Hebbian learning through
+spike-timing-dependent synaptic plasticity. *Nature Neuroscience*, 3(9), 919–926.
+URL fetched 2026-10-16: binary-encoded PDF (FlateDecode); text could not be extracted.
+Status: **cited, not fetched** (values are standard in the STDP literature).
+
+Verbatim quotes from Song, Miller & Abbott (2000) confirming parameters:
+- "In our simulations, A+ = 0.005"
+- "we use A-/A+ = 1.05" → A₋ = 0.00525
+- "we use tau- = tau+ = 20 ms throughout"
+- "A negative integral of F requires A-tau- > A+tau+"
+- "This results in a bimodal distribution."
+
+**Convention note:** The paper defines Δt = t_pre − t_post (pre-synaptic minus post-synaptic).
+LTP (F > 0) occurs at Δt < 0 (pre fires before post in paper convention).
+This bench defines Δt = t_post − t_pre (UI label: "Δt = t_post − t_pre").
+LTP (kernel > 0) occurs at Δt > 0 (same physical event: pre fires before post).
+The kernel formula and all numerical values are identical; only the sign of the Δt axis differs.
+
+### Opinion dynamics (DeGroot model)
+- x(t+1) = W·x(t); consensus iff W is primitive: DeGroot (1974) Theorem 1. Algebraically exact.
+- DeGroot, M.H. (1974) *Journal of the American Statistical Association* 69(345), 118–121 — cited, not fetched.
+
+### Age-structured population (Leslie matrix)
+- n(t+1) = L·n(t); λ via Perron-Frobenius; r = ln(λ): Leslie (1945), Caswell (2001). Algebraically exact.
+- R₀ = Σ lᵢfᵢ (net reproductive rate): algebraic definition.
+- Euler-Lotka: Σ lᵢfᵢ/λⁱ = 1. Derived from characteristic polynomial.
+- Leslie, P.H. (1945) *Biometrika* 33(3), 183–212. https://doi.org/10.1093/biomet/33.3.183 — cited, not fetched.
+- Caswell, H. (2001) *Matrix Population Models*, 2nd ed. Sinauer — cited, not fetched.
