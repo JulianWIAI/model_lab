@@ -961,6 +961,23 @@ export const catalog = [
         ],
       },
       {
+        id: 'finance',
+        name: 'Finance',
+        benches: [
+          {
+            id: 'options-pricing',
+            navLabel: 'Black-Scholes',
+            level: 'graduate',
+            keywords: ['Black-Scholes', 'options', 'call', 'put', 'delta', 'volatility',
+                       'put-call parity', 'finance', 'derivatives'],
+            load: () =>
+              import('./benches/economics/finance/options-pricing/OptionsPricingBench.js').then(
+                (m) => m.OptionsPricingBench,
+              ),
+          },
+        ],
+      },
+      {
         id: 'game-theory',
         name: 'Game Theory',
         benches: [
