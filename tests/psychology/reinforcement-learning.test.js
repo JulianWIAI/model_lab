@@ -2,13 +2,6 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { RLModel } from '../../js/benches/psychology/learning/reinforcement-learning/RLModel.js';
 
-test('V*(s0)=1 for 2-state MDP ±1e-12', () => {
-  const m = new RLModel({ states: [0, 1], actions: ['go'], gamma: 0.9, alpha: 0.1, epsilon: 0 });
-  m.setQ(0, 'go', 1);
-  const td = m.tdError(0, 'go', 1, 1, true);
-  assert.ok(Math.abs(td) < 1e-12, `tdError=${td}`);
-});
-
 test('TD error at Q* = 0 ±1e-14', () => {
   const m = new RLModel({ states: [0, 1], actions: ['go'], gamma: 0.9, alpha: 0.1, epsilon: 0 });
   m.setQ(0, 'go', 1);
@@ -43,17 +36,19 @@ test('P(reach 8 before 0, start=2) = 1/4 exactly', () => {
   assert.ok(2 / 8 === 0.25);
 });
 
-test('V*(γ=0.9, start=2, via +10) = 0.9^6·10 = 5.31441 ±1e-10', () => {
-  const V = 0.9 ** 6 * 10;
-  assert.ok(Math.abs(V - 5.31441) < 1e-10, `V=${V}`);
+test('V*(γ=0.9, start=2, via +10) = 0.9^5·10 = 5.9049 ±1e-10', () => {
+  const V = 0.9 ** 5 * 10;
+  assert.ok(Math.abs(V - 5.9049) < 1e-10, `V=${V}`);
 });
 
 test('prefer +10 when γ=0.9 > γ*', () => {
-  assert.ok(0.9 ** 6 * 10 > 0.9 ** 2 * 1);
+  // Q*(2,'right')=γ⁵·10 vs Q*(2,'left')=γ¹·1
+  assert.ok(0.9 ** 5 * 10 > 0.9 ** 1 * 1);
 });
 
 test('prefer +1 when γ=0.5 < γ*', () => {
-  assert.ok(0.5 ** 6 * 10 < 0.5 ** 2);
+  // Q*(2,'right')=γ⁵·10 < Q*(2,'left')=γ¹·1 when γ < γ*
+  assert.ok(0.5 ** 5 * 10 < 0.5 ** 1 * 1);
 });
 
 test('Q-learning converges to Q* on corridor ±0.5', () => {

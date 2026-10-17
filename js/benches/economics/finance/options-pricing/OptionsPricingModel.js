@@ -14,7 +14,7 @@
  */
 
 function erf(x) {
-  if (Math.abs(x) > 6) return x > 0 ? 1 : -1;
+  if (Math.abs(x) > 4) return x > 0 ? 1 : -1;  // |1-erf(4)| < 3e-8; safe early exit
   let sum = 0, term = x, n = 0;
   while (Math.abs(term) > 1e-17 && n < 200) {
     sum += term;

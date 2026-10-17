@@ -9,7 +9,7 @@
  *
  * Discount threshold:
  *   γ* = 10^{−1/4} ≈ 0.5623 — below this the agent prefers +1 (closer),
- *   above this it prefers +10 (further). Derivation: γ⁶·10 = γ²·1 → γ = 10^{−1/4}.
+ *   above this it prefers +10 (further). Derivation: γ⁵·10 = γ¹·1 → γ⁴ = 0.1 → γ = 10^{−1/4}.
  *
  * Gambler's ruin: unbiased walk, start=2, barriers 0 and 8:
  *   P(reach 8 first) = 2/8 = 1/4.
@@ -103,30 +103,6 @@ export class RLModel {
   tdError(s, a, r, sNext, terminal = false) {
     const maxQ = terminal ? 0 : Math.max(...this.actions.map(a2 => this.Q(sNext, a2)));
     return r + this.gamma * maxQ - this.Q(s, a);
-  }
-
-  /**
-   * Bellman error: max over all (s,a) of |Q(s,a) - [r + γ·max Q(s',a')]|.
-   * Returns 0 if no Q-values are set.
-   */
-  bellmanError() {
-    const keys = Object.keys(this._Q);
-    if (keys.length === 0) return 0;
-    let maxErr = 0;
-    for (const key of keys) {
-      const [sStr, a] = key.split(',');
-      const s = isNaN(Number(sStr)) ? sStr : Number(sStr);
-      const q = this._Q[key];
-      // We don't have transition dynamics stored; compute error as
-      // |Q(s,a) - 0 - gamma*max Q(s')|  where s' is inferred from action
-      // For corridor: s' = s+1 (right) or s-1 (left)
-      // Since we don't know the MDP transitions here, use stored Q values
-      // and compute the max over all known next states
-      const maxNextQ = Math.max(...this.actions.map(a2 => this.Q(s, a2)));
-      const err = Math.abs(q - this.gamma * maxNextQ);
-      if (err > maxErr) maxErr = err;
-    }
-    return maxErr;
   }
 
   /**

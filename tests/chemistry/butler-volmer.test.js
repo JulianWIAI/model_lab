@@ -60,17 +60,17 @@ test('Tafel limit: cathodic/anodic fraction < 1e-4 at η=0.5V', () => {
     `tafelApprox=${m.tafelApprox(eta)}, BV=${m.current(eta)}`);
 });
 
-test('log10(i/i0) at η=b = 0.9956351945975499 ±0.01 abs', () => {
+test('log10(i/i0) at η=b = 0.9956351945975499 ±1e-10 abs', () => {
   const m = new ButlerVolmerModel({ alpha: 0.5, T_K, i0: 1 });
   const b = m.tafelSlope();
   const logI = Math.log10(m.currentNorm(b));
   const expected = 0.9956351945975499;
-  assert.ok(Math.abs(logI - expected) < 0.01,
+  assert.ok(Math.abs(logI - expected) < 1e-10,
     `log10(i/i0 at η=b)=${logI}, expected≈${expected}`);
 });
 
 test('2·sinh(ln10) = 9.9 exactly', () => {
-  // Verifies the exact sinh formula at η=b: i/i0 = 2·sinh(ln10/2) = 9.900...
+  // Verifies the exact sinh formula at η=b: i/i0 = 2·sinh(ln10) = 9.900...
   // and confirms the mathematical identity 2·sinh(ln10) = 9.9 to 1e-13
   assert.ok(Math.abs(2 * Math.sinh(Math.log(10)) - 9.9) < 1e-13,
     `2·sinh(ln10)=${2 * Math.sinh(Math.log(10))}`);

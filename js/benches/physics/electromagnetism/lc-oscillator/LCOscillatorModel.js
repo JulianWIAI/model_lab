@@ -9,7 +9,7 @@
  * Step response (unit step V_in, V_C(0)=0, I(0)=0):
  *   Underdamped: V_C(t) = 1 − e^(−αt)[cos(ωd·t) + (α/ωd)·sin(ωd·t)]
  *   Critical:    V_C(t) = 1 − (1 + α·t)·e^(−αt)
- *   Overdamped:  V_C(t) = 1 + [s₂·e^(s₁t) − s₁·e^(s₂t)] / (s₂ − s₁)
+ *   Overdamped:  V_C(t) = 1 + [s₂·e^(s₁t) − s₁·e^(s₂t)] / (s₁ − s₂)
  *                         where s₁,₂ = −α ± √(α²−ω₀²)
  *
  * References: Heaviside (1894); Landau & Lifshitz, Mechanics §22.
@@ -112,8 +112,8 @@ export class LCOscillatorModel {
     const sq = Math.sqrt(a * a - w0 * w0);
     const s1 = -a + sq;   // less negative
     const s2 = -a - sq;   // more negative
-    // V_C(t) = V0 · [1 + (s2·e^(s1·t) − s1·e^(s2·t)) / (s2 − s1)]
-    return V0 * (1 + (s2 * Math.exp(s1 * t) - s1 * Math.exp(s2 * t)) / (s2 - s1));
+    // V_C(t) = V0 · [1 + (s2·e^(s1·t) − s1·e^(s2·t)) / (s1 − s2)]
+    return V0 * (1 + (s2 * Math.exp(s1 * t) - s1 * Math.exp(s2 * t)) / (s1 - s2));
   }
 
   /**

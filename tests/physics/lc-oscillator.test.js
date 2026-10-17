@@ -124,3 +124,21 @@ test('dampingRegime = underdamped for R=10', () => {
   const m = new LCOscillatorModel({ R, L, C });
   assert.strictEqual(m.dampingRegime(), 'underdamped');
 });
+
+test('overdamped: stepResponseVc(0) = 0', () => {
+  const m = new LCOscillatorModel({ R: 200, L: 1e-3, C: 1e-6 });
+  assert.strictEqual(m.stepResponseVc(0), 0);
+});
+
+test('overdamped: RK4 vs closed-form < 1e-7 rel', () => {
+  // R=200Ω, L=1mH, C=1µF — overdamped; α=100000, ω₀=31623
+  const m = new LCOscillatorModel({ R: 200, L: 1e-3, C: 1e-6 });
+  const tEnd = 5e-5;  // 50µs — well within settling
+  const pts = m.simulate(tEnd, 500);
+  const Vc_rk4 = pts[pts.length - 1].Vc;
+  const Vc_formula = m.stepResponseVc(tEnd);
+  assert.ok(
+    Math.abs(Vc_rk4 - Vc_formula) < 1e-7,
+    `overdamped RK4=${Vc_rk4}, formula=${Vc_formula}, err=${Math.abs(Vc_rk4 - Vc_formula)}`,
+  );
+});
