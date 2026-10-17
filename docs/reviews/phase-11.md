@@ -8,52 +8,62 @@
 |---|---|---|---|
 | phase-10c | 0b68143 | 982 | Phase 11 true baseline |
 | phase-11 | 191d793 | 1061 | Phase 11 complete (+79 tests, 8 benches) |
-| phase-11b | 74423d3 | 1071 | Phase 11b fix pass (+10 tests) |
+| phase-11b | 3bd0c37 | 1071 | Phase 11b fix pass (+10 tests) |
+| phase-11c | (HEAD) | 1080 | Phase 11c fix pass (+9 tests, girth+tolerances) |
 
-Push status: pending user approval
+### Tests added (phase-11 through phase-11c)
 
-Note: the runner reports 1061 tests at the end of Phase 11 (start of session was also 1061 — Phase 11 is already committed on `main`). Phase-11b adds 10 tests from fix/tighten pass.
-
-### Tests added this phase
-
-| Bench | Tests added | Cumulative |
+| Bench / file | Tests at phase-11c | Delta from 982 |
 |---|---|---|
-| Graph.js infra (graph.test.js) | +14 | 993 |
-| ising | +9 | 1002 |
-| population-coding | +7 | 1009 |
-| wilson-cowan | +10 | 1019 |
-| graph-theory (GraphTheoryBench wrapper) | +6 | 1025 |
-| inequality | +11 | 1036 |
-| langmuir | +13 | 1049 |
-| mwc-allosteric | +9 | 1058 |
-| **Total new** | **+79** | **1061** |
+| graph.test.js | 26 | +26 |
+| ising.test.js | 9 | +9 |
+| population-coding.test.js | 9 | +9 |
+| wilson-cowan.test.js | 13 | +13 |
+| graph-theory.test.js | 2 | +2 |
+| inequality.test.js | 14 | +14 |
+| langmuir.test.js | 15 | +15 |
+| mwc-allosteric.test.js | 10 | +10 |
+| **Total** | **98** | **+98** |
 
-Note: The cumulative total in this table uses 982 as the phase-11 baseline (1061 − 79 = 982). The discrepancy with the tag-level baseline of 979 reflects 3 tests added between a4194b1 and the phase-11 start that are not tracked here.
+(982 + 98 = 1080 at phase-11c. The runner count matches static `test(` counts in all files — no dynamic test generation in Phase 11 files.)
 
-### R12 Audit (post-phase-11b)
+### Audit reconciliation (93 vs 89 discrepancy in phase-11b review)
 
-**Before phase-11b:** PRESENT: 58, WEAK: 12, MISSING: 9
+The R12 audit table in the phase-11b review listed totals of 93 across phase-11 files. The runner at phase-11b reported 89 (1071 − 982 = 89). The 4-test gap was a manual counting error in the R12 table:
 
-**After phase-11b:** PRESENT: 75, WEAK: 2, MISSING: 7
+| File | R12 table count | Actual runner count | Over-count |
+|---|---|---|---|
+| population-coding.test.js | 11 | 9 | +2 |
+| wilson-cowan.test.js | 14 | 13 | +1 |
+| mwc-allosteric.test.js | 11 | 10 | +1 |
+| **Sum** | **93** | **89** | **+4** |
 
-Classification per test file (post-11b):
+There is no dynamic test generation in Phase 11 files. (The `no-hardcoded-colours.test.js` generates 16 tests dynamically from a loop over 8 files × 2 checks, but that is a Phase 7/8 artifact.)
+
+### R12 Audit (post-phase-11c)
+
+**After phase-11c:** PRESENT: 98, WEAK: 0, MISSING: 5
+
+Classification per test file (post-11c):
 
 | File | Tests | PRESENT | WEAK | MISSING-notes |
 |---|---|---|---|---|
-| graph.test.js | 17 | 17 | 0 | — (DFS times now tested) |
-| ising.test.js | 9 | 9 | 0 | — (runtime enumeration replaces literal) |
-| population-coding.test.js | 11 | 10 | 1 | sigma-scaling tightened; MLE added; FD Fisher present |
-| wilson-cowan.test.js | 14 | 13 | 1 | FP positions+saddle instability+LC amplitude added; dt-halving now non-vacuous |
-| graph-theory.test.js | 2 | 2 | 0 | — (4 duplicate tests removed) |
-| inequality.test.js | 14 | 14 | 0 | — (topShare identity+integration tests added; lorenzCurve) |
-| langmuir.test.js | 15 | 15 | 0 | — (concavity <0; langmuirPlot/isothermCurve added) |
-| mwc-allosteric.test.js | 11 | 11 | 0 | — (Hill ±1e-3; rStateFraction large alpha; curve added) |
+| graph.test.js | 26 | 26 | 0 | — (girth, non-planarity, BF negative-cycle added in 11c) |
+| ising.test.js | 9 | 9 | 0 | — |
+| population-coding.test.js | 9 | 9 | 0 | — |
+| wilson-cowan.test.js | 13 | 13 | 0 | — (dt-halving fixed, FP tol tightened, saddle comment in 11c) |
+| graph-theory.test.js | 2 | 2 | 0 | — |
+| inequality.test.js | 14 | 14 | 0 | — |
+| langmuir.test.js | 15 | 15 | 0 | — |
+| mwc-allosteric.test.js | 10 | 10 | 0 | — (Hill c=1 tol tightened 1e-3→1e-7 in 11c) |
 
-MISSING items remaining (7): BF on undirected graph (negative cycle detection); WilsonCowan Jacobian rE=rI=0 vs rE≠0 distinction; Ising critical slowing-down; Langmuir kinetic K_kin ≠ m.K edge case; inequality Lorenz convexity for Pareto with non-integer alpha; Girth computation from graph for K3,3 and Petersen; MWC enumeratedSaturation n>12 RangeError.
+MISSING items remaining (5): WilsonCowan Jacobian rE=rI=0 vs rE≠0 distinction; Ising critical slowing-down; Langmuir kinetic K_kin ≠ m.K edge case; inequality Lorenz convexity for Pareto with non-integer alpha; MWC enumeratedSaturation n>12 RangeError.
 
 ---
 
 ## Section 1: Commits
+
+### Phase 11 commits (0b68143 → 191d793)
 
 | # | Bench | Commit | Tests |
 |---|---|---|---|
@@ -66,11 +76,33 @@ MISSING items remaining (7): BF on undirected graph (negative cycle detection); 
 | 7 | mwc-allosteric | `994c8f9` | +9 |
 | 8 | catalog / plan / anchors | `191d793` | 0 |
 
+### Phase 11b commits (191d793 → 3bd0c37)
+
+| Commit | Message | Tests |
+|---|---|---|
+| `e050c65` | fix(inequality): topShare exponential formula | +1 |
+| `d2e6a6a` | fix(ising): runtime 2^16 enumeration replaces literal | +1 |
+| `beba415` | fix(population-coding): remove +0.15 from popvec tolerance | 0 |
+| `831ec92` | fix(graph-theory): remove 4 duplicate tests | −4 |
+| `d6ecbd9` | fix(multiple): DFS discovery times, concavity <0, dt-halving escape removed | +12 |
+
+### Phase 11c commits (3bd0c37 → HEAD)
+
+| Commit | Message | Tests |
+|---|---|---|
+| `3554898` | fix(wilson-cowan): dt-halving endpoint alignment; run() records final step | 0 |
+| `b6ce96f` | feat(graph): girth() BFS; K4/K3,3/Petersen/Q3/path; non-planarity; BF negative-cycle | +9 |
+| `79dd2a9` | fix(tolerances): saddle derivation comment, MWC Hill 1e-3→1e-7, WC FP 1e-4→1e-6 | 0 |
+
 ---
 
-## Section 2: R8 flags (mathematical correctness flags corrected this phase)
+## Section 2: R8 flags corrected
 
-No R8 flags were corrected this phase. The HIGH-1 finding (inequality `topShare` exponential formula) is a new issue identified in this review.
+| Phase | Finding | Fix commit | Description |
+|---|---|---|---|
+| 11b | HIGH-1: topShare exponential wrong formula | `e050c65` | `-(1-q)ln(1-q)` → `(1-q)(1-ln(1-q))` |
+| 11b | LOW-3: dt-halving vacuous escape clause | `d6ecbd9` | Removed `|| err2 < 1e-12` escape |
+| 11c | LOW-3 follow-up: dt-halving different endpoints | `3554898` | Fixed run() recording; Hopf-point preset; ratio 15.79∈[12,20] |
 
 ---
 
@@ -83,11 +115,11 @@ No R8 flags were corrected this phase. The HIGH-1 finding (inequality `topShare`
 | mwc-allosteric | Hill coeff ~2.362 (n=4, L=100, c=0.01) | Monod et al. (1965) — cited, not fetched | Numerically reproduced from closed-form formula ✓ |
 | inequality | Gini for Pareto: 1/(2α−1) | Lorenz (1905), Gini (1912) — cited, not fetched | Algebraically verified ✓ |
 | population-coding | Fisher info formula | Seung & Sompolinsky (1993) — cited, not fetched | Formula verified from first principles ✓ |
-| ising | MC anchor <\|m\|>_{L=4,T=2.5} = 0.76471239322120 | "partition function enumeration" — no code or external source provided | **not verified** (MED-1) |
+| ising | MC anchor <\|m\|>_{L=4,T=2.5} | Phase-11b: runtime 2^16 enumeration | Self-certified via inline partition function ✓ (MED-1 fixed) |
 
 ---
 
-## Section 4: Commit list
+## Section 4: Full commit list (phase-11 through phase-11c)
 
 | Commit | Message | Tests |
 |---|---|---|
@@ -99,37 +131,44 @@ No R8 flags were corrected this phase. The HIGH-1 finding (inequality `topShare`
 | `d4e1b71` | feat(langmuir): add Langmuir adsorption isotherm with kinetic route | +13 |
 | `994c8f9` | feat(mwc-allosteric): add Monod-Wyman-Changeux two-state allosteric model | +9 |
 | `191d793` | feat(catalog): register 8 Phase 11 benches + update plan and anchors | 0 |
+| `e050c65` | fix(inequality): correct topShare exponential formula | +1 |
+| `d2e6a6a` | fix(ising): replace literal with runtime 2^16 enumeration | +1 |
+| `beba415` | fix(population-coding): remove +0.15 from popvec tolerance | 0 |
+| `831ec92` | fix(graph-theory): remove 4 duplicate tests | −4 |
+| `d6ecbd9` | fix(multiple): DFS discovery times, concavity <0, dt-halving escape removed | +12 |
+| `3554898` | fix(wilson-cowan): dt-halving endpoint alignment; run() records final step | 0 |
+| `b6ce96f` | feat(graph): girth() BFS; K4/K3,3/Petersen/Q3/path; non-planarity; BF negative-cycle | +9 |
+| `79dd2a9` | fix(tolerances): saddle derivation comment, MWC Hill 1e-3→1e-7, WC FP 1e-4→1e-6 | 0 |
 
 ---
 
-## Section 9: Independent agent review
+## Section 5: Known deferred items
 
-Full findings: `docs/reviews/phase-11-agent-findings.md`
-
-Summary:
-- **HIGH:** 1
-- **MED:** 3
-- **LOW:** 3
-
-**HIGH-1 (inequality — topShare exponential):** `InequalityModel.topShare` returns `−(1−q)·log(1−q)` for the exponential distribution, but the correct income share of the top (1−q) is `1 − L(q) = (1−q)·(1 − log(1−q))`. The model formula is short by exactly `(1−q)`. At q=0.5 the error is 59%. The bug is latent because the only `topShare` test covers Pareto, not exponential.
-
-**MED-1 (ising — unverified MC anchor):** The hardcoded value `0.76471239322120` is cited as "from partition function enumeration" with no supporting code or external reference.
-
-**MED-2 (population-coding — loose popvec tolerance):** The `SD/CRB ~ 1.04` test uses a tolerance of `4·SE + 0.15`; the fixed +0.15 term is not statistically derived and inflates the acceptance window to ±0.24, making the test insensitive to factor-of-1.5 decoder bias.
-
-**MED-3 (graph duplication):** Four tests in `graph-theory.test.js` are exact duplicates of tests in `graph.test.js` (Euler K4, Euler Q3, Handshaking K4, Dijkstra reference), inflating the test count without adding mathematical coverage.
-
-**LOW-1:** DFS return values untested.
-**LOW-2:** Langmuir concavity threshold uses `< 1e-6` instead of `< 0`.
-**LOW-3:** Wilson-Cowan dt-halving test has a vacuous escape clause (`|| err2 < 1e-12`) that can make the RK4 order check unreachable.
-
-No findings were resolved inline (review-only).
+1. WilsonCowan Jacobian rE=rI=0 vs rE≠0 distinction (no test currently distinguishes these paths)
+2. Ising critical slowing-down (correlation time divergence near Tc)
+3. Langmuir kinetic K_kin ≠ m.K edge case
+4. Inequality Lorenz convexity for Pareto with non-integer alpha
+5. MWC enumeratedSaturation n>12 RangeError
 
 ---
 
-## Section 8: Phase 11b fix checklist (v4 plan items)
+## Section 6: R9 smoke results
 
-| Item | Implemented? | Evidence (file:line or justification) |
+All 84 benches × 4 viewports: 84/84 PASS, 0 failures.
+
+Run at phase-11c HEAD (2026-10-17).
+
+---
+
+## Section 7: R12 audit with dispositions
+
+See Section 0 for current PRESENT/WEAK/MISSING breakdown. All WEAK items from phases 11–11b have been resolved in phase-11c. No WEAK items remain.
+
+---
+
+## Section 8: Phase 11b fix checklist
+
+| Item | Implemented? | Evidence |
 |---|---|---|
 | Gini bound 2·\|ζ(−1/2)\|·h^1.5 | ✓ | inequality.test.js line 72 |
 | Ising stripe test E=−448J | ✓ | ising.test.js line 101 |
@@ -141,23 +180,30 @@ No findings were resolved inline (review-only).
 | removeEdge / removeNode | ✓ | graph.test.js line 105, 115 |
 | faces() K4 face count | ✓ | graph.test.js line 60 |
 | faces() Q3 face count | ✓ | graph.test.js line 72 |
-| Girth computed from graph for K3,3 (girth≥4, E>2V-4) | ✗ | No girth() method in Graph.js; out of scope |
-| Girth computed from graph for Petersen (girth=5, E>5(V-2)/3) | ✗ | Same; out of scope |
-| Pop-coding finite-difference Fisher route | ✓ | population-coding.test.js line 8 (Fisher two-way) |
+| Girth K3,3 (girth≥4, E>2V-4) | ✓ | graph.test.js (added phase-11c) |
+| Girth Petersen (girth=5, E>5(V-2)/3) | ✓ | graph.test.js (added phase-11c) |
+| Pop-coding finite-difference Fisher route | ✓ | population-coding.test.js line 8 |
 | Pop-coding rMax·T RangeError | ✓ | population-coding.test.js line 131 |
 | Langmuir kinetic via RK4 | ✓ | langmuir.test.js line 54 |
 | lorenz(p) RangeError outside [0,1] | ✓ | inequality.test.js line 86 |
-| "cited, not fetched" marks on all research.papers | ✓ | All 8 bench files confirmed (grep verified) |
+| "cited, not fetched" marks | ✓ | All 8 bench files confirmed |
 
-**Phase 11b additions beyond the v4 plan:**
-- topShare exponential fix: inequality.test.js (topShare identity + integration tests)
-- MLE SD/CRB test: population-coding.test.js line 88
-- DFS discovery times: graph.test.js lines 124, 132, 140
-- WC FP positions ±1e-4: wilson-cowan.test.js (Default FPs test)
-- Saddle instability test: wilson-cowan.test.js
-- nullclineI wII=0 branch: wilson-cowan.test.js
-- hopf-point stability type: wilson-cowan.test.js
-- sigma-scaling tightened to ±1e-9: population-coding.test.js
-- MWC Hill c=1 tightened to ±1e-3: mwc-allosteric.test.js
-- MWC rStateFraction saturation: mwc-allosteric.test.js
-- Coverage tests for utility methods: lorenzCurve, langmuirPlot, isothermCurve, tuningCurves, curve()
+**Phase 11c additions beyond the 11b plan:**
+- WC dt-halving: run() now records final step (k===n-1); Hopf-point preset; ratio 15.79 ∈ [12, 20]
+- girth() BFS method added to Graph.js (5 girth tests + 3 non-planarity tests + 1 BF negative-cycle)
+- Tolerance tightening: saddle derivation comment; MWC Hill ±1e-3→±1e-7; WC FP ±1e-4→±1e-6
+
+---
+
+## Section 9: Agent review
+
+Full findings: `docs/reviews/phase-11-agent-findings.md`
+
+Summary:
+- **HIGH:** 1 (fixed in phase-11b: e050c65)
+- **MED:** 3 (all fixed in phase-11b)
+- **LOW:** 3 (all fixed in phase-11b/11c)
+
+All findings resolved. Dispositions in `phase-11-agent-findings.md` Section "Dispositions".
+
+Phase-11c agent review brief and findings: `docs/reviews/phase-11b-agent-brief.md`, `docs/reviews/phase-11b-agent-findings.md`.
