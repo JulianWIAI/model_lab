@@ -518,3 +518,17 @@ The kernel formula and all numerical values are identical; only the sign of the 
 - Euler-Lotka: Σ lᵢfᵢ/λⁱ = 1. Derived from characteristic polynomial.
 - Leslie, P.H. (1945) *Biometrika* 33(3), 183–212. https://doi.org/10.1093/biomet/33.3.183 — cited, not fetched.
 - Caswell, H. (2001) *Matrix Population Models*, 2nd ed. Sinauer — cited, not fetched.
+
+---
+
+## Phase 10
+
+| Bench | Constant / formula / data | Status | Notes |
+|---|---|---|---|
+| lc-oscillator | All formulas: ω₀=1/√(LC), α=R/(2L), step response | algebraic | No empirical constants |
+| butler-volmer | F=96485.33212 C/mol, R=8.31446261815324 J/(mol·K) | Exact (CODATA 2018 SI 2019) | n/a (exact) |
+| options-pricing | Black-Scholes formula | algebraic | Educational use only |
+| hopfield | Hebbian weights w_ij=(1/N)Σξ_iξ_j | algebraic | No empirical constants |
+| reinforcement-learning | Q-learning update rule | algebraic | No empirical constants |
+| auctions | BNE b*(v)=(N-1)/N·v, revenue equivalence | algebraic | Symmetric IPV uniform only |
+| voting-systems | Plurality, Borda, Condorcet; Arrow's theorem | algebraic | No empirical constants |

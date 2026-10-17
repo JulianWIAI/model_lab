@@ -72,7 +72,7 @@ Source statuses:
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
 | rc-circuit ✓ | sim | intro | V_C(t) = V₀·(1−e^(−t/RC)) charging; V_C(τ) = V₀·(1−1/e) ±1e-6; energy ∫I²R dt = ½CV₀² (independent of R, verified by trapezoid); RK4 cross-check max err < 1e-6 | algebraic | formulas: checked by independent test; data: n/a |
-| lc-oscillator | sim | university | ω₀ = 1/√(LC); critical damping when R = 2√(L/C) | algebraic | anchor derived, test planned |
+| lc-oscillator ✓ | sim | university | ω₀ = 1/√(LC); critical damping when R = 2√(L/C) | algebraic | checked by independent test |
 
 #### Thermodynamics
 
@@ -131,7 +131,7 @@ Source statuses:
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| hopfield ‡ | sim | graduate | Storage capacity ≈ 0.138N (seeded test, finite-N tolerance); spurious mixture states; E=−½Σw_{ij}s_is_j; McEliece et al. 1987 gives asymptotic N/(4 ln N) | Amit, Gutfreund & Sompolinsky 1985, *PRL* 55:1530; McEliece et al. 1987, *IEEE Trans. IT* 33:461 | cited, not fetched |
+| hopfield ✓ ‡ | sim | graduate | Storage capacity ≈ 0.138N (seeded test, finite-N tolerance); spurious mixture states; E=−½Σw_{ij}s_is_j; McEliece et al. 1987 gives asymptotic N/(4 ln N) | Amit, Gutfreund & Sompolinsky 1985, *PRL* 55:1530; McEliece et al. 1987, *IEEE Trans. IT* 33:461 | checked by independent test |
 | population-coding ‡ | sim | graduate | Poisson Fisher info I(θ)=T·Σf_i'(θ)²/f_i(θ); CRB: Var(θ̂)≥1/I(θ); decoding error ∝ 1/√N | Seung & Sompolinsky 1993, *PNAS* 90:10749 | cited, not fetched |
 | wilson-cowan ‡ | sim | graduate | Hopf bifurcation: Jacobian eigenvalues cross imaginary axis → limit cycle; nullcline topology | Wilson & Cowan 1972, *Biophys. J.* 12:1 | cited, not fetched |
 
@@ -201,7 +201,7 @@ Source statuses:
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
 | nash-equilibria | sim | university | Matching pennies NE at (½,½); Battle of Sexes: 2 pure + 1 mixed NE | Nash 1950, *PNAS* 36:48 | cited, not fetched |
-| auctions | sim | university | Vickrey: dominant strategy = bid true value; revenue equivalence theorem | Vickrey 1961, *J. Finance* 16:8 | cited, not fetched |
+| auctions ✓ | sim | university | Vickrey: dominant strategy = bid true value; revenue equivalence theorem | Vickrey 1961, *J. Finance* 16:8 | checked by independent test |
 | mechanism-design ★ | sim | graduate | Revelation principle (algebraic); optimal reserve p*=(1−F(p*))/f(p*) | Myerson 1981, *Math. Oper. Res.* 6:58 | cited, not fetched |
 
 #### Growth & Macroeconomics
@@ -215,13 +215,13 @@ Source statuses:
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| options-pricing | sim | graduate | S=100, K=100, r=5%, σ=20%, T=1 → call≈10.45 (computed via Φ); put-call parity C−P=S−K·e^(−rT). **Educational use only — not financial advice.** | Black & Scholes 1973, *JPE* 81:637 | anchor derived, test planned |
+| options-pricing ✓ | sim | graduate | S=100, K=100, r=5%, σ=20%, T=1 → call≈10.45 (computed via Φ); put-call parity C−P=S−K·e^(−rT). **Educational use only — not financial advice.** | Black & Scholes 1973, *JPE* 81:637 | checked by independent test |
 
 #### Voting & Social Choice
 
 | id | kind | level | testable anchor | source | status |
 |---|---|---|---|---|---|
-| voting-systems | explorer | intro | Condorcet paradox A>B>C>A; Arrow's impossibility theorem | Arrow 1951 | cited, not fetched |
+| voting-systems ✓ | explorer | intro | Condorcet paradox A>B>C>A; Arrow's impossibility theorem | Arrow 1951 | checked by independent test |
 
 #### Network Economics
 
@@ -248,7 +248,7 @@ Source statuses:
 |---|---|---|---|---|---|
 | rescorla-wagner ✓ | sim | intro | formulas: acquisition/extinction closed forms, blocking, overshadowing asymptote, overexpectation, conditioned inhibition — checked by independent test | Rescorla & Wagner 1972; Kamin 1969 | formulas: checked by independent test; data: n/a |
 | drift-diffusion ‡ | sim | graduate | Boundaries ±a, start 0: P=1/(1+e^(−2μa/σ²)); RT=(a/μ)·tanh(μa/σ²)+t₀; both verified by numerical simulation of the SDE | Ratcliff 1978, *Psychol. Rev.* 85:59 | anchor derived, test planned |
-| reinforcement-learning ‡ | sim | graduate | Bellman: Q*(s,a)=R+γ·max Q*(s',a'); convergence via stochastic approximation (Robbins-Monro) | Watkins & Dayan 1992, *Machine Learning* 8:279 | cited, not fetched |
+| reinforcement-learning ✓ ‡ | sim | graduate | Bellman: Q*(s,a)=R+γ·max Q*(s',a'); convergence via stochastic approximation (Robbins-Monro) | Watkins & Dayan 1992, *Machine Learning* 8:279 | checked by independent test |
 | bayesian-observer | sim | university | σ_comb=1/√(1/σ₁²+1/σ₂²); for σ₁=σ₂ → σ/√2; weights ∝ 1/σ² | Ernst & Banks 2002, *Nature* 415:429 | cited, not fetched |
 | bayesian-cognitive ★ | sim | graduate | Analytic limits: P(C=1\|x₁,x₂)→1 as \|x₁−x₂\|→0; →0 as \|x₁−x₂\|→∞; exact posterior from product of Gaussians | Körding et al. 2007, *PLoS ONE* 2:e943 | unverified |
 
@@ -300,7 +300,7 @@ Each model has a documented failure mode for the bench's "Break it" card.
 |---|---|---|---|---|---|
 | radioactive-decay ✓ | sim | intro | N(t)=N₀·e^(−λt) where λ=ln2/t½; A(0)=λ·N₀; Curie anchor 1g Ra-226≈3.66e10 Bq (independent derivation); stochastic M=500 trials mean≈500±2.83 (4×SE), variance≈250±63 | NUBASE2020 (Kondev et al. 2021) | formulas: checked by independent test; data: verified (NUBASE2020 fetched 2026-10-15) |
 | phase-diagram | sim | university | dP/dT=ΔH_vap/(T·ΔV); water boils at 100°C at 1 atm | algebraic; NIST water data | cited, not fetched |
-| butler-volmer | sim | graduate | i=i₀[exp(αFη/RT)−exp(−(1−α)Fη/RT)]; Tafel slope=RT/(αF)·ln10≈118 mV/dec for α=0.5, 25°C | Bard & Faulkner 2001 §3.4 | cited, not fetched |
+| butler-volmer ✓ | sim | graduate | i=i₀[exp(αFη/RT)−exp(−(1−α)Fη/RT)]; Tafel slope=RT/(αF)·ln10≈118 mV/dec for α=0.5, 25°C | Bard & Faulkner 2001 §3.4 | checked by independent test |
 
 ---
 
@@ -417,13 +417,13 @@ Graduate: 2 original (options-pricing, butler-volmer) + 6 new ★ + 9 elevated �
 | 9 | opinion-dynamics | Psychology | university |
 | 9 | age-structure | Biology | university |
 | **[infra]** | Complex.js | — | — |
-| **10** | lc-oscillator | Physics | university |
-| 10 | butler-volmer | Chemistry | graduate † |
-| 10 | options-pricing | Economics | graduate † |
-| 10 | hopfield | Neuroscience | graduate † |
-| 10 | reinforcement-learning | Psychology | graduate † |
-| 10 | auctions | Economics | university |
-| 10 | voting-systems | Economics | intro |
+| **10** | lc-oscillator ✓ | Physics | university |
+| 10 | butler-volmer ✓ | Chemistry | graduate † |
+| 10 | options-pricing ✓ | Economics | graduate † |
+| 10 | hopfield ✓ | Neuroscience | graduate † |
+| 10 | reinforcement-learning ✓ | Psychology | graduate † |
+| 10 | auctions ✓ | Economics | university |
+| 10 | voting-systems ✓ | Economics | intro |
 | 10 | psychometric-function | Psychology | university |
 | **[infra]** | Graph.js | — | — |
 | **11** | ising | Physics | university |
