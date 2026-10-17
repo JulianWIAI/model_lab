@@ -110,6 +110,19 @@ export const catalog = [
                 (m) => m.RCCircuitBench,
               ),
           },
+          {
+            id: 'lc-oscillator',
+            navLabel: 'RLC oscillator',
+            level: 'university',
+            keywords: [
+              'RLC', 'LC oscillator', 'resonance', 'damping', 'Q factor', 'bandwidth',
+              'Laplace', 'poles', 'electromagnetism', 'impedance',
+            ],
+            load: () =>
+              import('./benches/physics/electromagnetism/lc-oscillator/LCOscillatorBench.js').then(
+                (m) => m.LCOscillatorBench,
+              ),
+          },
         ],
       },
       {
