@@ -13,19 +13,39 @@
  * Reference: Black & Scholes (1973), JPE 81:637.
  */
 
-function erf(x) {
-  if (Math.abs(x) > 4) return x > 0 ? 1 : -1;  // |1-erf(4)| < 3e-8; safe early exit
-  let sum = 0, term = x, n = 0;
-  while (Math.abs(term) > 1e-17 && n < 200) {
-    sum += term;
-    n++;
-    term *= -x * x * (2 * n - 1) / (n * (2 * n + 1));
-  }
-  return 2 / Math.sqrt(Math.PI) * sum;
+// Backward-recurrence Lentz CF for erfc(x), x > 0.
+// Laplace CF: erfc(x) = (e^{-x²}/√π) / (x + (1/2)/(x + (2/2)/(x + ...)))
+// Backward recurrence: f_{k-1} = x + (k/2)/f_k, seed f_N = x.
+// 80 iterations give |relative error| < 1e-15 for x ≥ 4.
+function erfc_cf(x) {
+  let f = x;
+  for (let k = 80; k >= 1; k--) f = x + (k / 2) / f;
+  return Math.exp(-x * x) / (Math.sqrt(Math.PI) * f);
 }
 
-function Phi(x) {
-  return (1 + erf(x / Math.SQRT2)) / 2;
+function erf(x) {
+  if (x === 0) return 0;
+  if (x < 0) return -erf(-x);
+  if (x <= 4) {
+    // Taylor series converges without catastrophic cancellation for |x| ≤ 4
+    let sum = 0, term = x, n = 0;
+    while (Math.abs(term) > 1e-17 && n < 200) {
+      sum += term;
+      n++;
+      term *= -x * x * (2 * n - 1) / (n * (2 * n + 1));
+    }
+    return 2 / Math.sqrt(Math.PI) * sum;
+  }
+  // x > 4: use 1 − erfc(x) via CF; Taylor series has catastrophic cancellation here
+  return 1 - erfc_cf(x);
+}
+
+export function Phi(x) {
+  const t = x / Math.SQRT2;
+  // For t ≤ −4: (1 + erf(t))/2 loses ~8 significant digits (1 + ~−1 cancellation).
+  // Use erfc_cf(−t)/2 directly; erfc_cf(−t) = 1 − erf(−t) = 1 + erf(t) (exact relation).
+  if (t <= -4) return erfc_cf(-t) / 2;
+  return (1 + erf(t)) / 2;
 }
 
 export class OptionsPricingModel {

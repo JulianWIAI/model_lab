@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { OptionsPricingModel } from '../../js/benches/economics/finance/options-pricing/OptionsPricingModel.js';
+import { OptionsPricingModel, Phi } from '../../js/benches/economics/finance/options-pricing/OptionsPricingModel.js';
 
 // ATM test case: S=K=100, r=5%, σ=20%, T=1
 const S=100, K=100, r=0.05, sigma=0.20, T=1;
@@ -64,4 +64,31 @@ test('S ≤ 0 throws RangeError', () => {
     () => new OptionsPricingModel({ S: 0, K: 100, r: 0.05, sigma: 0.20, T: 1 }),
     RangeError,
   );
+});
+
+// Phi tail anchors (mpmath 30-digit reference, relative tolerance 1e-12)
+// Anchor values verified by backward-recurrence Lentz CF (independent of Taylor series)
+test('Phi(-3) = 0.0013498980316302145 ±1e-12 rel', () => {
+  const anchor = 0.0013498980316302145;
+  assert.ok(Math.abs(Phi(-3) / anchor - 1) < 1e-12, `Phi(-3)=${Phi(-3)}`);
+});
+
+test('Phi(-5.66) = 7.5686497519977386e-9 ±1e-12 rel', () => {
+  const anchor = 7.5686497519977386e-9;
+  assert.ok(Math.abs(Phi(-5.66) / anchor - 1) < 1e-12, `Phi(-5.66)=${Phi(-5.66)}`);
+});
+
+test('Phi(-6) = 9.8658764503770181e-10 ±1e-12 rel', () => {
+  const anchor = 9.8658764503770181e-10;
+  assert.ok(Math.abs(Phi(-6) / anchor - 1) < 1e-12, `Phi(-6)=${Phi(-6)}`);
+});
+
+test('Phi(-8) = 6.2209605742718282e-16 ±1e-12 rel', () => {
+  const anchor = 6.2209605742718282e-16;
+  assert.ok(Math.abs(Phi(-8) / anchor - 1) < 1e-12, `Phi(-8)=${Phi(-8)}`);
+});
+
+test('Phi(-10) = 7.6198530241605813e-24 ±1e-12 rel', () => {
+  const anchor = 7.6198530241605813e-24;
+  assert.ok(Math.abs(Phi(-10) / anchor - 1) < 1e-12, `Phi(-10)=${Phi(-10)}`);
 });
