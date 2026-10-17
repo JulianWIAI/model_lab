@@ -73,6 +73,27 @@ test('Phi(-3) = 0.0013498980316302145 ±1e-12 rel', () => {
   assert.ok(Math.abs(Phi(-3) / anchor - 1) < 1e-12, `Phi(-3)=${Phi(-3)}`);
 });
 
+test('Phi(-4) = 3.1671241833119985e-5 ±1e-12 rel', () => {
+  // t = -4/√2 ≈ -2.828; below the new threshold -2, so erfc_cf path.
+  // mpmath: erfc(4/sqrt(2))/2 = 3.16712418331199853...e-5
+  const anchor = 3.1671241833119985e-5;
+  assert.ok(Math.abs(Phi(-4) / anchor - 1) < 1e-12, `Phi(-4)=${Phi(-4)}`);
+});
+
+test('Phi(-5) = 2.866515718791945e-7 ±1e-12 rel', () => {
+  // t = -5/√2 ≈ -3.536; erfc_cf path.
+  // mpmath: erfc(5/sqrt(2))/2 = 2.86651571879194...e-7
+  const anchor = 2.866515718791945e-7;
+  assert.ok(Math.abs(Phi(-5) / anchor - 1) < 1e-12, `Phi(-5)=${Phi(-5)}`);
+});
+
+test('Phi(-5.5) = 1.8989562465887754e-8 ±1e-12 rel', () => {
+  // t = -5.5/√2 ≈ -3.889; erfc_cf path.  Taylor had ~2×10⁻⁴ rel error here.
+  // mpmath: erfc(5.5/sqrt(2))/2 = 1.89895624658877...e-8
+  const anchor = 1.8989562465887754e-8;
+  assert.ok(Math.abs(Phi(-5.5) / anchor - 1) < 1e-12, `Phi(-5.5)=${Phi(-5.5)}`);
+});
+
 test('Phi(-5.66) = 7.5686497519977386e-9 ±1e-12 rel', () => {
   const anchor = 7.5686497519977386e-9;
   assert.ok(Math.abs(Phi(-5.66) / anchor - 1) < 1e-12, `Phi(-5.66)=${Phi(-5.66)}`);

@@ -16,7 +16,7 @@
 // Backward-recurrence Lentz CF for erfc(x), x > 0.
 // Laplace CF: erfc(x) = (e^{-x²}/√π) / (x + (1/2)/(x + (2/2)/(x + ...)))
 // Backward recurrence: f_{k-1} = x + (k/2)/f_k, seed f_N = x.
-// 80 iterations give |relative error| < 1e-15 for x ≥ 4.
+// 80 iterations give |relative error| < 1e-15 for x ≥ 4; < 1e-12 for x ≥ 2.
 function erfc_cf(x) {
   let f = x;
   for (let k = 80; k >= 1; k--) f = x + (k / 2) / f;
@@ -42,9 +42,11 @@ function erf(x) {
 
 export function Phi(x) {
   const t = x / Math.SQRT2;
-  // For t ≤ −4: (1 + erf(t))/2 loses ~8 significant digits (1 + ~−1 cancellation).
-  // Use erfc_cf(−t)/2 directly; erfc_cf(−t) = 1 − erf(−t) = 1 + erf(t) (exact relation).
-  if (t <= -4) return erfc_cf(-t) / 2;
+  // For t ≤ −2 (z ≤ −2√2 ≈ −2.83): the Taylor series for erf(t) has large intermediate
+  // terms (alternating, cancelling) that erode ~4 decimal digits.  At z = −4 the relative
+  // error in Phi via Taylor is ~4×10⁻¹¹; at z = −5 it reaches ~3×10⁻⁷; at z = −5.5 it
+  // reaches ~2×10⁻⁴.  Use erfc_cf(−t)/2 directly for t ≤ −2.
+  if (t <= -2) return erfc_cf(-t) / 2;
   return (1 + erf(t)) / 2;
 }
 
