@@ -458,6 +458,21 @@ Graduate: 2 original (options-pricing, butler-volmer) + 6 new ★ + 9 elevated �
 
 ---
 
+## Open UI / UX items
+
+### Navigation at 400 px pushes bench below the fold (UI pass)
+
+At the 400 px breakpoint, the subject navigation bar collapses into a scrollable
+horizontal strip. On benches with many controls (e.g., solow, stdp), the bench
+canvas starts several screens below the fold after navigation — users must scroll
+to see the visualisation.
+
+**Action:** A dedicated UI pass is needed: audit all benches at 400 px, minimise
+nav height at narrow viewports, and/or anchor the canvas to the top of the visible
+area so students see it without scrolling. Not scheduled to a specific phase yet.
+
+---
+
 ## Open science-accuracy items
 
 ### Verify pKa sources for phosphoric and citric acid
