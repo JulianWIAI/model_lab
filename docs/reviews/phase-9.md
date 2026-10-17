@@ -9,12 +9,16 @@
 | phase-8c | b96d63a | 756 | Phase 9 baseline |
 | phase-9 | 68b4db1 | 871 | Phase 9 complete (+115 tests, +7 benches, +9 core) |
 | phase-9b | dff029c | 872 | Phase 9b close-out (anchor precision, FD derivation, agent review) |
+| phase-9c | (this commit) | 875 | Phase 9c close-out (audit script, FD rewrite, STDP sources, smoke crops, agent review, MED/HIGH fixes) |
 
 <!-- Note on similar hashes: 0e7db3c is a phase-8 doc commit ("docs(phase-8): record final
      phase-8c commit hash in tag table") that was incorrectly referenced as the phase-8c tag
      hash in an earlier draft. b96d63a is the actual phase-8c tag commit. They are different
      commits; the confusion arose because 0e7db3c was created to fix the phase-8 review doc's
-     tag table, and was itself later superseded by the correct tag at b96d63a. -->
+     tag table, and was itself later superseded by the correct tag at b96d63a.
+
+     Verification: git show -s --oneline 0e7db3c = "docs(phase-8): record final phase-8c
+     commit hash in tag table" — confirmed 2026-10-17 during phase-9c close-out. -->
 
 Note on phase-8c hash: `git rev-parse phase-8c` = `b96d63a06273a6aac75ece9a68634b8a46aa138d`. The previous
 review doc said `0e7db3c`, which was incorrect — that was a draft hash. The correct hash is `b96d63a`
