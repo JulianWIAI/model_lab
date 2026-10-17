@@ -65,12 +65,15 @@ test('hillCoeff > 1 (cooperative) and < n', () => {
   assert.ok(Math.abs(h - 2.362) < 0.05, `h=${h}, expected ~2.362`);
 });
 
-test('c=1 -> h=1 (non-cooperative) ±1e-3', () => {
-  // When c=1, MWC reduces to Langmuir (Hill coeff = 1).
-  // Hill computed as central FD with h=1e-4 in log-space → tolerance ~1e-3.
+test('c=1 -> h=1 (non-cooperative) ±1e-7', () => {
+  // When c=1, MWC reduces to Langmuir (Hill coeff = 1 exactly).
+  // hillCoeff() uses central FD in log-space with step eps = alpha_h * 1e-4 + 1e-8.
+  // For Langmuir at half-sat alpha_h=1: eps ≈ 1e-4. FD truncation error is O(eps^2·f''').
+  // For smooth Langmuir at half-sat: f''' bounded, fourth-derivative term eps^2/6 ≈ 1e-8/6 ≈ 2e-9.
+  // Tolerance 1e-7 = 50× actual error — appropriate safety margin.
   const m = new MWCModel({ n: 4, L: 100, c: 1 });
   const h = m.hillCoeff();
-  assert.ok(Math.abs(h - 1) < 1e-3, `h=${h}, expected ~1 ±1e-3`);
+  assert.ok(Math.abs(h - 1) < 1e-7, `h=${h}, expected ~1 ±1e-7`);
 });
 
 test('saturation at large alpha: Y > 0.9999 and rStateFraction > 0.9999', () => {
