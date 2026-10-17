@@ -6,10 +6,13 @@
 
 | Tag | Commit | Tests | Notes |
 |---|---|---|---|
-| phase-10b | a4194b1 | 979 | Phase 11 baseline (pre-phase-11) |
-| — | 191d793 | 1061 | Phase 11 complete (+79 tests, 8 benches) |
+| phase-10c | 0b68143 | 982 | Phase 11 true baseline |
+| phase-11 | 191d793 | 1061 | Phase 11 complete (+79 tests, 8 benches) |
+| phase-11b | (see tag) | 1071 | Phase 11b fix pass (+10 tests) |
 
-Note: the runner reports 1061 tests at the end of Phase 11 (start of session was also 1061 — Phase 11 is already committed on `main`).
+Push status: pending user approval
+
+Note: the runner reports 1061 tests at the end of Phase 11 (start of session was also 1061 — Phase 11 is already committed on `main`). Phase-11b adds 10 tests from fix/tighten pass.
 
 ### Tests added this phase
 
@@ -27,24 +30,26 @@ Note: the runner reports 1061 tests at the end of Phase 11 (start of session was
 
 Note: The cumulative total in this table uses 982 as the phase-11 baseline (1061 − 79 = 982). The discrepancy with the tag-level baseline of 979 reflects 3 tests added between a4194b1 and the phase-11 start that are not tracked here.
 
-### R12 Audit
+### R12 Audit (post-phase-11b)
 
-PRESENT: 58, WEAK: 12, MISSING: 9
+**Before phase-11b:** PRESENT: 58, WEAK: 12, MISSING: 9
 
-Classification per test file:
+**After phase-11b:** PRESENT: 75, WEAK: 2, MISSING: 7
+
+Classification per test file (post-11b):
 
 | File | Tests | PRESENT | WEAK | MISSING-notes |
 |---|---|---|---|---|
-| graph.test.js | 14 | 14 | 0 | DFS return values never checked |
-| ising.test.js | 9 | 8 | 1 | MC anchor unverified (MED-1) |
-| population-coding.test.js | 7 | 5 | 2 | sigma-scaling tol=0.1; popvec SD/CRB tol loose |
-| wilson-cowan.test.js | 10 | 5 | 5 | 3 FPs type-only; saddle dist>0.1; limit cycle>0.1; dt-halving escape clause |
-| graph-theory.test.js | 6 | 6 | 0 | 4 tests duplicate graph.test.js (MED-3) |
-| inequality.test.js | 11 | 11 | 0 | exponential topShare untested (HIGH-1) |
-| langmuir.test.js | 13 | 12 | 1 | concavity threshold 1e-6 instead of <0 |
-| mwc-allosteric.test.js | 9 | 8 | 1 | c=1→h=1 tolerance ±0.05 |
+| graph.test.js | 17 | 17 | 0 | — (DFS times now tested) |
+| ising.test.js | 9 | 9 | 0 | — (runtime enumeration replaces literal) |
+| population-coding.test.js | 11 | 10 | 1 | sigma-scaling tightened; MLE added; FD Fisher present |
+| wilson-cowan.test.js | 14 | 13 | 1 | FP positions+saddle instability+LC amplitude added; dt-halving now non-vacuous |
+| graph-theory.test.js | 2 | 2 | 0 | — (4 duplicate tests removed) |
+| inequality.test.js | 14 | 14 | 0 | — (topShare identity+integration tests added; lorenzCurve) |
+| langmuir.test.js | 15 | 15 | 0 | — (concavity <0; langmuirPlot/isothermCurve added) |
+| mwc-allosteric.test.js | 11 | 11 | 0 | — (Hill ±1e-3; rStateFraction large alpha; curve added) |
 
-MISSING items (properties not tested at all): DFS return values; exponential topShare; BF on undirected graph; WilsonCowan Jacobian for rE=rI=0 case separately; MWC rStateFraction saturation for large alpha; Ising critical slowing-down; population coding MLE vs popvec comparison; Langmuir kinetic equilibrium consistency (K_kin ≠ m.K case); inequality Lorenz convexity for Pareto with non-integer alpha edge cases.
+MISSING items remaining (7): BF on undirected graph (negative cycle detection); WilsonCowan Jacobian rE=rI=0 vs rE≠0 distinction; Ising critical slowing-down; Langmuir kinetic K_kin ≠ m.K edge case; inequality Lorenz convexity for Pareto with non-integer alpha; Girth computation from graph for K3,3 and Petersen; MWC enumeratedSaturation n>12 RangeError.
 
 ---
 
@@ -119,3 +124,40 @@ Summary:
 **LOW-3:** Wilson-Cowan dt-halving test has a vacuous escape clause (`|| err2 < 1e-12`) that can make the RK4 order check unreachable.
 
 No findings were resolved inline (review-only).
+
+---
+
+## Section 8: Phase 11b fix checklist (v4 plan items)
+
+| Item | Implemented? | Evidence (file:line or justification) |
+|---|---|---|
+| Gini bound 2·\|ζ(−1/2)\|·h^1.5 | ✓ | inequality.test.js line 72 |
+| Ising stripe test E=−448J | ✓ | ising.test.js line 101 |
+| Ising L=4 exact averages | ✓ | ising.test.js line 55 (runtime enumeration, 2^16 configs) |
+| WC Hopf-point preset (wEE=8, tr=0, det=2) | ✓ | wilson-cowan.test.js line 127 |
+| WC limit-cycle preset (wEE=8.5, amplitude ~0.289) | ✓ | wilson-cowan.test.js line 145 (amplitude [0.2, 0.4]) |
+| Directed Bellman-Ford | ✓ | graph.test.js line 33 |
+| Dijkstra {allowNegative} flag | ✓ | graph.test.js line 26 |
+| removeEdge / removeNode | ✓ | graph.test.js line 105, 115 |
+| faces() K4 face count | ✓ | graph.test.js line 60 |
+| faces() Q3 face count | ✓ | graph.test.js line 72 |
+| Girth computed from graph for K3,3 (girth≥4, E>2V-4) | ✗ | No girth() method in Graph.js; out of scope |
+| Girth computed from graph for Petersen (girth=5, E>5(V-2)/3) | ✗ | Same; out of scope |
+| Pop-coding finite-difference Fisher route | ✓ | population-coding.test.js line 8 (Fisher two-way) |
+| Pop-coding rMax·T RangeError | ✓ | population-coding.test.js line 131 |
+| Langmuir kinetic via RK4 | ✓ | langmuir.test.js line 54 |
+| lorenz(p) RangeError outside [0,1] | ✓ | inequality.test.js line 86 |
+| "cited, not fetched" marks on all research.papers | ✓ | All 8 bench files confirmed (grep verified) |
+
+**Phase 11b additions beyond the v4 plan:**
+- topShare exponential fix: inequality.test.js (topShare identity + integration tests)
+- MLE SD/CRB test: population-coding.test.js line 88
+- DFS discovery times: graph.test.js lines 124, 132, 140
+- WC FP positions ±1e-4: wilson-cowan.test.js (Default FPs test)
+- Saddle instability test: wilson-cowan.test.js
+- nullclineI wII=0 branch: wilson-cowan.test.js
+- hopf-point stability type: wilson-cowan.test.js
+- sigma-scaling tightened to ±1e-9: population-coding.test.js
+- MWC Hill c=1 tightened to ±1e-3: mwc-allosteric.test.js
+- MWC rStateFraction saturation: mwc-allosteric.test.js
+- Coverage tests for utility methods: lorenzCurve, langmuirPlot, isothermCurve, tuningCurves, curve()

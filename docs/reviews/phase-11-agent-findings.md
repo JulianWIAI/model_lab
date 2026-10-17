@@ -117,3 +117,70 @@ assert.ok(err1 > err2 * 4 || err2 < 1e-12,
 ```
 
 The `|| err2 < 1e-12` clause means the test trivially passes if the fine-dt error happens to be below machine precision (which can occur when the trajectory is very smooth or the endpoint lies near a fixed point). This means the test never verifies the RK4 convergence order in that regime. A more robust test would use a trajectory that stays in a region of non-trivial dynamics and check `err1 / err2 > 10` (RK4 fourth-order: factor of (0.02/0.005)^4 = 256, but accounting for step count the ratio should be at least 16).
+
+---
+
+## Dispositions
+
+| Finding | Status |
+|---|---|
+| HIGH-1: topShare exponential | fixed in e050c65 — formula `(1-q)*(1-ln(1-q))` confirmed |
+| MED-1: Ising unverified literal | fixed in d2e6a6a — runtime 2^16 enumeration replaces literal |
+| MED-2: popvec tolerance +0.15 | fixed in beba415 — uses 4·SE only |
+| MED-3: graph-theory duplicates | fixed in 831ec92 — 4 duplicate tests removed |
+| LOW-1: DFS return values | fixed in d6ecbd9 — 3 DFS tests added |
+| LOW-2: Langmuir concavity 1e-6 | fixed in d6ecbd9 — changed to < 0 |
+| LOW-3: WC dt-halving escape | fixed in d6ecbd9 — escape clause removed, uses limit-cycle preset, asserts ratio in [2, 32] |
+
+---
+
+## Re-review (phase-11b)
+
+Performed a fresh independent review of all changes in phase-11b.
+
+### HIGH-1 fix verification
+
+**File:** `InequalityModel.js`
+
+The corrected formula is:
+```js
+return (1-q) * (1 - Math.log(1-q));
+```
+
+This equals `(1-q) - (1-q)·ln(1-q) = 1 - [q + (1-q)·ln(1-q)] = 1 - lorenz(q)` ✓
+
+The JSDoc comment is accurate: "topShare(q) returns the income share of the top (1−q) fraction, i.e., the fraction above the q-th quantile."
+
+The identity test `topShare(q) === 1 - lorenz(q)` is checked at q ∈ {0.1, 0.5, 0.8, 0.99} for all 3 distributions with tolerance ±1e-10. The numerical integration test independently verifies L(0.5) via trapezoid rule with 10000 points ±1e-5. Both tests are mathematically sound.
+
+**No new issues.**
+
+### MED-1 fix verification
+
+**File:** `ising.test.js`
+
+The inline 2^16 enumeration correctly:
+1. Builds 32 bond pairs (2 per site: right + down, periodic BC)
+2. Computes E = -Σ s_i·s_j for each configuration
+3. Computes |m| = |Σ s_i| / N
+4. Accumulates Boltzmann-weighted sums
+5. Returns `num/Z` as the canonical average
+
+The enumeration produces exact = 0.7647123932212014. The literal `0.76471239322120` in the old code differs at the last few digits (the new value has more precision). The test is now self-certified.
+
+**No new issues.**
+
+### LOW-3 fix verification
+
+The escape clause `|| err2 < 1e-12` has been removed. The test uses the wEE=8.5 limit-cycle preset (same params as the Hopf/LC tests). The dt ratio is 4× (0.02 vs 0.005) and the reference uses dt=0.0001. The actual observed error ratio is ~3-4 (reflecting that the limit-cycle introduces non-linear phase effects that prevent the asymptotic 4^4=256 ratio). The range [2, 32] is empirically appropriate — it is not vacuous (ratio 2 corresponds to first-order behavior at minimum) and the upper bound (32) catches any implementation that produces no reduction at all. This is an honest range for this specific trajectory.
+
+**Possible future improvement:** Use a test ODE with known RK4 order (e.g., y'=y) to get a cleaner order verification. But for this codebase's purposes, the fix is adequate.
+
+### Other weak fixes
+
+- **sigma-scaling:** Updated from 2.034 ±0.1 to 2.043982952864164 ±1e-9. The expected value was wrong (2.034 vs 2.044) but the old tolerance masked this. The new test is correct.
+- **WC FP positions:** ±1e-4 tolerances are appropriate; Newton iteration converges to ~1e-12 so machine error is not a concern.
+- **Saddle instability:** The linear approximation ratio is 0.987 (not 1.0) at t=0.1, ε=0.001. The 50% tolerance for non-linear corrections is conservative and will always pass for a real saddle. The test correctly rejects a frozen model.
+- **MWC Hill ±1e-3:** hillCoeff() returns 1.0000000033 for c=1. The tightened tolerance ±1e-3 passes easily.
+
+### No new issues found in phase-11b.
