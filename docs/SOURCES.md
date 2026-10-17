@@ -526,7 +526,7 @@ The kernel formula and all numerical values are identical; only the sign of the 
 | Bench | Constant / formula / data | Status | Notes |
 |---|---|---|---|
 | lc-oscillator | All formulas: ω₀=1/√(LC), α=R/(2L), step response | algebraic | No empirical constants |
-| butler-volmer | F=96485.33212 C/mol, R=8.31446261815324 J/(mol·K) | Exact (CODATA 2018 SI 2019) | n/a (exact) |
+| butler-volmer | F=96485.33212 C/mol, R=8.31446261815324 J/(mol·K) | Exact (CODATA 2018 SI 2019) | **verified** — fetched 2026-10-17 from physics.nist.gov/cuu/Constants/Table/allascii.txt: F=96485.33212(exact), R=8.314462618(exact); model uses full 2019 SI value 8.31446261815324 |
 | options-pricing | Black-Scholes formula | algebraic | Educational use only |
 | hopfield | Hebbian weights w_ij=(1/N)Σξ_iξ_j | algebraic | No empirical constants |
 | hopfield | Capacity ~0.138·N | cited, not fetched | Amit, Gutfreund & Sompolinsky (1985) Phys Rev A 32:1007; McEliece et al. (1987) IEEE IT 33:461 |
