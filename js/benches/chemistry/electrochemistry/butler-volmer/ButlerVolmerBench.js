@@ -27,7 +27,7 @@ export class ButlerVolmerBench extends Bench {
     predict: [
       'Set α=0.5 and increase T from 298 K to 373 K. Does the curve steepen or flatten? Why does higher temperature reduce the Tafel slope?',
       'Set α=0.3 (asymmetric). Is the anodic current larger or smaller than the cathodic current at the same |η|? Which direction is favoured?',
-      'Decrease η_max to 0.05 V. Does the i vs η curve look linear? How does this relate to the linear (Ohmic) approximation for small overpotentials?',
+      'Set η_max to 0.1 V and look near η=0. Does the curve look linear? For α=0.5, i/i_lin = sinh(x/2)/(x/2) ≈ 1 + x²/24 where x = η/V_T; the approximation is <1% accurate when x²/24 < 0.01, i.e. |η| < V_T·√0.24 ≈ 12.6 mV.',
     ],
     breaks: [
       'Single-step electron transfer assumed; multi-step mechanisms alter the apparent transfer coefficient.',

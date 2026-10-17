@@ -91,10 +91,23 @@ test('alpha outside (0,1) throws RangeError', () => {
   assert.throws(() => new ButlerVolmerModel({ alpha: 1.1 }), RangeError);
 });
 
-test('current() throws RangeError for |η| > overflow threshold (~18 V at 298 K, α=0.5)', () => {
-  // Overflow when α·η/V_T > 700, i.e. η > 700·V_T/α ≈ 700·0.02569/0.5 ≈ 36 V.
-  // A value of 50 V is safely above this threshold.
+test('current() throws RangeError when |η|/V_T > 700', () => {
+  // Guard fires when |η|/V_T > 700. At 298.15 K, V_T≈0.02569 V, so threshold ≈18 V.
+  // 50 V gives |η|/V_T ≈ 1946 >> 700.
   const m = new ButlerVolmerModel({ alpha: 0.5, T_K: 298.15, i0: 1 });
   assert.throws(() => m.current(50), RangeError);
   assert.throws(() => m.current(-50), RangeError);
+});
+
+test('linear approx error < 1% when x²/24 < 0.01 (x=η/V_T, α=0.5)', () => {
+  // For α=0.5: i/i₀ = 2sinh(x/2); i_lin = x.
+  // Ratio = sinh(x/2)/(x/2) = 1 + x²/24 + O(x⁴).
+  // At x=√0.24≈0.4899 (η≈12.6 mV): x²/24 = 0.24/24 = 0.01.
+  const m = new ButlerVolmerModel({ alpha: 0.5, T_K: 298.15, i0: 1 });
+  const x = Math.sqrt(0.24);            // x = η/V_T where x²/24 = 0.01
+  const eta = x * m.thermalVoltage();
+  const relErr = Math.abs(m.current(eta) / m.linearApprox(eta) - 1);
+  // Exact error is sinh(x/2)/(x/2)−1; x²/24 gives the leading term
+  assert.ok(relErr < 0.011, `relErr=${relErr} at x=√0.24 (should be ≈0.01)`);
+  assert.ok(relErr > 0.009, `relErr=${relErr} unexpectedly small at x²/24=0.01`);
 });
