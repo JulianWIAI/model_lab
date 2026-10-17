@@ -1,1016 +1,59 @@
-# Phase 12 — 7 benches
+# Phase 12 — 7 benches (v2)
 
-## Plan header (v1)
+## Plan header (v2)
 
 | Field | Value |
 |---|---|
-| Baseline commit | `3bd0c37` (phase-11b) |
-| Baseline tests | 1071 (0 fail) |
-| Anchors script | `tools/anchors-phase12.mjs` v1 — 69 asserts ALL PASS |
+| Baseline commit | `6b9e62f` (phase-11c) |
+| Baseline tests | 1080 (0 fail) |
+| Anchors script | `tools/anchors-phase12.mjs` v2 — ALL PASS |
 | Date | 2026-10-17 |
 
 git log (top 5):
 ```
-3bd0c37 docs(phase-11b): update baseline table with final commit hash 74423d3
-74423d3 docs(phase-11b): review rewrite, checklist, findings with dispositions, audit update
-f6c4dad tools(anchors): phase-11 v5 with R13 mutation checks
-e17d769 fix(coverage): add tests for uncovered branches in R14 model files
-2420a64 fix(weak): WC FP positions/saddle instability/lc amplitude; pop-coding σ-scaling; MWC Hill/saturation
+6b9e62f docs(phase-11c): audit reconciliation, review rewrite, agent brief + findings
+79dd2a9 fix(tolerances): saddle derivation comment, MWC Hill 1e-3->1e-7, WC FP 1e-4->1e-6
+b6ce96f feat(graph): add girth() BFS method; tests K4/K3,3/Petersen/Q3/path; non-planarity; BF negative-cycle
+3554898 fix(wilson-cowan): dt-halving test — correct nSteps calculation, switch to Hopf-point preset
+6c6dd01 plan(phase-12): write plan v1 and anchors script (69 asserts, all pass)
 ```
 
-git tags: phase-11b, phase-11, phase-10c, phase-10b, phase-10, phase-9c, phase-9b, phase-9, phase-8c, phase-8b, …
-
----
-
-## ROADMAP note
-
-Navigation at 400 px pushes the bench list several screens below the fold; UI/UX pass planned for a later project (see ROADMAP.md Open UI/UX items).
-
----
-
-## Context
-
-Phase 12 adds 7 benches from the ROADMAP Phase 12 allocation: special-relativity (physics/mechanics, university), perceptron (neuroscience/learning, university), network-effects (economics/markets, intro), neutral-theory (biology/evolution, graduate), coalescence (biology/evolution, graduate), plus two alternates: random-walk (math/probability, intro) and particle-in-box (physics/quantum, intro — already exists in catalog and is scheduled Phase 8 in ROADMAP but spec'd here as an alternate if a fully-specified bench hits an R8 wall).
-
-Catalog additions required:
-- `physics/relativity/special-relativity` — new field `relativity` under `physics`
-- `neuroscience/learning/perceptron` — new field `learning` under `neuroscience`
-- `economics/markets/network-effects` — add to existing `markets` field under `economics`
-- `biology/evolution/neutral-theory` — add to existing `evolution` field under `biology`
-- `biology/evolution/coalescence` — add to existing `evolution` field under `biology`
-- `math/probability/random-walk` — add to existing `probability` field under `math` *(already in catalog)*
-- `physics/quantum/particle-in-box` — add to existing `quantum` field under `physics` *(already in catalog)*
+git tags: phase-11c, phase-11b, phase-11, phase-10c, phase-10b, phase-10, phase-9c, phase-9b, phase-9, phase-8c, …
 
 ---
 
 ## Rules
 
-R1–R14 apply. Key rules for Phase 12:
-- R3: every symbol table entry must state unit and typical range.
-- R4: every finite domain must have a named RangeError test.
-- R8: formulas derived from first principles; no memorised constants; CODATA 2018 values cited.
-- R13: for each stochastic test, the gap between the correct value and a trivially-wrong value must exceed the test tolerance by a factor ≥ 3.
-- R14: branch coverage matrix required per bench.
+- **R1 Anchor first.** Before any bench plan is shown, every formula gets an independent numerical check (brute-force simulation, high-precision recomputation or a different algorithm). The result is printed in the plan next to the expected value.
+- **R2 Tolerances.** Deterministic checks: 1e-10 unless the algorithm limits it. Stochastic checks: 4 × the analytic standard error of the statistic, derived in a comment. Never tune a seed or tolerance to pass. Numerical checks must also pass when dt or h is halved (convergence), not only at the chosen step.
+- **R3 Conventions.** One symbol table per bench. The model, the Derive-it steps, the Predict questions and the Where-it-breaks text use the same symbols and conventions.
+- **R4 Domains.** State the valid parameter domain; test its boundaries; no silent clamping (show a visible "outside model domain" state).
+- **R5 Data.** No constant or table value from memory. Fetch it, or mark it "unverified" in code, SOURCES.md and the UI. If a fetch fails, stop and tell me.
+- **R6 Status words.** Per bench, "formulas" and "data" are separate. "checked by independent test" is allowed only once the test exists and passes.
+- **R7 Reports.** No claim without evidence. Corrections are reported as a table: anchor → file → test name.
+- **R8 Anchor disagreements.** If an anchor in the prompt looks wrong, stop and report the discrepancy before implementing.
+- **R9 Visual checks.** `npm run smoke` is the visual regression check. Before each bench commit: `npm run smoke -- --bench <id>`; the catalog entry is part of that commit. Any commit touching `js/core`, `js/ui`, theme tokens, or CSS: full `npm run smoke`. End of a phase: full run; put the counts per failure type in the phase report. The full run must finish in under 3 minutes. `tests/theme-tokens.test.js` and `tests/no-hardcoded-colours.test.js` run in `npm test`. Never claim a visual result without a smoke run or a screenshot. If no browser is available, write "not run in a browser".
+- **R10 Predict answers.** Every Predict question has a numerical answer asserted in the anchors script with a derived tolerance. "Yes/no" is not a Predict answer; rephrase to a quantity.
+- **R11 Independent agent review.** After all bench commits: spawn a separate agent with a written brief (stored in `docs/reviews/<phase>-agent-brief.md`). Record findings in `docs/reviews/<phase>-agent-findings.md`. MED/HIGH issues: fix before tagging or justify in writing.
+- **R12 Test audit.** Run `tools/gen-test-audit.mjs` to classify every test as PRESENT (tight numeric assertion, derived tolerance) / WEAK (right thing, loose tolerance) / MISSING (important property not tested). Headline totals must equal per-file table sums. MISSING counts properties, not tests.
+- **R13 Mutation check.** For every numeric/stochastic test, name the WRONG IMPLEMENTATION the test must reject (frozen model, ×2, ×1/2, wrong sign, haploid vs diploid, per-person vs total value, swapped formulas) and run it in the script: assert (a) the test fails for it, (b) tolerance < gap. Comparing the correct model at two parameter values is not a mutation check.
+- **R14 Measured coverage.** Run `node --test --experimental-test-coverage` after every phase; paste uncovered lines per new model file. Every branch needs a test with an assertion. A typed matrix is not coverage.
 
 ---
 
-## Bench 1 — special-relativity
+## R8 flag: Schrödinger FD formula correction
 
-### A. Path, level, catalog field
+The prompt spec gave: `E_n^FD = (4ℏ²/(m·h²))·sin²(nπ/(2(N+1)))`.
 
-| Field | Value |
-|---|---|
-| Catalog path | `physics/relativity/special-relativity` |
-| Level | university |
-| New field | `relativity` (id: `relativity`, name: `Relativity`) under `physics` |
-| navLabel | `Special relativity` |
-| keywords | special relativity, Lorentz factor, time dilation, length contraction, relativistic energy, E=mc², rapidity, four-momentum, muon, velocity addition |
-
-### B. Model class and equations
-
-State: `{beta, m0, c0}` where `beta = v/c₀`, `m0` is rest mass, `c0 = 299792458 m/s` (exact).
+The correct FD Hamiltonian for `H = −ℏ²/(2m) d²/dx²` with 2nd-order central differences gives diagonal `ℏ²/(m·h²)` and off-diagonal `−ℏ²/(2m·h²)`. Factoring out `ℏ²/(2m·h²)` from the tridiagonal matrix `[2,−1,…,−1,2]`, eigenvalues are `2−2cos(nπ/(N+1))`, so:
 
 ```
-β = v / c₀                                  domain: |β| < 1
-γ = 1 / √(1 − β²)                           Lorentz factor; γ ≥ 1
-Δt_dilated = γ · Δt_proper                  time dilation
-L = L₀ / γ                                  length contraction
-p = m₀ · γ · v                              relativistic momentum
-KE = (γ − 1) · m₀ · c₀²                    kinetic energy
-E_total = γ · m₀ · c₀²                      total energy (includes rest mass)
-E² = (p·c₀)² + (m₀·c₀²)²                   energy-momentum relation (invariant)
-φ = atanh(β)                                rapidity
-γ = cosh(φ),  βγ = sinh(φ)
-u' = (u − v) / (1 − u·v/c₀²)              relativistic velocity addition
+E_n^FD = ℏ²/(2m·h²) × 2·(1 − cos(nπ/(N+1)))
 ```
 
-**Muon example** (β = 0.9994):
-```
-1 − β² = 1 − 0.9994² = 1 − 0.99880036 = 0.00119964
-γ = 1/√0.00119964 = 28.872…
-```
-Muon rest lifetime τ₀ = 2.197 μs (PDG 2022, cited not fetched).
-Dilated lifetime = γ · τ₀ ≈ 63.4 μs.
+The identity `2(1−cosθ) = 4sin²(θ/2)` gives an equivalent form, but only if the prefactor is `ℏ²/(2m·h²)`, not `ℏ²/(m·h²)`. The spec wrote `4ℏ²/(m·h²)·sin²(nπ/(2(N+1)))` which is 2× too large, giving `E₁(L=1nm) ≈ 0.752 eV` vs correct `0.376 eV`.
 
-Methods: `gamma()`, `timeDilation(dtProper)`, `lengthContraction(L0)`, `momentum()`, `kineticEnergy()`, `totalEnergy()`, `velocityAddition(u)`, `rapidity()`.
-
-### C. R3 Symbol table
-
-| Symbol | Meaning | Unit | Typical range | Source |
-|---|---|---|---|---|
-| β | v/c₀ (velocity ratio) | dimensionless | [0, 1) | algebraic |
-| γ | Lorentz factor 1/√(1−β²) | dimensionless | [1, ∞) | algebraic |
-| v | velocity | m/s | [0, c₀) | input |
-| c₀ | speed of light | m/s | 299792458 (exact) | SI definition |
-| m₀ | rest mass | kg | > 0 | input |
-| Δt_proper | proper time interval | s | > 0 | input |
-| Δt_dilated | dilated time interval | s | > Δt_proper | derived |
-| L₀ | proper length | m | > 0 | input |
-| L | contracted length | m | (0, L₀] | derived |
-| p | relativistic momentum | kg·m/s | ≥ 0 | derived |
-| KE | relativistic kinetic energy | J | ≥ 0 | derived |
-| E_total | total relativistic energy | J | m₀c₀² to ∞ | derived |
-| φ | rapidity | dimensionless | (−∞, ∞) | algebraic |
-| u | velocity in original frame | m/s | (−c₀, c₀) | input |
-| u' | velocity in boosted frame | m/s | (−c₀, c₀) | derived |
-
-### D. R4 Domain table
-
-| Parameter | Domain | Trigger condition | Test |
-|---|---|---|---|
-| β | \|β\| < 1 | \|β\| ≥ 1 | `gamma(1.0)` → RangeError |
-| β | \|β\| < 1 | β = −1.1 | `gamma(-1.1)` → RangeError |
-| m₀ | m₀ > 0 | m₀ ≤ 0 | constructor with m₀=0 → RangeError |
-
-### E. Predict questions
-
-| # | Question | Answer |
-|---|---|---|
-| P1 | γ at β = 0.5 | 1/√0.75 = 2/√3 ≈ 1.15470 |
-| P2 | γ at β = 0.9994 (muon) | 1/√0.00119964 ≈ 28.872 |
-| P3 | Velocity addition: 0.9c in frame moving at 0.5c | (0.9−0.5)/(1−0.45) c = (0.4/0.55) c ≈ 0.72727c |
-
-**Asserted in script:**
-```js
-assert(Math.abs(gamma(0.5) - 1/Math.sqrt(0.75)) < 1e-14);
-assert(Math.abs(gamma(0.9994) - 28.87) < 0.01);
-assert(Math.abs(velocityAddition(0.9*C0, 0.5*C0) / C0 - 0.4/0.55) < 1e-14);
-```
-
-### F. Derive-it steps
-
-1. Start with the Lorentz transformation: t' = γ(t − vx/c²), x' = γ(x − vt). For a clock at rest (x=0): Δt' = γ·Δt → time dilation.
-2. For a rod at rest (Δt'=0 in rest frame): Δx = γ(Δx' + v·Δt') = γΔx' → L₀ = γL → L = L₀/γ.
-3. Four-momentum (E/c, p) has invariant E² − (pc)² = (m₀c²)². Substituting E = γm₀c², p = γm₀v gives the energy-momentum relation.
-4. Rapidity φ = atanh(β): velocity addition becomes φ₁ + φ₂ (additive) — much simpler than the non-linear formula in β.
-
-### G. research.papers
-
-- Einstein, A. (1905). Zur Elektrodynamik bewegter Körper. Annalen der Physik. 17:891–921. (cited, not fetched)
-- Particle Data Group (2022). Review of Particle Physics. Prog. Theor. Exp. Phys. 2022:083C01. https://pdg.lbl.gov. (cited, not fetched — muon rest lifetime 2.197 μs)
-
-### H. Where it breaks
-
-1. Does not include general relativity: gravitational time dilation, curved spacetime.
-2. Assumes inertial frames only; no acceleration (four-force, proper acceleration not included).
-3. Point particle model: no internal degrees of freedom, no spin.
-4. Velocity addition formula holds for 1D collinear case; 3D case requires full Lorentz matrix.
-
-### I. Tests with derived tolerances
-
-| Test | Expected | Tolerance derivation |
-|---|---|---|
-| γ(0) = 1 | 1 | exact; floating point: < 1e-15 |
-| γ(0.5) = 1/√0.75 | 1.15470053837925… | formula exact; FP error: < 1e-14 |
-| γ(0.9994) ≈ 28.872 | 28.872 | formula exact; tolerance 0.01 (two sig figs) |
-| E² = (pc)² + (m₀c²)² | exact identity | relative error < 1e-12 (double precision) |
-| cosh(atanh(β)) = γ | exact identity | FP round-trip error < 1e-14 |
-| velocity addition < c | u' < c₀ | exact inequality; no numerical tolerance needed |
-
-### J. Independent anchor route
-
-- γ(β): cross-check via rapidity: `cosh(atanh(β)) == γ`; also via series expansion at small β: γ ≈ 1 + β²/2 (to 0.1% for β ≤ 0.05).
-- E²=(pc)²+(m₀c²)²: verify that E_total² − (p·c₀)² = (m₀c₀²)² exactly in floating point (relative error < 1e-12).
-- Velocity addition: special case u=v=0.6c: u' = 0; special case u=c₀: u' = c₀ exactly (light speed invariant).
-
-### K. R14 Branch matrix
-
-| Test | Method | Branch/variant |
-|---|---|---|
-| γ(0) = 1 | gamma | β = 0 (rest frame) |
-| γ(0.5), γ(0.9), γ(0.9994) | gamma | 0 < β < 1 |
-| gamma(1.0) → RangeError | gamma | \|β\| ≥ 1 boundary |
-| timeDilation(1.0) at β=0.5 | timeDilation | standard dilation |
-| lengthContraction(1.0) at β=0.5 | lengthContraction | standard contraction |
-| timeDilation at β=0.9 | timeDilation | high-β dilation |
-| lengthContraction at β=0.9 | lengthContraction | high-β contraction |
-| momentum() at β=0.6 | momentum | p = γm₀v |
-| kineticEnergy() at β=0.6 | kineticEnergy | KE = (γ-1)m₀c₀² |
-| totalEnergy() at β=0.6 | totalEnergy | E = γm₀c₀² |
-| E²=(pc)²+(m₀c²)² | totalEnergy + momentum | energy-momentum invariant |
-| rapidity at β=0.5 | rapidity | φ = atanh(β) |
-| cosh/sinh rapidity check | rapidity | cosh(φ)=γ, sinh(φ)=βγ |
-| velocityAddition(0.9c, 0.5c) | velocityAddition | sub-luminal addition |
-| velocityAddition → < c | velocityAddition | light-speed bound |
-| Muon γ ≈ 28.87 | gamma | extreme relativistic limit |
-
----
-
-## Bench 2 — perceptron
-
-### A. Path, level, catalog field
-
-| Field | Value |
-|---|---|
-| Catalog path | `neuroscience/learning/perceptron` |
-| Level | university |
-| New field | `learning` (id: `learning`, name: `Learning`) under `neuroscience` |
-| navLabel | `Perceptron` |
-| keywords | perceptron, Rosenblatt, linear classifier, Novikoff, convergence theorem, margin, supervised learning, neural network, hyperplane, separability |
-
-### B. Model class and equations
-
-**Perceptron update rule (Rosenblatt 1958):**
-```
-Augmented input: x̃ = [x₁, …, xₐ, 1]   (bias absorbed into weight w[d])
-ŷ = sign(w · x̃) ∈ {−1, +1}
-If ŷ ≠ y: w ← w + η · y · x̃
-```
-
-**Convergence theorem (Novikoff 1962):**
-```
-Given: {(xᵢ, yᵢ)} linearly separable with functional margin γ = min_i yᵢ·(w*·x̃ᵢ)/‖w*‖ > 0
-       R = max_i ‖x̃ᵢ‖  (max augmented norm)
-Then: number of mistakes ≤ (R/γ)²
-```
-Note: The bound is on total mistakes across all passes (epochs), not per-epoch.
-
-**OR gate (4 points, linearly separable):**
-```
-(−1,−1) → −1,  (−1,+1) → +1,  (+1,−1) → +1,  (+1,+1) → +1
-Augmented: [x₁, x₂, 1]
-w* = (1,1,1):  (−1,−1,1)·(1,1,1) = −1 < 0 → y=−1 ✓
-               (−1,1,1)·(1,1,1)  = 1  > 0 → y=+1 ✓
-               (1,−1,1)·(1,1,1)  = 1  > 0 → y=+1 ✓
-               (1,1,1)·(1,1,1)   = 3  > 0 → y=+1 ✓
-‖w*‖ = √3
-margins: 1/√3, 1/√3, 1/√3, 3/√3=√3  → γ = 1/√3
-R = √(1+1+1) = √3   (all augmented inputs have norm √3)
-(R/γ)² = (√3·√3)² = 9
-```
-
-Methods: `predict(x)`, `train(data, labels, {maxEpochs, eta})` → `{converged, epochs, mistakes, weights}`.
-
-State: `{weights: number[], eta: number, inputDim: number}`.
-
-### C. R3 Symbol table
-
-| Symbol | Meaning | Unit | Typical range | Source |
-|---|---|---|---|---|
-| w | weight vector (d+1 dim with bias) | dimensionless | unconstrained | internal state |
-| η | learning rate | dimensionless | (0, 1] | input |
-| x | input feature vector | dimensionless | any ℝᵈ | input |
-| ŷ | predicted label | dimensionless | {−1, +1} | derived |
-| y | true label | dimensionless | {−1, +1} | input |
-| γ | functional margin of separating hyperplane | dimensionless | > 0 | problem-specific |
-| R | max augmented input norm | dimensionless | > 0 | problem-specific |
-| d | input dimension | dimensionless | ≥ 1, integer | input |
-
-### D. R4 Domain table
-
-| Parameter | Domain | Trigger condition | Test |
-|---|---|---|---|
-| η | η > 0 | η ≤ 0 | `new Perceptron({eta: 0})` → RangeError |
-| input dimension | consistent | x.length ≠ w.length−1 | `predict(wrongLengthVector)` → RangeError |
-
-### E. Predict questions
-
-| # | Question | Answer |
-|---|---|---|
-| P1 | (R/γ)² for OR gate (augmented, w*=(1,1,1)) | 9 |
-| P2 | Does perceptron converge on OR gate? | Yes; ≤ 9 total mistakes |
-| P3 | After convergence, are all 4 points correctly classified? | Yes |
-
-**Asserted in script:**
-```js
-assert(Math.abs(novikoff_bound - 9) < 1e-10);
-assert(result_or.mistakes <= novikoff_bound);
-assert(allCorrect);
-```
-
-### F. Derive-it steps
-
-1. Show that the mistake count is bounded: define potential function Φ = w_t · w* / (‖w_t‖·‖w*‖) (cosine of angle). Each mistake increases the numerator by at least γ (margin) and the denominator grows by at most R.
-2. After k mistakes: w_k·w* ≥ k·γ·‖w*‖ (by induction on update rule).
-3. ‖w_k‖² ≤ k·R² (by induction: each update adds at most R² to ‖w‖²).
-4. Cosine ≤ 1 → k·γ/R ≤ √k → k ≤ (R/γ)². QED.
-
-### G. research.papers
-
-- Rosenblatt, F. (1958). The Perceptron: A Probabilistic Model for Information Storage and Organization in the Brain. Psychological Review. 65(6):386–408. (cited, not fetched)
-- Novikoff, A. B. J. (1962). On convergence proofs on perceptrons. Proc. Symposium on the Mathematical Theory of Automata. 12:615–622. (cited, not fetched)
-
-### H. Where it breaks
-
-1. Only converges for linearly separable data; for XOR (not separable) it oscillates forever.
-2. Convergence time can be O((R/γ)²) = exponential in n for ill-conditioned problems; SVMs are preferred.
-3. No probabilistic output; hard threshold gives 0/1 confidence.
-4. No regularisation; weights can grow unboundedly even after convergence.
-
-### I. Tests with derived tolerances
-
-| Test | Expected | Tolerance derivation |
-|---|---|---|
-| γ = 1/√3 | 0.57735… | exact; FP error < 1e-12 |
-| R = √3 | 1.73205… | exact; FP error < 1e-12 |
-| (R/γ)² = 9 | 9 | exact; FP error < 1e-10 |
-| mistakes ≤ 9 | ≤ 9 | Novikoff theorem (hard bound) |
-| allCorrect | true | exact classification test |
-
-### J. Independent anchor route
-
-- Verify (R/γ)² = 9 by direct computation from the OR dataset and w*=(1,1,1), without reference to any formula.
-- Cross-check that all margins > 0 by evaluating y·(w*·x̃) for each of the 4 points explicitly.
-- After training, verify predict(x) for all 4 training points directly (no formula — just test).
-
-### K. R14 Branch matrix
-
-| Test | Method | Branch/variant |
-|---|---|---|
-| margins all > 0 with w*=(1,1,1) | margin computation | separable dataset |
-| (R/γ)² = 9 | Novikoff bound formula | exact calculation |
-| converged = true | train | convergence in finite epochs |
-| mistakes ≤ 9 | train | Novikoff bound satisfied |
-| allCorrect | predict | all 4 OR points correct |
-| η ≤ 0 → RangeError | constructor | invalid learning rate |
-| dimension mismatch → RangeError | predict | invalid input |
-
----
-
-## Bench 3 — network-effects
-
-### A. Path, level, catalog field
-
-| Field | Value |
-|---|---|
-| Catalog path | `economics/markets/network-effects` |
-| Level | intro |
-| Existing field | `markets` under `economics` |
-| navLabel | `Network effects` |
-| keywords | network effects, Metcalfe's law, Sarnoff, Reed, tipping point, adoption dynamics, critical mass, social network, value function |
-
-### B. Model class and equations
-
-**Value functions:**
-```
-Sarnoff (broadcast): V_S(n) = n
-Metcalfe (pairwise): V_M(n) = n·(n−1)/2   [edges in K_n]
-Reed (groups):       V_R(n) = 2ⁿ − n − 1  [subsets of size ≥ 2]
-```
-
-**Adoption dynamics:**
-```
-dx/dt = x·(1−x)·[V(x·N) − c]
-where: x ∈ [0,1] = adoption fraction
-       N = total population
-       V(x·N) = v₁·(x·N)·(x·N−1)/2   [Metcalfe value with unit weight v₁]
-       c = per-person adoption cost
-
-Fixed points: x=0 (stable), x=x* (unstable tipping point), x=1 (stable)
-```
-
-**Tipping point (exact):**
-```
-Solve v₁·k·(k−1)/2 = c where k = x*·N
-→ v₁·k² − v₁·k − 2c = 0
-→ k = [v₁ + √(v₁² + 8·v₁·c)] / (2·v₁)
-→ x* = k / N
-
-Large-N approximation: x* ≈ √(2c/v₁) / N
-```
-
-Methods: `metcalfeValue(n)`, `sarnoffValue(n)`, `reedValue(n)`, `tippingPoint(N, v1, c)`, `run(x0, T, nSteps)` via RK4.
-
-### C. R3 Symbol table
-
-| Symbol | Meaning | Unit | Typical range | Source |
-|---|---|---|---|---|
-| n | network size (users) | count | ≥ 0, integer | input |
-| x | adoption fraction | dimensionless | [0, 1] | state |
-| N | total population | count | > 0, integer | input |
-| v₁ | marginal value per link | value/link | > 0 | input |
-| c | per-person adoption cost | value | > 0 | input |
-| x* | tipping-point adoption fraction | dimensionless | (0, 1) | derived |
-| V | network value per person | value | ≥ 0 | derived |
-
-### D. R4 Domain table
-
-| Parameter | Domain | Trigger condition | Test |
-|---|---|---|---|
-| n | n ≥ 0 | n < 0 | `metcalfeValue(-1, 1)` → RangeError |
-| N | N > 0 | N ≤ 0 | `tippingPoint(0, 0.001, 100)` → RangeError |
-| x | x ∈ [0, 1] | x outside [0,1] | `run(-0.1, …)` → RangeError |
-
-### E. Predict questions
-
-| # | Question | Answer |
-|---|---|---|
-| P1 | Metcalfe V(10) with v₁=1 | 45 |
-| P2 | Tipping point x* for N=1000, v₁=0.001, c=100 | ≈ 0.4477 |
-| P3 | Reed V(5) | 2⁵ − 5 − 1 = 26 |
-
-**Asserted in script:**
-```js
-assert(metcalfeValue(10, 1) === 45);
-assert(Math.abs(xstar - 0.4477) < 0.001);
-assert(reedValue(5) === 26);
-```
-
-### F. Derive-it steps
-
-1. Metcalfe: n users → n(n-1)/2 possible pairwise connections; V ∝ n² for large n.
-2. Tipping dynamics: dx/dt = 0 at x=0, x=x*, x=1; sign analysis shows x* is unstable (dx/dt > 0 for x > x*).
-3. Exact tipping: solve the quadratic v₁k²-v₁k-2c=0 (positive root).
-4. Tipping demo: integrate RK4 from x₀ = x* ± ε over T=5 time units; below → 0, above → 1.
-
-### G. research.papers
-
-- Metcalfe, R. M. (1995). Metcalfe's Law: A network becomes more valuable as it reaches more users. InfoWorld 17:53. (cited, not fetched)
-- Katz, M. & Shapiro, C. (1985). Network Externalities, Competition, and Compatibility. American Economic Review. 75(3):424–440. (cited, not fetched)
-- Reed, D. (1999). That Sneaky Exponential — Beyond Metcalfe's Law to the Power of Community Building. http://www.reed.com/gikeconomics.html. (cited, not fetched)
-
-### H. Where it breaks
-
-1. Assumes all users are identical (homogeneous value); real networks have power-law degree distributions.
-2. Continuous ODE approximation breaks down for small N.
-3. Reed's law 2^n grows so fast it is only meaningful for small n; for large networks the group value is practically inaccessible.
-4. Does not model churn (users leaving), multi-homing, or platform competition.
-
-### I. Tests with derived tolerances
-
-| Test | Expected | Tolerance derivation |
-|---|---|---|
-| x* is fixed point: |f(x*)| | ≈ 0 | RK4 residual at tipping point exact; FP error < 1e-8 |
-| x(0)=x*−ε after T=5 → 0 | < 0.1 | ODE with dt=0.001, 5000 steps; RK4 global error O(h⁴)·T = (0.001)⁴·5000/24 ≈ 2e-10; well within 0.1 |
-| x(0)=x*+ε after T=5 → 1 | > 0.9 | same argument |
-| Metcalfe V(10)=45 | 45 | exact integer arithmetic |
-| Reed V(5)=26 | 26 | exact integer arithmetic |
-
-### J. Independent anchor route
-
-- Tipping point: verify x* also satisfies `f(x*) ≈ 0` directly in the ODE (numerical fixed-point check).
-- Large-N approx: x* ≈ √(2c/v₁)/N; verify agrees with exact formula to < 0.01.
-- Metcalfe n=2: V=1 (one link); n=3: V=3; verify by enumeration.
-
-### K. R14 Branch matrix
-
-| Test | Method | Branch/variant |
-|---|---|---|
-| metcalfeValue(10) = 45 | metcalfeValue | standard n > 1 |
-| metcalfeValue(-1) → RangeError | metcalfeValue | n < 0 boundary |
-| sarnoffValue(10) = 10 | sarnoffValue | n > 0 |
-| reedValue(5) = 26 | reedValue | small n (exact) |
-| tippingPoint(N=1000) | tippingPoint | standard params |
-| tippingPoint(N=0) → RangeError | tippingPoint | N ≤ 0 boundary |
-| f(x*)=0 | adoptionODE | fixed point |
-| x₀ below tipping → 0 | run (RK4) | below-threshold dynamics |
-| x₀ above tipping → 1 | run (RK4) | above-threshold dynamics |
-
----
-
-## Bench 4 — neutral-theory
-
-### A. Path, level, catalog field
-
-| Field | Value |
-|---|---|
-| Catalog path | `biology/evolution/neutral-theory` |
-| Level | graduate |
-| Existing field | `evolution` under `biology` |
-| navLabel | `Neutral theory` |
-| keywords | neutral theory, Wright-Fisher, genetic drift, fixation probability, Kimura, allele frequency, effective population size, population genetics |
-
-### B. Model class and equations
-
-**Wright-Fisher neutral drift:**
-```
-N diploid individuals → 2N gene copies per generation
-Starting allele count k₀ = round(p₀ · 2N)
-Each generation: k_{t+1} ~ Binomial(2N, kₜ/(2N))
-```
-
-**Fixation probability (Kimura 1968, cited not fetched):**
-```
-u(p₀) = p₀                     [exact result for neutral allele]
-u(k) = k / (2N)                 [k starting copies out of 2N]
-```
-
-**Expected fixation time (conditional on fixation; Kimura & Ohta 1969, cited not fetched):**
-```
-t_fix(p₀) = −4N · p₀ · ln(p₀) / (1 − p₀)     generations
-```
-
-**Expected loss time (conditional on loss):**
-```
-t_loss(p₀) = −4N · (1−p₀) · ln(1−p₀) / p₀     generations
-```
-
-**Variance of allele frequency per generation:**
-```
-Var(Δp) = p·(1−p) / (2N_e)
-```
-
-Methods: `simulateGeneration(k, N)`, `run(p0, nGenerations)` → `{history, finalK}`, `fixationProbability(p0)`, `expectedFixationTime(p0)`, `expectedLossTime(p0)`, `varPerGeneration(p0)`.
-
-State: `{N, seed}`.
-
-### C. R3 Symbol table
-
-| Symbol | Meaning | Unit | Typical range | Source |
-|---|---|---|---|---|
-| N | diploid population size | count | 10–10⁶ | input |
-| 2N | haploid gene copies | count | 20–2×10⁶ | derived |
-| p₀ | initial allele frequency | dimensionless | (0, 1) exclusive | input |
-| k₀ | initial allele count | count | 1 to 2N−1 | input |
-| p | current allele frequency | dimensionless | [0, 1] | state |
-| u(p₀) | fixation probability | dimensionless | = p₀ (neutral) | algebraic / Kimura 1968 |
-| t_fix | expected fixation time | generations | 0 to 4N·ln(4N) | Kimura & Ohta 1969 |
-| N_e | effective population size | count | ≈ N for diploid | input |
-
-### D. R4 Domain table
-
-| Parameter | Domain | Trigger condition | Test |
-|---|---|---|---|
-| N | N > 0 | N ≤ 0 | `new NeutralModel({N: 0})` → RangeError |
-| p₀ | p₀ ∈ (0, 1) exclusive | p₀ ≤ 0 or p₀ ≥ 1 | `fixationProbability(0)` → RangeError |
-| p₀ | p₀ ∈ (0, 1) exclusive | p₀ = 1 | `fixationProbability(1)` → RangeError |
-
-### E. Predict questions
-
-| # | Question | Answer |
-|---|---|---|
-| P1 | Fixation probability for a single new allele in N=50 diploids | 1/(2N) = 0.01 |
-| P2 | E[t_fix\|fix] for p₀=0.1, N=100 | −400·0.1·ln(0.1)/(0.9) = 40·ln(10)/0.9 ≈ 102.34 |
-| P3 | Var(Δp) per generation for p₀=0.01, N=50 | 0.01·0.99/100 = 9.9×10⁻⁵ |
-
-**Asserted in script:**
-```js
-assert(p0_wf === 0.01);  // 1/(2×50)
-assert(Math.abs(t_fix_01 - 40*Math.log(10)/0.9) < 1e-10);
-assert(Math.abs(var_per_gen - 0.01*0.99/100) < 1e-15);
-```
-
-### F. Derive-it steps
-
-1. Wright-Fisher: each generation is a binomial draw; allele frequencies form a martingale → E[p_{t+1}] = p_t.
-2. Neutral fixation probability: since frequency is a martingale, E[p_∞] = p₀; final state is 0 or 1; so P(fix) = p₀.
-3. Expected fixation time: derived by solving a boundary-value problem for the diffusion approximation of Wright-Fisher (Kolmogorov forward equation); result involves the integral ∫G(p,y)dy where G is the Green's function.
-4. Variance of allele frequency: each generation, 2N Bernoulli trials with p success → Var(k) = 2Np(1−p); Var(Δp) = Var(k)/(2N)² = p(1−p)/(2N).
-
-### G. research.papers
-
-- Kimura, M. (1968). Evolutionary rate at the molecular level. Nature. 217:624–626. doi:10.1038/217624a0. (cited, not fetched)
-- Kimura, M. & Ohta, T. (1969). The average number of generations until fixation of a mutant gene in a finite population. Genetics. 61:763–771. (cited, not fetched)
-- Watterson, G. A. (1975). On the number of segregating sites in genetical models without recombination. Theoretical Population Biology. 7(2):256–276. (cited, not fetched)
-
-### H. Where it breaks
-
-1. Assumes complete neutrality (all alleles have equal fitness); selection coefficient s = 0.
-2. Assumes constant population size; size fluctuations reduce N_e.
-3. Normal approximation for binomial is used for large N in fast mode; fails for p → 0 or p → 1 (use exact for k ≤ 200).
-4. Single locus model; no recombination or epistasis.
-
-### I. Tests with derived tolerances
-
-| Test | Expected | Tolerance derivation |
-|---|---|---|
-| Empirical fixation prob (1000 trials, p₀=0.01, N=50) | p₀ = 0.01 | 3σ = 3·√(p₀(1−p₀)/1000) = 3·√(9.9e-6) ≈ 0.00944; test: \|empirical − 0.01\| < 5·3σ (wider due to finite-generation cutoff) |
-| E[t_fix](p₀=0.1, N=100) | 102.337… | Exact formula; FP < 1e-10 |
-| Var(Δp) | p(1−p)/(2N) | Exact formula; FP < 1e-15 |
-
-### J. Independent anchor route
-
-- Fixation probability: verify u(p₀) = p₀ is consistent with u(1−p₀) = 1−p₀ (if you start near 1, fixation probability is near 1) — check that u(0.01) + loss_probability(0.01) = 1 (they sum to 1 since ultimate absorption is certain).
-- E[t_fix]: numerically integrate −4N·p·ln(p)/(1−p) and verify against tabulated values from Kimura & Ohta 1969.
-- Stochastic: run 1000 trials with seed=42, count fixations; compare to 3σ confidence interval.
-
-### K. R14 Branch matrix
-
-| Test | Method | Branch/variant |
-|---|---|---|
-| k₀=1, N=50 fix prob = 0.01 | fixationProbability | single-copy neutral allele |
-| E[t_fix](p₀=0.1) ≈ 102.34 | expectedFixationTime | intermediate frequency |
-| Var(Δp) formula | varPerGeneration | p₀ = 0.01 |
-| simulateGeneration(k=1, N=50) | simulateGeneration | near-loss boundary |
-| simulateGeneration(k=99, N=50) | simulateGeneration | near-fixation boundary |
-| run(p0=0.5) | run | symmetric case |
-| N ≤ 0 → RangeError | constructor | invalid N |
-| p₀ = 0 → RangeError | fixationProbability | boundary excluded |
-| p₀ = 1 → RangeError | fixationProbability | boundary excluded |
-| Stochastic: 1000 trials mean ≈ p₀ | run (stochastic) | Monte Carlo validation |
-
----
-
-## Bench 5 — coalescence
-
-### A. Path, level, catalog field
-
-| Field | Value |
-|---|---|
-| Catalog path | `biology/evolution/coalescence` |
-| Level | graduate |
-| Existing field | `evolution` under `biology` |
-| navLabel | `Coalescent` |
-| keywords | coalescent theory, Kingman, MRCA, most recent common ancestor, genealogy, effective population size, Watterson theta, Tajima's D, segregating sites, phylogenetics |
-
-### B. Model class and equations
-
-**Kingman's coalescent (Kingman 1982, cited not fetched):**
-```
-n lineages coalesce backward in time.
-Rate for k lineages: C(k,2)/(2N_e) = k(k−1)/(4N_e)   events per generation
-Wait time T_k ~ Exponential(k(k−1)/(4N_e))
-E[T_k] = 4N_e / (k(k−1))
-```
-
-**Expected T_MRCA (exact telescoping sum):**
-```
-E[T_MRCA] = Σ_{k=2}^{n} E[T_k]
-           = 4N_e · Σ_{k=2}^{n} 1/(k(k−1))
-           = 4N_e · Σ_{k=2}^{n} (1/(k−1) − 1/k)   [partial fractions]
-           = 4N_e · (1 − 1/n)                        [telescoping]
-
-n=2: E[T_MRCA] = 4N_e·(1−1/2) = 2N_e
-n=3: E[T_MRCA] = 4N_e·(2/3) = 8N_e/3
-n→∞: E[T_MRCA] → 4N_e
-```
-
-**Expected segregating sites (Watterson 1975, cited not fetched):**
-```
-θ = 4·N_e·μ    (population-scaled mutation rate)
-H_{n-1} = Σ_{i=1}^{n-1} 1/i    (harmonic number)
-E[S] = θ · H_{n-1}
-```
-
-**Tajima's D numerator:**
-```
-d = S − a₁·ŝ    where a₁ = H_{n-1}
-```
-(Full Tajima's D includes a variance estimate; model provides numerator only.)
-
-Methods: `expectedTk(k, Ne)`, `expectedTMRCA(n, Ne)`, `expectedSegSites(n, Ne, mu)`, `simulate(n, Ne, seed)` → `{tMRCA, waitTimes}`.
-
-State: `{n, Ne, mu}`.
-
-### C. R3 Symbol table
-
-| Symbol | Meaning | Unit | Typical range | Source |
-|---|---|---|---|---|
-| n | number of sampled lineages | count | ≥ 2 | input |
-| N_e | effective (diploid) population size | count | 10³–10⁶ | input |
-| T_k | waiting time for k→k-1 coalescence | generations | Exp(k(k-1)/(4Ne)) | Kingman 1982 |
-| T_MRCA | time to most recent common ancestor | generations | ≈ 4N_e | derived |
-| θ | scaled mutation rate 4N_e·μ | dimensionless | 0.001–10 | input/derived |
-| μ | per-generation mutation rate | per generation | 10⁻⁸–10⁻⁵ | input |
-| S | number of segregating sites | count | ≥ 0 | derived |
-| H_{n-1} | (n-1)th harmonic number | dimensionless | ≈ ln(n) for large n | algebraic |
-
-### D. R4 Domain table
-
-| Parameter | Domain | Trigger condition | Test |
-|---|---|---|---|
-| n | n ≥ 2 | n < 2 | `expectedTMRCA(1, 1000)` → RangeError |
-| N_e | N_e > 0 | N_e ≤ 0 | `new CoalescentModel({Ne: 0})` → RangeError |
-
-### E. Predict questions
-
-| # | Question | Answer |
-|---|---|---|
-| P1 | E[T_MRCA] for n=2, N_e=1000 | 2·1000 = 2000 generations |
-| P2 | E[T_MRCA] for n=3, N_e=1000 | 8·1000/3 ≈ 2666.67 generations |
-| P3 | E[T_MRCA] for n=10, N_e=1000 | 4·1000·(1−1/10) = 3600 generations |
-
-**Asserted in script:**
-```js
-assert(Math.abs(expectedTMRCA(2, 1000) - 2000) < 1e-10);
-assert(Math.abs(expectedTMRCA(3, 1000) - 8000/3) < 1e-8);
-assert(Math.abs(expectedTMRCA(10, 1000) - 3600) < 1e-8);
-```
-
-### F. Derive-it steps
-
-1. Pairwise coalescence: probability that two specific lineages share a common ancestor in one generation = 1/(2N_e); with k lineages, there are C(k,2) pairs → rate k(k-1)/(4N_e).
-2. Waiting time is memoryless (Poisson process) → T_k ~ Exponential → E[T_k] = 4N_e/(k(k-1)).
-3. Telescoping: Σ_{k=2}^{n} 1/(k(k-1)) = Σ_{k=2}^{n} (1/(k-1) − 1/k) = 1 − 1/n. Verify for n=2: 1/2; for n=3: 1/2+1/6 = 2/3 = 1-1/3 ✓.
-4. Mutation: each lineage-generation is exposed to mutations at rate μ; expected mutations on branch of length t: μt; sum over all branches gives E[S] = θ·H_{n-1}.
-
-### G. research.papers
-
-- Kingman, J. F. C. (1982). The coalescent. Stochastic Processes and their Applications. 13(3):235–248. doi:10.1016/0304-4149(82)90011-4. (cited, not fetched)
-- Watterson, G. A. (1975). On the number of segregating sites in genetical models without recombination. Theoretical Population Biology. 7(2):256–276. (cited, not fetched)
-- Tajima, F. (1989). Statistical method for testing the neutral mutation hypothesis by DNA polymorphism. Genetics. 123(3):585–595. (cited, not fetched)
-
-### H. Where it breaks
-
-1. Assumes constant N_e; population size changes (bottlenecks, expansions) alter T_MRCA distribution.
-2. Assumes no recombination; recombination creates an ancestral recombination graph (ARG), not a tree.
-3. Assumes no selection; selected alleles have non-standard coalescent rates.
-4. Standard Kingman coalescent is for haploid model; diploid model needs factor of 2 for N_e (conventions vary — always document 2N_e vs N_e).
-
-### I. Tests with derived tolerances
-
-| Test | Expected | Tolerance derivation |
-|---|---|---|
-| E[T_MRCA] n=2, closed form | 2000 | exact; FP < 1e-10 |
-| E[T_MRCA] n=3, closed form | 8000/3 | exact; FP < 1e-8 |
-| E[T_MRCA] simulation (200 trials, n=10, N_e=1000) | 3600 | 3σ/√200 where σ = SD of T_MRCA over trials; empirically ≈ 420 → tolerance ≈ 420 |
-| H_9 | Σ_{i=1}^{9} 1/i | exact rational arithmetic; FP < 1e-12 |
-| E[S] formula | θ·H_{n-1} | exact formula; FP < 1e-12 |
-
-### J. Independent anchor route
-
-- Telescoping: verify Σ_{k=2}^{n} 1/(k(k-1)) = 1 − 1/n by evaluating both the sum and the closed form and checking equality to 1e-12.
-- n=∞ limit: E[T_MRCA]/(4N_e) → 1 as n → ∞; verify with n=1000: ratio should be 1 − 1/1000 = 0.999 exactly.
-- Simulation: 200 trials with seed=42; mean ≈ 3600 within 3σ/√200.
-
-### K. R14 Branch matrix
-
-| Test | Method | Branch/variant |
-|---|---|---|
-| E[T_k] formula | expectedTk | any k ≥ 2 |
-| E[T_MRCA] n=2 | expectedTMRCA | minimum case |
-| E[T_MRCA] n=3 | expectedTMRCA | 3-lineage case |
-| E[T_MRCA] n=10 | expectedTMRCA | standard case |
-| Telescoping closed form vs sum | expectedTMRCA_closed | algebraic identity |
-| H_{n-1} computation | harmonicNumber | n=10 |
-| E[S] = θ·H_{n-1} | expectedSegSites | standard θ |
-| simulate(n, Ne, seed) | simulate | exponential wait times |
-| 200-trial mean ≈ 4Ne(1-1/n) | simulate | stochastic validation |
-| n=1 → RangeError | expectedTMRCA | n < 2 boundary |
-| Ne=0 → RangeError | constructor | invalid Ne |
-
----
-
-## Bench 6 (Alternate A) — random-walk
-
-### A. Path, level, catalog field
-
-| Field | Value |
-|---|---|
-| Catalog path | `math/probability/random-walk` |
-| Level | intro |
-| Existing field | `probability` under `math` |
-| navLabel | `Random walk` |
-| keywords | random walk, Brownian motion, diffusion, mean squared displacement, gambler's ruin, absorption, stochastic, Pólya, recurrence |
-
-(Already in catalog.js — no catalog addition needed.)
-
-### B. Model class and equations
-
-**1D discrete random walk:**
-```
-X₀ = 0
-X_{t+1} = X_t + ξ_t    where ξ_t = ±1 with equal probability
-E[X_t] = 0
-Var(X_t) = t          [E[X_t²] = t]
-E[|X_t|] ≈ √(2t/π)   [Gaussian limit; exact for large t]
-```
-
-**2D lattice walk (4-neighbour):**
-```
-Each step moves in one of 4 directions by ±s (step size)
-E[Δx²] = s²/2, E[Δy²] = s²/2 per step
-E[r²_t] = t · s²   (for unit step s=1: E[r²_t] = t)
-```
-
-**Diffusion coefficient:**
-```
-D = s² / (2d·Δt)    d = dimension, s = step size, Δt = time step
-1D: D = 1/2 for s=Δt=1
-Einstein relation: E[r²] = 2d·D·t (general)
-```
-
-Methods: `run1D(n, seed)` → positions array, `run2D(n, seed)` → `{x, y}` arrays, `expectedMSD(t)`, `expectedAbsVal(t)`.
-
-### C. R3 Symbol table
-
-| Symbol | Meaning | Unit | Typical range | Source |
-|---|---|---|---|---|
-| X_t | 1D position at time t | steps | (−∞, ∞) | state |
-| t | number of steps | count | ≥ 0 | input |
-| s | step size | length | 1 (unit) | input |
-| D | diffusion coefficient | length²/time | s²/(2d) | algebraic |
-| r² | squared displacement in 2D | length² | ≥ 0 | derived |
-
-### D. R4 Domain table
-
-| Parameter | Domain | Trigger condition | Test |
-|---|---|---|---|
-| n | n ≥ 1 | n ≤ 0 | `run1D(0)` → RangeError |
-
-### E. Predict questions
-
-| # | Question | Answer |
-|---|---|---|
-| P1 | E[X²_100] for 1D unit walk | 100 |
-| P2 | E[\|X_100\|] (Gaussian approx) | √(200/π) ≈ 7.9788 |
-| P3 | D for 1D unit walk (s=1, Δt=1) | 1/2 |
-
-### F. Derive-it steps
-
-1. Each step: E[ξ_t] = 0, E[ξ_t²] = 1; by independence: Var(X_t) = t·Var(ξ) = t.
-2. CLT: for large t, X_t ≈ N(0, t) → |X_t| has half-normal distribution → E[|X_t|] = √(2t/π).
-3. Einstein (1905): diffusion E[r²] = 2dDt; for unit lattice D = s²/(2d) → E[r²] = t·s².
-4. Pólya's theorem: 1D and 2D random walks are recurrent (return to origin with probability 1); 3D is transient.
-
-### G. research.papers
-
-- Einstein, A. (1905). Über die von der molekularkinetischen Theorie der Wärme geforderte Bewegung von in ruhenden Flüssigkeiten suspendierten Teilchen. Annalen der Physik. 322:549–560. (cited, not fetched)
-- Pólya, G. (1921). Über eine Aufgabe der Wahrscheinlichkeitsrechnung betreffend die Irrfahrt im Straßennetz. Mathematische Annalen. 84:149–160. (cited, not fetched)
-
-### H. Where it breaks
-
-1. Independent steps; correlated random walks (persistent motion, Lévy flights) need different models.
-2. Gaussian approximation E[|X|]≈√(2t/π) fails for small t (only exact asymptotically).
-3. No boundary conditions; gambler's ruin (absorbing barriers) requires separate analysis.
-4. Lattice walk differs from continuous Brownian motion in short-time behavior.
-
-### I. Tests with derived tolerances
-
-| Test | Expected | Tolerance derivation |
-|---|---|---|
-| E[X²_t] = t | 100 | Exact; integer arithmetic |
-| E[\|X_t\|] formula | √(200/π) | Exact formula; FP < 1e-14 |
-| Empirical MSD (5000 walks, t=100) | 100 | SE = σ(X²)/√5000; Var(X²)=2t² for X~N(0,t); SE = t√(2/5000) = 100·√(4e-4) = 2.0; tolerance = 3·2 = 6 |
-
-### J. Independent anchor route
-
-- E[X²_t] = t: verify by Var(X_t) = E[X_t²] − (E[X_t])² = E[X_t²] − 0 = t (algebraic).
-- Cross-check: simulate 5000 walks and verify empirical mean ≈ 100 within 3SE.
-
-### K. R14 Branch matrix
-
-| Test | Method | Branch/variant |
-|---|---|---|
-| E[X²_100]=100 | expectedMSD | exact formula |
-| E[\|X_100\|] | expectedAbsVal | Gaussian approximation |
-| E[r²_100] 2D = 100 | expectedMSD2D | 2D version |
-| run1D(1000) | run1D | seeded 1D walk |
-| 5000-walk MSD check | run1D | stochastic validation |
-| D = 1/2 | diffusionCoeff | 1D unit walk |
-| n ≤ 0 → RangeError | run1D | boundary |
-
----
-
-## Bench 7 (Alternate B) — particle-in-box
-
-### A. Path, level, catalog field
-
-| Field | Value |
-|---|---|
-| Catalog path | `physics/quantum/particle-in-box` |
-| Level | intro |
-| Existing field | `quantum` under `physics` (already in catalog) |
-| navLabel | `Particle in a box` (already in catalog) |
-| keywords | (already in catalog) |
-
-(Already in catalog.js — no catalog addition needed. This is an alternate in case a fully-specified bench hits an R8 wall.)
-
-### B. Model class and equations
-
-**1D infinite square well, x ∈ [0, L]:**
-```
-E_n = n²·π²·ℏ²/(2·m·L²)     n = 1, 2, 3, …
-ψ_n(x) = √(2/L) · sin(n·π·x/L)
-
-Physical constants (CODATA 2018):
-  ℏ = 1.054571817×10⁻³⁴ J·s
-  m_e = 9.1093837015×10⁻³¹ kg
-
-For electron, L=1 nm:
-  E₁ = π²·(1.054571817e-34)²/(2·9.1093837015e-31·(1e-9)²)
-     ≈ 6.0247×10⁻²⁰ J ≈ 0.37603 eV
-```
-
-**Expectation values:**
-```
-⟨x⟩_n = L/2    (by symmetry of sin²)
-⟨x²⟩_n = L²·(1/3 − 1/(2n²π²))
-σ_x,n = √(⟨x²⟩_n − L²/4)
-```
-
-**Probability in interval [a, b]:**
-```
-P_n(a,b) = ∫_a^b |ψ_n|² dx = ∫_a^b (2/L)·sin²(nπx/L) dx
-         = (b−a)/L − [sin(2nπb/L) − sin(2nπa/L)]/(2nπ)   [analytic]
-P₁(L/2, L) = 1/2   (by symmetry)
-```
-
-Methods: `energy(n)`, `psi(n, x)`, `psiSquared(n, x)`, `expectationX(n)`, `expectationX2(n)`, `probabilityInInterval(n, a, b)`, `curve(n, nPoints=300)`.
-
-### C. R3 Symbol table
-
-| Symbol | Meaning | Unit | Typical range | Source |
-|---|---|---|---|---|
-| n | quantum number | dimensionless | 1, 2, 3, … | input |
-| L | box length | m | 0.1–10 nm | input |
-| m | particle mass | kg | m_e = 9.109×10⁻³¹ kg | input |
-| E_n | energy level | J | E₁ to n²E₁ | algebraic / CODATA 2018 |
-| ψ_n(x) | wavefunction | m⁻¹/² | real | algebraic |
-| ⟨x⟩ | expectation of x | m | L/2 | algebraic |
-| ⟨x²⟩ | second moment of x | m² | L²/3 − … | algebraic |
-| P(a,b) | probability in [a,b] | dimensionless | [0,1] | algebraic |
-
-### D. R4 Domain table
-
-| Parameter | Domain | Trigger condition | Test |
-|---|---|---|---|
-| n | n ≥ 1, integer | n = 0 | `energy(0)` → RangeError |
-| n | n ≥ 1, integer | n = 1.5 | `energy(1.5)` → RangeError |
-| x | x ∈ [0, L] | x < 0 | `psi(1, −0.1)` → RangeError |
-| x | x ∈ [0, L] | x > L | `psi(1, L+1)` → RangeError |
-| [a, b] | a ≤ b | a > b | `probabilityInInterval(1, b, a)` → RangeError |
-
-### E. Predict questions
-
-| # | Question | Answer |
-|---|---|---|
-| P1 | E₁ for electron in L=1 nm (in eV) | ≈ 0.37603 eV |
-| P2 | E₂/E₁ | 4 (exactly) |
-| P3 | P([L/2, L]) for n=1 | 0.5 (exactly, by symmetry) |
-
-**Asserted in script:**
-```js
-assert(Math.abs(E1_box/EV - 0.37603) < 0.00005);
-assert(Math.abs(E2_box/E1_box - 4) < 1e-12);
-assert(Math.abs(P_right_n1 - 0.5) < 1e-8);
-```
-
-### F. Derive-it steps
-
-1. Time-independent Schrödinger: −ℏ²/(2m) · ψ''(x) = E·ψ(x) with ψ(0) = ψ(L) = 0 → ψ = A·sin(kx), k = nπ/L.
-2. Normalization: ∫₀ᴸ |ψ|² dx = A²·L/2 = 1 → A = √(2/L).
-3. Energy: E = ℏ²k²/(2m) = n²π²ℏ²/(2mL²).
-4. ⟨x²⟩: use ∫₀ᴸ x²·sin²(nπx/L)·(2/L)dx = L²/3 − 1/(2n²π²/L²·L²)·1 … carry out by integration by parts → L²(1/3 − 1/(2n²π²)).
-
-### G. research.papers
-
-- Griffiths, D. J. (2005). Introduction to Quantum Mechanics (2nd ed.). Pearson. §2.2. (cited, not fetched)
-
-### H. Where it breaks
-
-1. Infinite walls: real quantum wells have finite barriers → tunneling into barrier; energy levels are lower.
-2. 1D model: real quantum dots are 3D (spherical or cubic) → degenerate levels, angular momentum.
-3. Single-particle: ignores electron-electron interaction; important for multi-electron systems.
-4. Non-relativistic: at high n or small L, relativistic corrections (Dirac equation) become significant.
-
-### I. Tests with derived tolerances
-
-| Test | Expected | Tolerance derivation |
-|---|---|---|
-| E₁(L=1nm) ≈ 0.37603 eV | 6.0247×10⁻²⁰ J | CODATA constants × π²; tolerance 5×10⁻⁵ eV (textbook precision) |
-| E₂/E₁ = 4 | exact | FP < 1e-12 |
-| E₃/E₁ = 9 | exact | FP < 1e-12 |
-| ⟨x²⟩₁ trapezoid vs analytic | match | trapezoid: h = L/10000; LTE = h²/12·|f''|·L; f(x)=x²·ψ₁², \|f''\|≤ a few·E₁/L²; tolerance: 1e-22 m² |
-| P([L/2,L]) = 0.5 | 0.5 | trapezoid h=L/10000; smooth integrand; error < 1e-8 |
-| Normalization = 1 | 1 | trapezoid; error < 1e-8 |
-| Orthogonality ψ₁·ψ₂ = 0 | 0 | exact for trapezoid of odd function on [0,L]; error < 1e-8 |
-| E₁(2L)/E₁(L) = 0.25 | 0.25 | exact (1/L² scaling); FP < 1e-14 |
-
-### J. Independent anchor route
-
-- E₂/E₁ = 4: verify from formula: (2²·π²·ℏ²)/(1²·π²·ℏ²) = 4 exactly.
-- ⟨x²⟩ analytic formula: verify by numerical integration (trapezoid, N=10000); discrepancy < 1e-22 m².
-- Energy scale: verify E₁/EV ≈ 0.37603 eV against known textbook value (Griffiths §2.2).
-
-### K. R14 Branch matrix
-
-| Test | Method | Branch/variant |
-|---|---|---|
-| energy(1) ≈ 0.376 eV | energy | ground state |
-| E₂/E₁ = 4, E₃/E₁ = 9 | energy | excited states n=2,3 |
-| E_n/E₁ = n² for n=4,5 | energy | higher levels |
-| energy(0) → RangeError | energy | n < 1 boundary |
-| psi(1, 0) | psi | left boundary x=0 |
-| psi(1, L/2) | psi | midpoint |
-| psi(1, −0.1) → RangeError | psi | x < 0 boundary |
-| ⟨x²⟩ trapezoid vs analytic | expectationX2 | numerical vs analytic |
-| P([L/2,L]) = 0.5 | probabilityInInterval | symmetry case |
-| normalization = 1 | probabilityInInterval or trapezoid | full interval |
-| orthogonality ψ₁·ψ₂ = 0 | psi | different n |
-| E₁(2L)/E₁(L) = 0.25 | energy | L-scaling law |
-
----
-
-## Implementation order
-
-1. **special-relativity** — pure algebra, no ODE or stochastic component; fast to implement and test; R8 risk very low (all formulas from first principles).
-2. **perceptron** — requires a small iterative training loop; self-contained; no infrastructure dependency; R8 risk low.
-3. **network-effects** — uses RK4 from `Integrators.js`; intro level so formulae are simple; R8 risk low.
-4. **neutral-theory** — stochastic binomial simulation; uses `Random.js` Mulberry32 PRNG; graduate level; R8 moderate (Kimura formulas).
-5. **coalescence** — builds on neutral-theory concepts; stochastic simulation with exponential wait times; R8 moderate (Kingman/Watterson).
-6. **[Alternate A] random-walk** — simplest possible stochastic model; swap in if any of benches 1–5 hits R8 wall.
-7. **[Alternate B] particle-in-box** — already in catalog and largely implemented from Phase 8; swap in if needed.
-
-Rationale: implement in increasing stochastic complexity. Deterministic benches first (1–3), then stochastic (4–5), then alternates last. The PhaseElevenb pass showed that stochastic tests are the most likely R8 source.
-
----
-
-## Shared infrastructure
-
-| Module | Already exists? | Phase 12 usage |
-|---|---|---|
-| `js/core/Integrators.js` | yes | RK4 for network-effects adoption ODE |
-| `js/core/Random.js` | yes | Mulberry32 seeded PRNG for neutral-theory, coalescence, random-walk |
-| `js/core/LinAlg.js` | yes | not used in Phase 12 (no matrix operations) |
-| `js/core/RootFinding.js` | yes | optional: tipping point could use Brent; currently quadratic formula is exact |
-| `js/core/Complex.js` | check if exists | not needed in Phase 12 |
-| `js/core/PDE1D.js` | in plan (Phase 12 ROADMAP: schrodinger-1d) | needed for schrodinger-1d but not these 7 benches |
-
-No new infrastructure modules are required for the 7 benches in this plan. All rely on:
-- `Integrators.rk4` (network-effects)
-- Mulberry32 PRNG from `Random.js` constructor (neutral-theory, coalescence)
-- Scalar math only (special-relativity, perceptron, particle-in-box, random-walk)
+**Resolution:** The anchors script uses `ℏ²/(2m·h²) × 2(1−cos(nπ/(N+1)))`. All FD vs exact checks pass at < 1% relative error for n=1..5, N=100.
 
 ---
 
@@ -1020,157 +63,503 @@ No new infrastructure modules are required for the 7 benches in this plan. All r
 ════════════════════════════════════════════════════════════════════════
 1. SPECIAL RELATIVITY
 ════════════════════════════════════════════════════════════════════════
-  γ(β=0)                                             1.000000000  (exact 1)
-  γ(β=0.5)                                           1.154700538  (exact 2/√3 ≈ 1.154701)
-  Δt_dilated(β=0.5)                                  1.154700538  = γ·1 s
-  L(β=0.5)                                           0.8660254038  = L₀·√0.75
-  γ(β=0.9)                                           2.294157339  ≈ 2.294157
-  Δt_dilated(β=0.9)                                  2.294157339  ≈ 2.294 s
-  L(β=0.9)                                           0.4358898944  = L₀·√0.19
+  γ(β=0)                                               1.000000000  (exact 1)
+  γ(β=0.5)                                             1.154700538  = 2/√3 ≈ 1.1547005383792515
 
-Muon β=0.9994: 1−β²                               0.001199640000  = 0.00119964
-  Muon γ                                             28.87184456  ≈ 28.87
-  Muon dilated lifetime (μs)                         63.43144250  μs (expect ≈ 63.3 μs)
+Velocity addition u=0.9c, v=0.5c → u'/c             0.7272727273  = 8/11 ≈ 0.72727...
 
-Energy-momentum: E²                               1.262126361e+34  J²
-  (pc)² + (m₀c²)²                                    1.262126361e+34  J² (must equal E²)
+Muon γ(β=0.9994)                                    28.87184456  = 1/√(1−0.9994²)
+  1 − β²                                               0.001199640000  = 0.00119964
+  Muon τ_dilated (μs)                                  63.43089682  ≈ 63.43 μs (PDG 2022 τ₀=2.1969811e-6)
 
-Rapidity φ(β=0.5)                                 0.5493061443  = atanh(0.5)
+Energy-momentum invariant: |E²−(pc)²−(m₀c²)²|/E²    1.826950993e-16  < 1e-12
 
-Velocity addition u=0.9c, v=0.5c                  0.7272727273  in units of c (expect < 1)
-
-R13 mutation: γ(0.99) vs γ(0.9994)                21.78303251  gap (must >> 0.01 tol)
+R13 wrong-γ (β not β²) gap at β=0.9994              11.95298449  gap >> 1e-12
 
   ✓ All special-relativity assertions passed
 
 ════════════════════════════════════════════════════════════════════════
 2. PERCEPTRON
 ════════════════════════════════════════════════════════════════════════
-  w* = (1,1,1), norm                                 1.732050808  = √3
-  margins for all 4 OR points                        [0.57735,0.57735,0.57735,1.732051]
-  γ (minimum margin)                                 0.5773502692  = 1/√3 ≈ 0.5774
-  R (max augmented norm)                             1.732050808  = √3 ≈ 1.7321
-  (R/γ)² Novikoff bound                              9.000000000  = 9
+  OR gate converged                                    true  (must be true)
+  OR gate epochs                                       2.000000000  (must be 2)
+  OR gate total mistakes                               3.000000000  (must be 3)
+  trace[0] = w after mistake 1                         [1,1,-1]  (must be [1,1,-1])
+  trace[1] = w after mistake 2                         [0,2,0]  (must be [0,2,0])
+  trace[2] = w after mistake 3                         [1,1,1]  (must be [1,1,1])
 
-OR gate: converged                                true
-  OR gate: epochs                                    2.000000000
-  OR gate: total mistakes                            3.000000000
-  Novikoff bound (R/γ)²                              9.000000000  ≤ this
+γ (minimum margin / ‖w*‖)                           0.5773502692  = 1/√3
+  R (max ‖x̃‖)                                         1.732050808  = √3
+  (R/γ)² Novikoff bound                                9.000000000  = 9
 
-R13 mutation: w*·wrong point > 0?                 -1.000000000
+Mistakes with η=0.1                                 3.000000000  (should equal η=1 count)
+  Mistakes with η=7                                    3.000000000  (should equal η=1 count)
+
+XOR converged (must be false)                       false
+
+R13 wrong sign: |w_wrong[0] − w_correct[0]| after mistake 1 2.000000000  = 2 >> 0
+
+R13 sign(0)=−1: first mistake index                 1.000000000  (correct convention: index 0; wrong: ≥1)
 
   ✓ All perceptron assertions passed
 
 ════════════════════════════════════════════════════════════════════════
 3. NETWORK EFFECTS
 ════════════════════════════════════════════════════════════════════════
-  Tipping point x* (N=1000,v1=0.001,c=100)           0.4477138750  ≈ 0.4477
-  dx/dt at x* (should ≈ 0)                           0.000000000
+  x* = (c/v1 + 1)/N                                    0.4100000000  = (2/0.05 + 1)/100 = 41/100 = 0.41
+  f'(x*) = x*(1-x*)·v1·N                               1.209500000  (must be > 0 → unstable)
+  f'(x*) central FD                                    1.209500000  (agrees with analytic)
+  f(x*) = 0 (fixed-point check)                        0.000000000
 
-Tipping demo: x₀ = x* − ε, after T=5              3.493893023e-217  (expect → 0)
-  Tipping demo: x₀ = x* + ε, after T=5               1.000000000  (expect → 1)
+Tipping: x₀=0.40, after T=10                        1.898404337e-7  (expect → 0)
+  Tipping: x₀=0.42, after T=10                         0.9999999995  (expect → 1)
 
-Metcalfe V(10, v1=1)                              45.00000000  = 10·9/2 = 45
-  Sarnoff V(10)                                      10.00000000  = 10
-  Reed V(5)                                          26.00000000  = 2^5 − 5 − 1 = 26
+Metcalfe marginal(n=10)                             0.4500000000  = v1·(n-1) = 0.45
+  Reed marginal(n=5)                                   15.00000000  = 2^(n-1)-1 = 15
 
-Tipping x* (exact)                                0.4477138750
-  Tipping x* (approx √(2c/v₁)/N)                     0.4472135955  ≈ 0.4472
+Reed n=1023 finite                                  true
+  Reed n=1024 overflows                                true
 
-R13 mutation: x*(c=200) vs x*(c=100)              0.1852418547  gap >> 1e-8 tol
+R13 wrong x* (total value): √(2c/(v1·N²))           0.08944271910  ≈ 0.028
+  Gap |x*_correct − x*_wrong|                          0.3205572809  >> 1e-9
+  R13 wrong x* (total value, exact)                    0.09458236434  ≈ 0.0946
+  Gap |x*_correct − x*_wrong_exact|                    0.3154176357  >> 1e-9
 
   ✓ All network-effects assertions passed
 
 ════════════════════════════════════════════════════════════════════════
 4. NEUTRAL THEORY
 ════════════════════════════════════════════════════════════════════════
-  N (diploid)                                        50.00000000
-  2N (gene copies)                                   100.0000000
-  p₀ = k₀/(2N)                                       0.01000000000  = 0.01 (1 copy)
-  Exact fixation probability u(p₀)                   0.01000000000  = p₀ (Kimura 1968)
+  t_fix(p₀=0.1, N=25) [−4N(1-p)ln(1-p)/p]              94.82446409  ≈ 94.82 (sim≈94.09)
+  t_loss(p₀=0.1, N=25) [−4N·p·ln(p)/(1-p)]             25.58427881  ≈ 25.58 (sim≈24.46)
 
-Empirical fixation probability                    0.01300000000  (expect 0.01 ±3σ)
-  3σ tolerance                                       0.009439279634  = 3·√(p(1−p)/n)
-  Error |empirical − p₀|                             0.003000000000
+Gap: |t_fix − t_loss|                               69.24018528  = 69.24 >> 21.6 tolerance
 
-E[T_fix | fix] for p₀=0.1, N=100                  102.3371152  generations
-  Var(Δp) per generation                             0.00009900000000  = p(1−p)/(2N)
+t_fix(p₀=0.1, N=100)                                379.2978564  ≈ 379.3 (v1 plan said ≈394 — that was wrong formula)
 
-R13: E[T_fix](p₀=0.5, N=1000)                     2772.588722  ≈ 2772.6
-  R13: E[T_fix](p₀=0.1, N=1000)                      1023.371152  ≈ 1023.4
-  R13 mutation gap                                   1749.217570  >> tolerance
+Fixation probability u(0.2)                         0.2000000000  = 0.2 (exact, Kimura 1968)
+
+R13 swapped: |t_fix_correct − t_fix_wrong(swapped)| 69.24018528  >> tolerance ~21.6
+  R13 haploid: |t_fix_diploid − t_fix_haploid|         47.41223205  = t_fix/2 ≈ 47.4
 
   ✓ All neutral-theory assertions passed
 
 ════════════════════════════════════════════════════════════════════════
 5. COALESCENCE
 ════════════════════════════════════════════════════════════════════════
-  E[T_MRCA] n=2, Ne=1000                             2000.000000  = 2000 (exact)
-  E[T_MRCA] n=3, Ne=1000                             2666.666667  = 8000/3 ≈ 2666.67
-  E[T_MRCA] n=1000                                   3996.000000  ≈ 4Ne = 4000
+  E[T₂] (k=2, Ne=1000)                                 2000.000000  = 2000 exactly
+  E[T₃] (k=3, Ne=1000)                                 666.6666667  = 4000/6 ≈ 666.67
+  E[T₄] (k=4, Ne=1000)                                 333.3333333  = 4000/12 ≈ 333.33
 
-E[T_MRCA] n=10, Ne=1000 (closed form)             3600.000000  = 4Ne·(1−1/10) = 3600
-  Simulated mean T_MRCA (200 trials)                 3555.101557
-  Simulated SD                                       1982.543605
-  3σ/√200 tolerance                                  420.5610082
-  |simulated − expected|                             44.89844301
+E[T_MRCA] n=10, Ne=1000 (closed)                    3600.000000  = 4000·(1-1/10) = 3600
+  E[T_MRCA] n=10, Ne=1000 (sum)                        3600.000000
 
-H_{n-1} = H_9                                     2.828968254  ≈ 2.828968
-  E[S] θ=4Ne·μ=4000·1e-5=0.04, H_9                   0.1131587302  ≈ 0.04·H_9
+SD(T_MRCA) analytic                                 2152.339982  = √(Σ E[T_k]²)
 
-R13: E[T_MRCA](Ne=1000) − E[T_MRCA](Ne=500)       1800.000000  >> tolerance
+Simulated E[T_MRCA] (200 trials)                    3555.101557
+  Expected E[T_MRCA]                                   3600.000000  = 3600
+  3σ/√200 tolerance                                    419.5082881
+
+H_9 = Σ_{i=1}^{9} 1/i                               2.828968254  ≈ 2.8289682539682539
+
+Example: S=8, π=4.2, n=10
+    θ_W = S/H_9                                        2.827886099  ≈ 2.828
+    Tajima numerator = π − θ_W                         1.372113901
+
+R13 haploid coalescent: E[T_MRCA_wrong]             1800.000000  = 1800
+  Gap |3600 − 1800|                                    1800.000000  >> 3σ/√200 tolerance
+
+R13 Tajima wrong (×a₁ not ÷a₁): correct numerator   0.000000000  ≈ 0
+  R13 Tajima wrong: wrong numerator                    -0.2801224553  ≈ −0.32
+  Gap                                                  0.2801224553  >> any tolerance
+
+E[S] = θ·H_9 (θ=0.04)                               0.1131587302
 
   ✓ All coalescence assertions passed
 
 ════════════════════════════════════════════════════════════════════════
-6. RANDOM WALK (Alternate A)
+6. SCHRÖDINGER 1D (Alternate A)
 ════════════════════════════════════════════════════════════════════════
-  E[X²_100] 1D (= 100)                               100.0000000  (exact)
-  E[|X_100|] 1D (Gaussian approx)                    7.978845608  ≈ √(200/π) ≈ 7.979
-  E[r²_100] 2D (= 100)                               100.0000000  (exact)
+  E₂/E₁ (exact)                                        4.000000000  = 4 exactly
+  FD relative error n=1, N=100                         0.00008062611836  ≈ 8.1×10⁻⁵ (< 0.1%)
 
-1D walk position after n=1000 steps               40.00000000
+FD vs exact eigenvalues (N=100):
+    n=1: rel err                                       0.00008062351821  < 1% (analytic bound ≈8.06e-5)
+    n=2: rel err                                       0.0003224628727  < 1% (analytic bound ≈3.23e-4)
+    n=3: rel err                                       0.0007254244795  < 1% (analytic bound ≈7.26e-4)
+    n=4: rel err                                       0.001289352419  < 1% (analytic bound ≈1.29e-3)
+    n=5: rel err                                       0.002014028518  < 1% (analytic bound ≈2.02e-3)
 
-Empirical <X²> at t=100 (5000 walks)              100.5504000  expect 100 ± 6.000
-  D (1D, s=1, Δt=1)                                  0.5000000000  = 1/2
+E₁(L=1nm) in eV                                     0.3760301622  ≈ 0.37603 eV
 
-  ✓ All random-walk assertions passed
+HO zero-point E₀/(ℏω)                               0.5000000000  = 0.5 exactly
+
+R13 wrong E_n: (n²-1) instead of n²
+    E₁_wrong (n=1, n²-1=0)                             0.000000000  vs E₁_correct
+    Gap E₁_correct − E₁_wrong                          6.024667395e-20  J (huge)
+
+R13 wrong E_n (n²-1 not n²): E₂_exact               2.409866958e-19  J
+  E₂_wrong (3·E₁)                                      1.807400218e-19  J
+  Gap                                                  6.024667395e-20  = E₁ = 0 J
+
+  ✓ All schrodinger-1d assertions passed
 
 ════════════════════════════════════════════════════════════════════════
-7. PARTICLE IN A BOX (Alternate B)
+7. BAYESIAN OBSERVER (Alternate B)
 ════════════════════════════════════════════════════════════════════════
-  E₁ (L=1nm) in J                                    6.024667395e-20
-  E₁ (L=1nm) in eV                                   0.3760301622  ≈ 0.37603 eV
-  E₂/E₁                                              4.000000000  = 4 exactly
-  E₃/E₁                                              9.000000000  = 9 exactly
-  E_n/E_1 = n² (verified n=2..5)                     true
+  σ_comb(σ₁=3, σ₂=4)                                   2.400000000  = 3·4/√(9+16) = 12/5 = 2.4
+  w₁(σ₁=3, σ₂=4)                                       0.6400000000  = 16/25 = 0.64
+  σ_comb(σ,σ)                                          3.535533906  = σ/√2
 
-⟨x⟩_1 = L/2                                       5.000000000e-10  m
-  ⟨x²⟩₁ analytic                                     2.826727415e-19  m²
-  ⟨x²⟩₁ trapezoid                                    2.826727415e-19  m²
+w₁(σ₁=100, σ₂=1)                                    0.00009999000100  ≈ 1/10001 → 0
 
-P([L/2,L]) n=1 (trapezoid)                        0.5000000000  (exact = 0.5)
-  ∫ψ₁² dx (trapezoid)                                1.000000000  (exact = 1)
-  ∫ψ₁·ψ₂ dx (orthogonality)                          7.763155577e-17  (exact = 0)
+w₁/w₂ = σ₂²/σ₁² (σ₁=3,σ₂=4)                         1.777777778  = 1.7777777777777777 = 16/9
 
-R13: E₂ − E₁                                      1.807400218e-19  J (>> tol_x2)
+Analytic SD(ŝ) = σ_comb(1,3)                        0.9486832981  = 1·3/√(1+9) = 3/√10 ≈ 0.9487
 
-E₁(L=2nm)/E₁(L=1nm)                               0.2500000000  = 1/4 exactly
+Sim SD(ŝ) (5000 trials, σ₁=1, σ₂=3)                 0.9348193334  expect 0.948683 ± 0.037947
 
-  ✓ All particle-in-box assertions passed
+R13 equal weights: SD_wrong                         1.581138830  = √10/2 ≈ 1.581
+  Gap |σ_comb − SD_wrong|                              0.6324555320  >> 4·SE = 0.0379
+  R13 harmonic mean SD_wrong                           0.7500000000  = 3/4 = 0.75
+  Gap |σ_comb − SD_harmonic|                           0.1986832981  >> 4·SE = 0.0379
+
+  ✓ All bayesian-observer assertions passed
 
 ════════════════════════════════════════════════════════════════════════
 SUMMARY
 ════════════════════════════════════════════════════════════════════════
-  1. special-relativity: ✓ PASS
-  2. perceptron: ✓ PASS
-  3. network-effects: ✓ PASS
-  4. neutral-theory: ✓ PASS
-  5. coalescence: ✓ PASS
-  6. random-walk (Alternate A): ✓ PASS
-  7. particle-in-box (Alternate B): ✓ PASS
+  1. special-relativity         [physics/relativity/special-relativity]: ✓ PASS
+  2. perceptron                 [neuroscience/learning/perceptron]: ✓ PASS
+  3. network-effects            [economics/markets/network-effects]: ✓ PASS
+  4. neutral-theory             [biology/evolution/neutral-theory]: ✓ PASS
+  5. coalescence                [biology/evolution/coalescence]: ✓ PASS
+  6. schrodinger-1d (Alt A)     [physics/quantum/schrodinger-1d]: ✓ PASS
+  7. bayesian-observer (Alt B)  [psychology/learning/bayesian-observer]: ✓ PASS
 
   All assertions passed. Script complete.
   Node version: v22.22.2
   Date: 2026-10-17
 ```
+
+---
+
+## Bench specifications
+
+### 1. special-relativity — `physics/relativity/special-relativity` — university
+
+**Symbol table:**
+
+| Symbol | Meaning | Unit |
+|---|---|---|
+| β | velocity fraction v/c₀ | dimensionless |
+| γ | Lorentz factor | dimensionless |
+| Δt_proper | proper time interval | s |
+| Δt_dilated | dilated time | s |
+| L₀ | proper length | m |
+| L | contracted length | m |
+| m₀ | rest mass | kg |
+| p | relativistic momentum | kg·m/s |
+| KE | kinetic energy | J |
+| E_total | total energy | J |
+| φ | rapidity | dimensionless |
+| u′ | velocity in moving frame | m/s |
+| c₀ | speed of light in vacuum | m/s |
+| τ₀ | muon rest lifetime | s |
+
+**Formulas:**
+```
+β = v/c₀                                      [|β| < 1]
+γ = 1 / √(1 − β²)                             [≥ 1]
+Δt_dilated = γ · Δt_proper
+L = L₀ / γ
+p = m₀ · γ · v
+KE = (γ − 1) · m₀ · c₀²
+E_total = γ · m₀ · c₀²
+E² = (p·c₀)² + (m₀·c₀²)²
+φ = atanh(β)
+u′ = (u − v) / (1 − u·v/c₀²)
+```
+
+**Physical constants (from `js/data/constants.js`):** c₀ = 299792458 m/s (exact SI). Muon τ₀ = 2.1969811×10⁻⁶ s (PDG 2022, cited not fetched).
+
+**Anchors (R1):**
+
+| Quantity | Anchor value |
+|---|---|
+| γ(β=0.5) | 2/√3 = 1.1547005383792515 (exact FP) |
+| u′(u=0.9c, v=0.5c) | 0.4/0.55 = 8/11 = 0.727272… |
+| γ(β=0.9994) | 1/√(1−0.9994²) = 28.87184456… (assert ±1e-12, NOT vs 28.87) |
+| τ_dilated(β=0.9994) | γ·τ₀ = 63.43089682… μs (assert ±1e-10 relative) |
+| E-momentum check | \|E²−(pc)²−(m₀c²)²\|/E² < 1e-12 |
+
+**Predict answers (asserted in script):**
+1. γ(β=0.5) = 1/√0.75 ≈ 1.1547005383792515
+2. u′(u=0.9c, v=0.5c) = 0.4/0.55 = 8/11 ≈ 0.72727272…
+3. γ(β=0.9994) = 1/√(1−0.9994²) ≈ 28.8718…
+
+**R4 domain:** |β| ≥ 1 → RangeError; m₀ ≤ 0 → RangeError.
+
+**R13 mutations:**
+- Wrong γ: β→β in denominator (γ_wrong = 1/√(1−β)). Gap at β=0.9994: 11.95 >> 1e-12.
+- No γ in time dilation: Δt_wrong=Δt_proper. Gap=(γ−1)≈27.87 >> 1e-10.
+- Wrong E²: negative sign: E²=(pc)²−(m₀c²)². Gap=2(m₀c²)²/E² >> 1e-12.
+
+---
+
+### 2. perceptron — `neuroscience/learning/perceptron` — university
+
+**Symbol table:**
+
+| Symbol | Meaning |
+|---|---|
+| w | weight vector (augmented, includes bias) |
+| x̃ | augmented input [x₁,…,x_d,1] |
+| ŷ | predicted label |
+| y | true label ∈ {−1,+1} |
+| η | learning rate |
+| γ | geometric margin of w* |
+| R | max augmented input norm |
+| d | feature dimension |
+
+**Algorithm (Rosenblatt 1958):**
+```
+Predict: ŷ = sign(w·x̃); sign(0) = +1 (positive convention)
+Update on mistake: w ← w + η·y·x̃
+```
+
+**Convergence (Novikoff 1962):** Mistakes ≤ (R/γ)²
+
+**Anchors (R1) — OR gate exact trace:**
+
+| Step | Input | True label | dot | ŷ | Mistake? | w after |
+|---|---|---|---|---|---|---|
+| ep1, pt1 | (−1,−1,1) | −1 | 0 | +1 | yes | (1,1,−1) |
+| ep1, pt2 | (−1,+1,1) | +1 | −1 | −1 | yes | (0,2,0) |
+| ep1, pt3 | (+1,−1,1) | +1 | −2 | −1 | yes | (1,1,1) |
+| ep1, pt4 | (+1,+1,1) | +1 | +3 | +1 | no | (1,1,1) |
+| ep2 | all | — | — | — | no | converged |
+
+w* = (1,1,1)/√3; γ = 1/√3; R = √3; (R/γ)² = 9; mistakes = 3 ≤ 9 ✓
+
+**R13 mutations:**
+- Wrong sign (w−): w_wrong after mistake 1 = (−1,−1,1). Gap = 2 per component.
+- sign(0)=−1: first mistake at index ≠ 0 (point 1 is NOT a mistake under wrong convention).
+
+**R4:** η ≤ 0 → RangeError; dimension mismatch → RangeError.
+
+---
+
+### 3. network-effects — `economics/markets/network-effects` — intro
+
+**Symbol table:**
+
+| Symbol | Meaning |
+|---|---|
+| x | adoption fraction ∈ [0,1] |
+| N | total potential adopters |
+| v₁ | per-link value coefficient |
+| c | cost of joining |
+| x* | tipping point |
+
+**CRITICAL (corrected from v1):** Use marginal benefit (not total value).
+
+**Correct ODE:**
+```
+dx/dt = x·(1−x)·[v₁·(x·N − 1) − c]
+x* = (c/v₁ + 1) / N
+```
+
+**Working parameters:** N=100, v₁=0.05, c=2 → x* = 41/100 = 0.41 (exact).
+
+**Anchors (R1):**
+
+| Quantity | Value |
+|---|---|
+| x* | (2/0.05 + 1)/100 = 0.41 exactly |
+| f(x*) | 0 (fixed-point) |
+| f′(x*) = x*(1−x*)·v₁·N | 1.2095 > 0 (unstable) |
+| x₀=0.40 after T=10 | 1.9e-7 → 0 |
+| x₀=0.42 after T=10 | 0.9999999995 → 1 |
+
+**R13 mutations:**
+- Wrong (total value ODE): tipping point exact FP at x*≈0.0946 vs correct 0.41. Gap = 0.315 >> 1e-9.
+
+**R4:** N ≤ 0 → RangeError; n_Reed > 1023 → RangeError; x outside [0,1] → RangeError.
+
+---
+
+### 4. neutral-theory — `biology/evolution/neutral-theory` — graduate
+
+**Symbol table:**
+
+| Symbol | Meaning |
+|---|---|
+| N | diploid population size |
+| p₀ | initial allele frequency |
+| u(p₀) | fixation probability |
+| t_fix | conditional mean fixation time (generations) |
+| t_loss | conditional mean loss time (generations) |
+
+**CRITICAL (corrected from v1):** Formulas were swapped.
+
+**Correct formulas (Kimura & Ohta 1969):**
+```
+u(p₀) = p₀                                        [neutral allele]
+t_fix(p₀, N) = −4N·(1−p₀)·ln(1−p₀) / p₀          [conditional on fixation]
+t_loss(p₀, N) = −4N·p₀·ln(p₀) / (1−p₀)           [conditional on loss]
+```
+
+**Anchors (R1):**
+
+| Formula | Anchored value | Sim result (N=25, p₀=0.1, 20000 trials) |
+|---|---|---|
+| t_fix(0.1, 25) | 94.82446… | 94.09 (0.8% diffusion error) ✓ |
+| t_loss(0.1, 25) | 25.58427… | 24.46 (4% diffusion error) ✓ |
+| t_fix(0.1, 100) | 379.2978… | — (= 4 × t_fix(0.1,25)) |
+
+**R13 mutations:**
+- Swapped: t_fix_wrong = t_loss_correct = 25.58. Gap = 69.24 >> tolerance.
+- Haploid: −2N instead of −4N. Gap = t_fix/2 = 47.41 >> tolerance.
+
+**R4:** p₀ outside (0,1) exclusive → RangeError; N ≤ 0 → RangeError.
+
+---
+
+### 5. coalescence — `biology/evolution/coalescence` — graduate
+
+**Symbol table:**
+
+| Symbol | Meaning |
+|---|---|
+| n | sample size (lineages) |
+| N_e | effective population size |
+| T_k | waiting time with k lineages |
+| T_MRCA | time to MRCA |
+| θ | 4·N_e·μ (population mutation rate) |
+| θ_W | Watterson estimator = S/a₁ |
+| π | mean pairwise differences |
+| a₁ = H_{n-1} | harmonic number |
+| S | segregating sites |
+
+**CRITICAL (corrected from v1):** Tajima numerator = π − S/a₁ (NOT S − a₁·ŝ).
+
+**Correct formulas (Kingman 1982; Watterson 1975; Tajima 1989):**
+```
+E[T_k] = 4N_e / (k(k−1))
+E[T_MRCA] = 4N_e·(1 − 1/n)   [telescoping]
+θ_W = S / a₁ = S / H_{n-1}
+Tajima D numerator = π − θ_W = π − S/a₁
+```
+
+**Anchors (R1):**
+
+| Quantity | Value |
+|---|---|
+| E[T₂] (N_e=1000) | 2000 exactly |
+| E[T_MRCA] n=10 | 3600 = 4000·(1−1/10) |
+| Sim mean T_MRCA (200 trials, seed=42) | 3555.1 (within 3σ/√200 = 419.5) |
+| H_9 | 2.828968254… |
+| Tajima num at neutrality | π − θ_W = 0 |
+
+**R13 mutations:**
+- Haploid coalescent: E[T_MRCA_wrong] = 1800. Gap = 1800 >> 3σ/√200 = 419.5.
+- Tajima ×a₁ (not ÷a₁): wrong numerator = −0.280. Gap = 0.280 >> tolerance.
+
+**R4:** n < 2 → RangeError; N_e ≤ 0 → RangeError.
+
+---
+
+### 6. schrodinger-1d — `physics/quantum/schrodinger-1d` — graduate (Alternate A)
+
+**Note on alternates:** `random-walk` (phase 9) and `particle-in-box` (phase 8) are already in catalog — confirmed in `js/catalog.js`. They cannot be alternates.
+
+**Symbol table:**
+
+| Symbol | Meaning | Unit |
+|---|---|---|
+| ℏ | reduced Planck constant | J·s |
+| m | particle mass | kg |
+| L | box length | m |
+| h | grid spacing = L/(N+1) | m |
+| N | interior grid points | — |
+| E_n | nth energy level | J |
+| n | quantum number (1,2,3,…) | — |
+
+**Correct FD formula (derived in R8 flag above):**
+```
+E_n^FD = ℏ²/(2m·h²) × 2·(1 − cos(nπ/(N+1)))
+E_n^exact = n²·π²·ℏ²/(2m·L²)
+FD rel error ≈ (nπ/(N+1))²/12
+```
+
+**Anchors (R1):**
+
+| Quantity | Value |
+|---|---|
+| E₂/E₁ | 4 exactly |
+| FD rel error n=1, N=100 | 8.062×10⁻⁵ (< 0.1%) |
+| FD rel error n=5, N=100 | 2.014×10⁻³ (< 1%) |
+| E₁(L=1nm, m=m_e) | 0.37603 eV |
+| HO zero-point E₀/(ℏω) | 0.5 exactly |
+
+**R13 mutations:**
+- (n²−1) instead of n²: E₁_wrong = 0. Gap = E₁ = 6.02×10⁻²⁰ J >> 1e-22 J.
+
+**R4:** N < 3 → RangeError; L ≤ 0 → RangeError.
+
+---
+
+### 7. bayesian-observer — `psychology/learning/bayesian-observer` — university (Alternate B)
+
+**Symbol table:**
+
+| Symbol | Meaning |
+|---|---|
+| s | true stimulus |
+| x₁, x₂ | cue observations |
+| σ₁, σ₂ | cue noise SDs |
+| w₁, w₂ | reliability weights |
+| ŝ | Bayesian estimate |
+| σ_comb | combined (optimal) SD |
+
+**Formulas (Ernst & Banks 2002, Nature 415:429 — cited, not fetched):**
+```
+w₁ = σ₂²/(σ₁²+σ₂²),  w₂ = 1−w₁
+ŝ = w₁·x₁ + w₂·x₂
+σ_comb = σ₁·σ₂ / √(σ₁²+σ₂²)
+```
+
+**Anchors (R1):**
+
+| Quantity | Value |
+|---|---|
+| σ_comb(3,4) | 12/5 = 2.4 exactly (±1e-10) |
+| w₁(3,4) | 16/25 = 0.64 exactly (±1e-10) |
+| σ_comb(σ,σ) | σ/√2 exactly (±1e-10) |
+| Sim SD(ŝ) σ₁=1,σ₂=3, 5000 trials | 0.9348 ≈ 3/√10 ± 4·SE=0.038 |
+
+**Predict answers:**
+1. σ_comb(σ₁=3, σ₂=4) = 12/5 = 2.4
+2. w₁(σ₁=3, σ₂=4) = 16/25 = 0.64
+3. σ_comb(σ₁=σ₂=σ) = σ/√2 ≈ 0.7071·σ
+
+**R13 mutations:**
+- Equal weights: SD_wrong = √10/2 = 1.581. Gap = 0.632 >> 5×4·SE = 0.190.
+- Harmonic mean SD: σ_wrong = 3/4 = 0.75. Gap = 0.199 >> 5×4·SE = 0.190.
+
+**R4:** σ₁ ≤ 0 or σ₂ ≤ 0 → RangeError.
+
+---
+
+## Status
+
+| Bench | Formulas | Data | Anchors |
+|---|---|---|---|
+| special-relativity | checked by independent test | c₀ from constants.js (exact SI); τ₀ PDG 2022 cited | PASS |
+| perceptron | checked by independent test | algorithm Rosenblatt 1958 cited | PASS |
+| network-effects | checked by independent test | no external data | PASS |
+| neutral-theory | checked by independent test | Kimura & Ohta 1969 cited | PASS |
+| coalescence | checked by independent test | Kingman 1982; Watterson 1975; Tajima 1989 cited | PASS |
+| schrodinger-1d | checked by independent test | ℏ, m_e from constants.js | PASS |
+| bayesian-observer | checked by independent test | Ernst & Banks 2002 cited | PASS |
