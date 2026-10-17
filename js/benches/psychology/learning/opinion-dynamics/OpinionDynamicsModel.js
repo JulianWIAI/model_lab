@@ -91,11 +91,20 @@ export class OpinionDynamicsModel {
   }
 
   /**
-   * Consensus: π·x₀
+   * Long-run consensus: π·x₀  (valid only for primitive W).
+   * For imprimitive or reducible W, opinions do not converge to a unique
+   * consensus — this method throws to prevent silent misleading results.
    * @param {number[]} x0
    * @returns {number}
+   * @throws {Error} if W is not primitive
    */
   consensus(x0) {
+    if (!this.primitive) {
+      throw new Error(
+        'OpinionDynamicsModel.consensus(): W is not primitive (imprimitive or reducible); ' +
+        'opinions do not converge to a unique consensus value.',
+      );
+    }
     const pi = this.stationary();
     return pi.reduce((s, p, i) => s + p * x0[i], 0);
   }

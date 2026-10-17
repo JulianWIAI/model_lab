@@ -31,6 +31,15 @@ test('2-age eigenvalues: λ₁=+√2, λ₂=−√2 via eigen2x2', () => {
   assert.strictEqual(imprimitive, true);
 });
 
+test('2-age dominantEigen lambda = √2 ±1e-10 (geometric mean of oscillating iterates)', () => {
+  // Power iteration L1 norms alternate: 2.25 and 8/9 = 0.8̄
+  // geometric mean = sqrt(2.25 × 8/9) = sqrt(2) exactly.
+  // dominantEigen uses prevLambda·lambda geometric mean after maxIter=400 (even) steps.
+  const { lambda, imprimitive } = m2.dominantEigen();
+  assert.strictEqual(imprimitive, true);
+  assert.ok(Math.abs(lambda / Math.sqrt(2) - 1) < 1e-10, `lambda=${lambda}`);
+});
+
 test('2-age power iteration sign alternates (imprimitive oscillation)', () => {
   const L2 = [[0, 4], [0.5, 0]];
   let v = [1, 0];
@@ -91,12 +100,32 @@ test('3-age char poly residual |λ³−0.4λ−1.2| < 1e-13', () => {
   assert.ok(residual < 1e-13, `residual=${residual}`);
 });
 
-test('3-age Euler-Lotka: l₁f₁/λ² + l₂f₂/λ³ = 1 ±1e-13', () => {
+test('3-age char poly identity: l₁f₁/λ² + l₂f₂/λ³ = 1 ±1e-13', () => {
+  // Derived by dividing char poly −λ³ + f₁s₀λ + f₂s₀s₁ = 0 by λ³:
+  //   l₁f₁/λ² + l₂f₂/λ³ = 1
+  // Note: this is NOT the classical Euler-Lotka equation Σ l(a)m(a)λ^{-a} = 1
+  // (which would give l₁f₁/λ + l₂f₂/λ² = 1). It is the characteristic polynomial
+  // rearranged; the two are related but have different exponents.
   const { lambda } = m3.dominantEigen();
   const l1f1 = 0.4 * 1;   // l₁=s₀=0.4, f₁=1
   const l2f2 = 0.4 * 0.6 * 5;  // l₂=s₀·s₁=0.24, f₂=5
   const lhs = l1f1 / (lambda ** 2) + l2f2 / (lambda ** 3);
-  assert.ok(Math.abs(lhs - 1) < 1e-13, `Euler-Lotka=${lhs}`);
+  assert.ok(Math.abs(lhs - 1) < 1e-13, `char poly identity=${lhs}`);
+});
+
+test('3-age classical Euler-Lotka: l₁f₁/λ + l₂f₂/λ² = 1 ±1e-13', () => {
+  // Classical discrete Euler-Lotka: Σ l(a)m(a)λ^{-a} = 1 (Caswell 2001)
+  // ages 0,1,2: l(0)m(0)λ⁰ + l(1)m(1)λ⁻¹ + l(2)m(2)λ⁻² = 0 + 0.4/λ + 1.2/λ²
+  // This equals 1 only when λ satisfies λ² = 0.4λ + 1.2 (the 2-age equation),
+  // NOT the 3-age char poly λ³ = 0.4λ + 1.2. For our λ ≈ 1.1876:
+  //   0.4/λ + 1.2/λ² ≈ 0.4/1.1876 + 1.2/1.1876² ≈ 0.3368 + 0.8505 ≈ 1.1873 ≠ 1
+  // This confirms the classical Euler-Lotka uses different exponents than the char poly.
+  // The identity tested here is the CORRECT Euler-Lotka for reference.
+  const { lambda } = m3.dominantEigen();
+  const eulerLotka = 0.4 / lambda + 1.2 / (lambda ** 2);
+  // For λ = Newton root ≈ 1.1876: eulerLotka ≈ 1.1873 (not 1)
+  // Assert it is NOT equal to 1 (to document the distinction from the char poly identity)
+  assert.ok(Math.abs(eulerLotka - 1) > 0.1, `Euler-Lotka =${eulerLotka} (expected ≠1 for 3-age)`);
 });
 
 test('3-age R₀ = 1.6 ±1e-15', () => {
@@ -159,8 +188,10 @@ test('sᵢ≤0 throws RangeError', () => {
   assert.throws(() => new LeslieModel({ fecundities: [0, 5], survivals: [-0.1] }), RangeError);
 });
 
-test('r at imprimitive model: intrinsicRate returns non-null (lambda>0)', () => {
-  // Even for imprimitive 2-age, λ from power iteration is √2 > 0, so r is defined
+test('r at imprimitive model: intrinsicRate returns null (imprimitive)', () => {
+  // For imprimitive matrices there is no asymptotic stable age distribution,
+  // so r = ln(λ) as a long-run growth rate is not well-defined.
+  // intrinsicRate() checks the imprimitive flag and returns null.
   const r = m2.intrinsicRate();
-  assert.ok(r !== null, 'r should be computable for λ>0');
+  assert.strictEqual(r, null, 'imprimitive model: intrinsicRate should return null');
 });

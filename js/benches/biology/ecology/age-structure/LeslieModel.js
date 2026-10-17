@@ -87,8 +87,18 @@ export class LeslieModel {
 
   /**
    * Dominant eigenvalue and stable age distribution via power iteration.
-   * For imprimitive matrices, power iteration oscillates.
-   * @param {number} [maxIter=400]
+   *
+   * Primitive matrices: power iteration converges to the Perron eigenvalue λ.
+   * Returns {lambda, stableAge}.
+   *
+   * Imprimitive matrices: power iteration oscillates (period > 1).
+   * The L1 norm alternates between two values each iteration cycle. Their
+   * geometric mean equals the true Perron eigenvalue magnitude (exact for
+   * period-2 matrices; good approximation for higher periods after sufficient
+   * iterations). Returns {lambda: geometricMean, imprimitive: true}.
+   * The stableAge vector is not returned for imprimitive matrices (undefined).
+   *
+   * @param {number} [maxIter=400] — must be even for the geometric mean to work
    * @returns {{lambda: number, stableAge: number[]}|{lambda: number, imprimitive: true}}
    */
   dominantEigen(maxIter = 400) {
@@ -98,16 +108,23 @@ export class LeslieModel {
     // Start from uniform
     let v = Array(n).fill(1 / n);
     let lambda = 0;
+    let prevLambda = 0;
 
     for (let iter = 0; iter < maxIter; iter++) {
       const Lv = matVec(this.L, v);
       const norm = Lv.reduce((s, x) => s + Math.abs(x), 0);
       if (norm === 0) break;
+      prevLambda = lambda;
       lambda = norm;
       v = Lv.map(x => x / norm);
     }
 
-    if (!prim) return { lambda, imprimitive: true };
+    if (!prim) {
+      // Geometric mean of two consecutive L1 norms = true Perron eigenvalue
+      // (exact for period-2; maxIter=400 is even so both oscillation phases sampled)
+      const trueLambda = prevLambda > 0 ? Math.sqrt(prevLambda * lambda) : lambda;
+      return { lambda: trueLambda, imprimitive: true };
+    }
     return { lambda, stableAge: v };
   }
 
@@ -127,13 +144,16 @@ export class LeslieModel {
   }
 
   /**
-   * Intrinsic growth rate r = ln(λ). Returns null if λ ≤ 0.
+   * Intrinsic growth rate r = ln(λ). Returns null if λ ≤ 0 or if the matrix
+   * is imprimitive (no well-defined asymptotic stable age distribution, so the
+   * asymptotic growth rate interpretation of r is invalid).
    * @param {number} [maxIter=400]
    * @returns {number|null}
    */
   intrinsicRate(maxIter = 400) {
-    const { lambda } = this.dominantEigen(maxIter);
-    if (lambda <= 0) return null;
-    return Math.log(lambda);
+    const result = this.dominantEigen(maxIter);
+    if (result.imprimitive) return null;
+    if (result.lambda <= 0) return null;
+    return Math.log(result.lambda);
   }
 }

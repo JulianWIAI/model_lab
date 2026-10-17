@@ -152,7 +152,10 @@ export class RandomWalkModel {
 /**
  * Log-gamma for positive integers: lgamma(n) = log((n-1)!)
  * Uses direct summation Σ log(k) for k=1..n-1 (integer inputs only).
- * This is exact to double precision for moderate n.
+ * Integer inputs only; name follows the C library convention (the real lgamma
+ * handles all positive reals — this function does not).
+ * Accumulated rounding error ≈ O(n·ε·n·log n). Relative error < 1e-12 for
+ * n ≤ 500; may exceed 1e-12 for larger n.
  */
 function lgamma(n) {
   if (n <= 0) throw new RangeError('lgamma: n must be positive');
