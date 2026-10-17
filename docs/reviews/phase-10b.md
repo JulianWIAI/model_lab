@@ -87,6 +87,19 @@ Test audit: see `docs/reviews/phase-10b-test-audit.md` (979 tests, PRESENT=688, 
 
 ---
 
+## Section 9: Independent agent review #2
+
+Full findings: `docs/reviews/phase-10b-agent-findings.md`.
+
+Summary:
+- **HIGH:** 0 (one tentative — putPrice — immediately self-retracted)
+- **MED:** 7 (4 pre-existing; 3 phase-10b-adjacent; none require immediate fix)
+- **LOW:** 5 (all deferred)
+
+Notable MED: inline `erf`/`Phi` in `hopfield.test.js:109` uses old `|x|>6` cutoff instead of new Lentz CF. At the argument −1.826 the Taylor path is taken, so no correctness impact. Deferred.
+
+---
+
 ## Section 5: Known deferred items (carried from phase-10)
 
 1. **LOW-2** (auction revenue equivalence test name): The GL5 test now correctly names and tests revenue equivalence — resolved.
