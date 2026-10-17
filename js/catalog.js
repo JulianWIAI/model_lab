@@ -1010,6 +1010,35 @@ export const catalog = [
                 (m) => m.NashEquilibriaBench,
               ),
           },
+          {
+            id: 'auctions',
+            navLabel: 'Auctions',
+            level: 'university',
+            keywords: [
+              'auction', 'BNE', 'Bayesian Nash equilibrium', 'first-price', 'second-price',
+              'Vickrey', 'revenue equivalence', 'private values', 'optimal mechanism',
+            ],
+            load: () =>
+              import('./benches/economics/game-theory/auctions/AuctionBench.js').then(
+                (m) => m.AuctionBench,
+              ),
+          },
+        ],
+      },
+      {
+        id: 'social-choice',
+        name: 'Social Choice',
+        benches: [
+          {
+            id: 'voting-systems',
+            navLabel: 'Voting systems',
+            level: 'university',
+            keywords: ['voting', 'Condorcet', 'Borda', 'plurality', 'Arrow', 'impossibility', 'social choice', 'preference aggregation'],
+            load: () =>
+              import('./benches/economics/social-choice/voting-systems/VotingBench.js').then(
+                (m) => m.VotingBench,
+              ),
+          },
         ],
       },
       {
