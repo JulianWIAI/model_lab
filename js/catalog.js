@@ -222,6 +222,25 @@ export const catalog = [
           },
         ],
       },
+      {
+        id: 'statistical-mechanics',
+        name: 'Statistical Mechanics',
+        benches: [
+          {
+            id: 'ising',
+            navLabel: 'Ising model',
+            level: 'university',
+            keywords: [
+              'Ising model', 'phase transition', 'critical temperature', 'magnetisation',
+              'Metropolis', 'statistical mechanics', 'Onsager', 'ferromagnet', 'spin',
+            ],
+            load: () =>
+              import('./benches/physics/statistical-mechanics/ising/IsingBench.js').then(
+                (m) => m.IsingBench,
+              ),
+          },
+        ],
+      },
     ],
   },
   {
@@ -438,6 +457,25 @@ export const catalog = [
           },
         ],
       },
+      {
+        id: 'surface',
+        name: 'Surface Chemistry',
+        benches: [
+          {
+            id: 'langmuir',
+            navLabel: 'Langmuir',
+            level: 'university',
+            keywords: [
+              'Langmuir', 'adsorption', 'isotherm', 'surface chemistry', 'coverage',
+              'van\'t Hoff', 'kinetics', 'equilibrium constant',
+            ],
+            load: () =>
+              import('./benches/chemistry/surface/langmuir/LangmuirBench.js').then(
+                (m) => m.LangmuirBench,
+              ),
+          },
+        ],
+      },
     ],
   },
   {
@@ -533,6 +571,19 @@ export const catalog = [
             load: () =>
               import('./benches/biology/biochemistry/hill-binding/HillBindingBench.js').then(
                 (m) => m.HillBindingBench,
+              ),
+          },
+          {
+            id: 'mwc-allosteric',
+            navLabel: 'MWC allosteric',
+            level: 'graduate',
+            keywords: [
+              'MWC', 'Monod-Wyman-Changeux', 'allosteric', 'cooperativity',
+              'T-state', 'R-state', 'Hill coefficient', 'concerted model',
+            ],
+            load: () =>
+              import('./benches/biology/biochemistry/mwc-allosteric/MWCBench.js').then(
+                (m) => m.MWCBench,
               ),
           },
         ],
@@ -774,6 +825,32 @@ export const catalog = [
                 (m) => m.HopfieldBench,
               ),
           },
+          {
+            id: 'population-coding',
+            navLabel: 'Population coding',
+            level: 'graduate',
+            keywords: [
+              'population coding', 'tuning curve', 'Fisher information', 'Cramer-Rao bound',
+              'Poisson', 'neural coding', 'population vector', 'maximum likelihood',
+            ],
+            load: () =>
+              import('./benches/neuroscience/networks/population-coding/PopulationCodingBench.js').then(
+                (m) => m.PopulationCodingBench,
+              ),
+          },
+          {
+            id: 'wilson-cowan',
+            navLabel: 'Wilson-Cowan',
+            level: 'graduate',
+            keywords: [
+              'Wilson-Cowan', 'excitatory', 'inhibitory', 'neural population',
+              'nullcline', 'phase plane', 'Hopf bifurcation', 'limit cycle', 'sigmoid',
+            ],
+            load: () =>
+              import('./benches/neuroscience/networks/wilson-cowan/WilsonCowanBench.js').then(
+                (m) => m.WilsonCowanBench,
+              ),
+          },
         ],
       },
     ],
@@ -922,6 +999,25 @@ export const catalog = [
           },
         ],
       },
+      {
+        id: 'graph-theory',
+        name: 'Graph Theory',
+        benches: [
+          {
+            id: 'graph-theory',
+            navLabel: 'Graph theory',
+            level: 'university',
+            keywords: [
+              'graph', 'Dijkstra', 'BFS', 'Euler characteristic', 'handshaking lemma',
+              'planar graph', 'face tracing', 'shortest path', 'algorithm',
+            ],
+            load: () =>
+              import('./benches/math/graph-theory/graph-theory/GraphTheoryBench.js').then(
+                (m) => m.GraphTheoryBench,
+              ),
+          },
+        ],
+      },
     ],
   },
   {
@@ -1052,6 +1148,25 @@ export const catalog = [
             keywords: ['tax', 'incidence', 'deadweight loss', 'supply', 'demand', 'elasticity', 'revenue'],
             load: () =>
               import('./benches/economics/taxation/tax/TaxBench.js').then((m) => m.TaxBench),
+          },
+        ],
+      },
+      {
+        id: 'distribution',
+        name: 'Income & inequality',
+        benches: [
+          {
+            id: 'inequality',
+            navLabel: 'Inequality',
+            level: 'intro',
+            keywords: [
+              'Lorenz curve', 'Gini coefficient', 'inequality', 'Pareto', 'income distribution',
+              'top share', 'wealth', 'economics',
+            ],
+            load: () =>
+              import('./benches/economics/distribution/inequality/InequalityBench.js').then(
+                (m) => m.InequalityBench,
+              ),
           },
         ],
       },
