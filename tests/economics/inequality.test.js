@@ -88,3 +88,50 @@ test('lorenz RangeError outside [0,1]', () => {
   assert.throws(() => m.lorenz(-0.1), RangeError);
   assert.throws(() => m.lorenz(1.1), RangeError);
 });
+
+test('topShare identity: topShare(q) === 1 - lorenz(q) for all distributions', () => {
+  const models = [
+    new InequalityModel({ dist: 'pareto', alpha: 2 }),
+    new InequalityModel({ dist: 'uniform' }),
+    new InequalityModel({ dist: 'exponential' }),
+  ];
+  for (const m of models) {
+    for (const q of [0.1, 0.5, 0.8, 0.99]) {
+      const ts = m.topShare(q);
+      const expected = 1 - m.lorenz(q);
+      assert.ok(
+        Math.abs(ts - expected) < 1e-10,
+        `${m.dist}: topShare(${q})=${ts}, 1-lorenz(${q})=${expected}, diff=${Math.abs(ts-expected)}`,
+      );
+    }
+  }
+});
+
+test('topShare exponential: numerical integration agrees +/-1e-5', () => {
+  // For exponential(lambda=1): Q(u) = -ln(1-u), mu = 1
+  // L(q) = integral_0^q Q(u) du = integral_0^q -ln(1-u) du
+  // Computed via trapezoid on 10000 points
+  const m = new InequalityModel({ dist: 'exponential' });
+  const q = 0.5;
+  const N = 10000;
+  let trapSum = 0;
+  for (let i = 0; i < N; i++) {
+    const u0 = (i / N) * q;
+    const u1 = ((i + 1) / N) * q;
+    const Q0 = -Math.log(1 - u0);
+    const Q1 = -Math.log(1 - u1);
+    trapSum += (Q0 + Q1) / 2 * (u1 - u0);
+  }
+  const lorenzNumerical = trapSum; // divided by mu=1
+  const lorenzAnalytic = m.lorenz(q);
+  assert.ok(
+    Math.abs(lorenzNumerical - lorenzAnalytic) < 1e-5,
+    `Numerical L(0.5)=${lorenzNumerical}, analytic=${lorenzAnalytic}`,
+  );
+  const topShareNumerical = 1 - lorenzNumerical;
+  const topShareAnalytic = m.topShare(q);
+  assert.ok(
+    Math.abs(topShareNumerical - topShareAnalytic) < 1e-5,
+    `Numerical topShare(0.5)=${topShareNumerical}, analytic=${topShareAnalytic}`,
+  );
+});

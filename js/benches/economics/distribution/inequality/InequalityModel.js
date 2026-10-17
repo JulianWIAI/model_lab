@@ -39,10 +39,17 @@ export class InequalityModel {
     return 1 - 2*intL;
   }
 
+  /**
+   * topShare(q) returns the income share of the **top (1−q) fraction**,
+   * i.e., the fraction of total income earned by those above the q-th quantile.
+   * Equivalently, topShare(q) = 1 − lorenz(q).
+   */
   topShare(q) {
     if (this.dist === 'pareto') return Math.pow(1-q, (this.alpha-1)/this.alpha);
     if (this.dist === 'uniform') return 1 - q*q;
-    return -(1-q)*Math.log(1-q);
+    // Exponential: topShare(q) = 1 - lorenz(q) = 1 - [q + (1-q)*ln(1-q)]
+    //            = (1-q)*(1 - ln(1-q))
+    return (1-q) * (1 - Math.log(1-q));
   }
 
   lorenzCurve(nPoints = 200) {
