@@ -7,7 +7,7 @@
 | Tag | Commit | Tests | Notes |
 |---|---|---|---|
 | phase-10 | c8144e1 | 960 | Phase 10b baseline |
-| phase-10b | (HEAD at tag time) | 979 | Phase 10b complete (+19 tests, 9 fixes) |
+| phase-10b | a4194b1 | 979 | Phase 10b complete (+19 tests, 9 fixes) |
 
 ### Tests added this phase
 
@@ -24,7 +24,9 @@
 
 Note: 2 vacuous tests (auctions revenue-equivalence; RL gambler's-ruin) were replaced in-place — count shows 0 net change for those items.
 
-Test audit: see `docs/reviews/phase-10b-test-audit.md` (979 tests, PRESENT=688, WEAK=205, MISSING=72 — MISSING are mostly structural/ordering tests without numeric tolerances).
+Test audit: see `docs/reviews/phase-10b-test-audit.md` (PRESENT=688, WEAK=205, MISSING=72; audit total=965).
+
+Audit-vs-runner discrepancy (14 tests): `gen-test-audit-phase10b.mjs` finds tests by regex-matching `test(` and `it(` at the start of a source line. `tests/no-hardcoded-colours.test.js` generates `it()` calls dynamically inside a `for` loop (2 template-string patterns × 8 view files at runtime = 16 runner tests; regex extracts only the 2 static patterns). The 14 extra runner tests are all from this one file. PRESENT+WEAK+MISSING+14(dynamic) = 979 ✓.
 
 ---
 
@@ -48,7 +50,7 @@ Test audit: see `docs/reviews/phase-10b-test-audit.md` (979 tests, PRESENT=688, 
 
 | Flag | Old value | Corrected value | Commit |
 |---|---|---|---|
-| Voting Predict 2 | "FALSE for 3 alts, possible for ≥4" | "FALSE for all n≥2 (algebraic proof: Condorcet loser Borda score < average)" | `94536f2` |
+| Voting Predict 2 | "FALSE for 3 alts, possible for ≥4" | "FALSE for all n≥2 voters and any number of alternatives m≥2 (algebraic proof: Condorcet loser Borda score < average n(m−1)/2)" | `94536f2` |
 | Auctions revenue equivalence test | Repeated E[R]=1/3 assertion (vacuous) | GL5 quadrature ∫₀¹ b*(v)N·v^{N-1}dv = (N-1)/(N+1) for N=2,3,8 ±1e-12 | `cae8f4d` |
 | RL gambler's ruin test | `assert.ok(2/8 === 0.25)` (no model code) | Thomas algorithm direct solve of 7×7 tridiagonal system ±1e-12 | `cae8f4d` |
 | Options Phi(z) for z ≤ −5.66 | (1+erf(z/√2))/2 — ~8 digits lost to cancellation | erfc_cf(−z/√2)/2 for t = z/√2 ≤ −4; 5 mpmath anchors ±1e-12 rel | `1dbbf30` |
@@ -65,7 +67,7 @@ Test audit: see `docs/reviews/phase-10b-test-audit.md` (979 tests, PRESENT=688, 
 |---|---|---|---|
 | butler-volmer | F = 96485.33212 C/mol | physics.nist.gov/cuu/Constants/Table/allascii.txt (2026-10-17) | **verified** — CODATA 2022: 96485.33212(exact) ✓ |
 | butler-volmer | R = 8.31446261815324 J/(mol·K) | physics.nist.gov/cuu/Constants/Table/allascii.txt (2026-10-17) | **verified** — CODATA 2022: 8.314462618(exact); full 2019 SI value used ✓ |
-| hopfield | Capacity ~0.138·N | DOI 10.1103/PhysRevA.32.1007 (Amit 1985); DOI 10.1109/TIT.1987.1057328 (McEliece 1987) | **not fetched** — paywalled; value is standard textbook result |
+| hopfield | Capacity ~0.138·N | DOI 10.1103/PhysRevA.32.1007 (Amit, Gutfreund & Sompolinsky, PRL 55:1530, 1985) | **not fetched** — paywalled; ~0.138·N is the finite-temperature capacity from Amit 1985. McEliece et al. (IEEE Trans. IT 33:461, 1987) gives an asymptotic capacity N/(4 ln N) — a different (zero-error) notion that is smaller for realistic N. |
 | all others (phase-10b) | All formulas | — | algebraic — no empirical constants to fetch |
 
 ---
@@ -93,10 +95,18 @@ Full findings: `docs/reviews/phase-10b-agent-findings.md`.
 
 Summary:
 - **HIGH:** 0 (one tentative — putPrice — immediately self-retracted)
-- **MED:** 7 (4 pre-existing; 3 phase-10b-adjacent; none require immediate fix)
-- **LOW:** 5 (all deferred)
+- **MED:** 7 (4 pre-existing; 3 phase-10b-adjacent)
+- **LOW:** 5
 
-Notable MED: inline `erf`/`Phi` in `hopfield.test.js:109` uses old `|x|>6` cutoff instead of new Lentz CF. At the argument −1.826 the Taylor path is taken, so no correctness impact. Deferred.
+All 7 MED items resolved in phase-10c (commit 0b68143):
+- MED-1 (BV sinh wording): comment clarified — mathematical identity vs IEEE 754.
+- MED-2 (BV x²/24 window): O(x⁴) residual (≈3×10⁻⁵) documented; exact value 0.010030 within [0.009, 0.011].
+- MED-3 (Options σ→∞ tolerance): tightened `< 1` → `< 1e-10`; Φ(d₂=−500) = 0 exactly in IEEE 754.
+- MED-4 (LC overdamped abs): justified in comment; |V_C|≈0.9933, so abs ≈ rel to < 1%.
+- MED-5 (Hopfield inline erf cutoff): updated `|x|>6` → `|x|>4` to match OptionsPricingModel.js.
+- MED-6 (RL Q-learning ±0.5): justification added (Watkins & Dayan 1992; 3σ bound ≈ 0.3 for 10 000 episodes).
+- MED-7 (Voting half = m/2): comment proves `> m/2` is correct strict majority for all integer m.
+All 5 LOW items remain deferred.
 
 ---
 
