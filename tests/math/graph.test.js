@@ -120,6 +120,32 @@ test('removeNode removes node and incident edges', () => {
   assert.strictEqual(g.edgeCount, 1);
 });
 
+test('DFS path A→B→C→D: 4 entries, distinct times 0-3, A has time 0', () => {
+  const g = new Graph({ directed: true });
+  g.addEdge('A','B',1).addEdge('B','C',1).addEdge('C','D',1);
+  const t = g.dfs('A');
+  assert.ok(t instanceof Map, 'dfs returns Map');
+  assert.strictEqual(t.size, 4, `expected 4 entries, got ${t.size}`);
+  assert.strictEqual(t.get('A'), 0, `A time should be 0 (first discovered)`);
+  const times = [...t.values()].sort((a, b) => a - b);
+  assert.deepStrictEqual(times, [0, 1, 2, 3], `times not distinct [0,3]: ${times}`);
+});
+
+test('DFS star center→{A,B,C}: 4 entries', () => {
+  const g = new Graph({ directed: true });
+  g.addEdge('center','A',1).addEdge('center','B',1).addEdge('center','C',1);
+  const t = g.dfs('center');
+  assert.strictEqual(t.size, 4, `expected 4 entries, got ${t.size}`);
+});
+
+test('DFS disconnected: dfs(X) returns Map with 1 entry (just X, time=0)', () => {
+  const g = new Graph();
+  g.addNode('X'); g.addNode('Y');
+  const t = g.dfs('X');
+  assert.strictEqual(t.size, 1, `expected 1 entry, got ${t.size}`);
+  assert.strictEqual(t.get('X'), 0, 'X time should be 0');
+});
+
 test('Oracle: Dijkstra and Bellman-Ford agree on positive-weight graph', () => {
   const g = new Graph();
   g.addEdge('A','B',2).addEdge('B','C',3).addEdge('A','C',6).addEdge('C','D',1).addEdge('B','D',7);

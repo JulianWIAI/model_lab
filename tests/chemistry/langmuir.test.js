@@ -88,7 +88,8 @@ test('Concavity grid: theta\'\'(p) < 0', () => {
     const fp = m.coverage(p + eps);
     const fm = m.coverage(p - eps);
     const d2 = (fp - 2*f0 + fm) / (eps * eps);
-    assert.ok(d2 < 1e-6, `Concavity at p=${p}: d2f=${d2}, expected < 0`);
+    // theta''(p) = -2K^2/(1+Kp)^3 which is always strictly negative
+    assert.ok(d2 < 0, `Concavity at p=${p}: d2f=${d2}, expected < 0`);
   }
 });
 
