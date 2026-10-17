@@ -32,8 +32,29 @@ test('γ* = 10^{-1/4} = 0.5623413251903491 ±1e-14', () => {
   assert.ok(Math.abs(gStar - 0.5623413251903491) < 1e-14, `γ*=${gStar}`);
 });
 
-test('P(reach 8 before 0, start=2) = 1/4 exactly', () => {
-  assert.ok(2 / 8 === 0.25);
+test('P(reach 8 before 0, start=2) = 2/8 via Thomas algorithm on corridor absorbing chain', () => {
+  // Corridor MDP: unbiased walk on states 0..8, absorbing at 0 and 8.
+  // P(k) = P(reach 8 | start k) satisfies P(k-1) − 2P(k) + P(k+1) = 0 (k=1..7),
+  // P(0)=0, P(8)=1. Solution P(k)=k/8, so P(2)=2/8.
+  // Solve the 7×7 tridiagonal system by Thomas algorithm; no hardcoded answer.
+  const n = 7;  // unknowns: P(1)..P(7) = x[0]..x[6]
+  const rhs = new Array(n).fill(0); rhs[n - 1] = -1;  // boundary P(8)=1 moves to RHS
+  // Forward sweep: sub=1, main=−2, super=1
+  const c = new Array(n).fill(0);
+  const d = new Array(n).fill(0);
+  c[0] = 1 / (-2);
+  d[0] = rhs[0] / (-2);
+  for (let i = 1; i < n; i++) {
+    const denom = -2 - c[i - 1];
+    c[i] = 1 / denom;
+    d[i] = (rhs[i] - d[i - 1]) / denom;
+  }
+  // Back substitution
+  const x = new Array(n).fill(0);
+  x[n - 1] = d[n - 1];
+  for (let i = n - 2; i >= 0; i--) x[i] = d[i] - c[i] * x[i + 1];
+  // x[1] = P(2)
+  assert.ok(Math.abs(x[1] - 2 / 8) < 1e-12, `P(2)=${x[1]}`);
 });
 
 test('V*(γ=0.9, start=2, via +10) = 0.9^5·10 = 5.9049 ±1e-10', () => {

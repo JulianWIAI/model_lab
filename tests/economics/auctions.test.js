@@ -28,13 +28,34 @@ describe('AuctionModel', () => {
     assert.ok(Math.abs(m.expectedRevenue() - 0.5) < 1e-14);
   });
 
-  it("revenue equivalence: E[R_1st] = E[R_2nd] (N=2, analytic)", () => {
-    // Analytic: both equal (N-1)/(N+1)
-    const m = new AuctionModel({ N: 2 });
-    // First-price: E[max BNE bid] = E[(N-1)/N * max V] = (N-1)/N * N/(N+1) = (N-1)/(N+1)
-    // Second-price: E[2nd highest uniform] = (N-1)/(N+1)
-    // Revenue equivalence is algebraic identity
-    assert.ok(Math.abs(m.expectedRevenue() - 1/3) < 1e-14);
+  it("revenue equivalence: GL5 ∫₀¹ b*(v)·N·v^{N-1} dv = (N-1)/(N+1) for N=2,3,8 ±1e-12", () => {
+    // 5-point Gauss-Legendre nodes/weights on [-1,1].
+    // Nodes are roots of P₅(x)=0; weights from standard formulas.
+    // Computed analytically to full double precision — no hardcoded truncated constants.
+    // Exact for polynomials of degree ≤9; integrand b*(v)·N·v^{N-1} has degree N (≤8 here).
+    const sqrt70 = Math.sqrt(70);
+    const n1 = Math.sqrt((35 - 2 * sqrt70) / 63);  // ≈ 0.538469
+    const n2 = Math.sqrt((35 + 2 * sqrt70) / 63);  // ≈ 0.906180
+    const w0 = 128 / 225;                            // weight for x=0
+    const w1 = (322 + 13 * sqrt70) / 900;            // weight for ±n1
+    const w2 = (322 - 13 * sqrt70) / 900;            // weight for ±n2
+    const nodes   = [-n2, -n1, 0, n1, n2];
+    const weights = [ w2,  w1, w0, w1, w2];
+    for (const N of [2, 3, 8]) {
+      const m = new AuctionModel({ N });
+      // Change of variable v = (t+1)/2 maps [-1,1] → [0,1]; Jacobian = 1/2
+      let integral = 0;
+      for (let k = 0; k < 5; k++) {
+        const v = (nodes[k] + 1) / 2;
+        integral += weights[k] * m.bneBid(v) * N * Math.pow(v, N - 1);
+      }
+      integral *= 0.5;
+      const expected = (N - 1) / (N + 1);
+      assert.ok(
+        Math.abs(integral - expected) < 1e-12,
+        `N=${N}: GL5 integral=${integral}, (N-1)/(N+1)=${expected}`,
+      );
+    }
   });
 
   it("optimal reserve = 0.5 (uniform)", () => {
