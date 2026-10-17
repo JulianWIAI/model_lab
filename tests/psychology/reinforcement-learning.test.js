@@ -91,7 +91,12 @@ test('Q-learning converges to Q* on corridor ±0.5', () => {
   const V2 = Math.max(model.Q(2, 'left'), model.Q(2, 'right'));
   // Agent should prefer right (+10 terminal): V2 > 5.0
   assert.ok(V2 > 5.0, `V*(2)=${V2} should be > 5.0`);
-  // Q*(2,'right') ~ γ^5·10 = 5.9049; check within generous tolerance
+  // Q*(2,'right') ~ γ^5·10 = 5.9049; ±0.5 tolerance justified:
+  // ε-greedy Q-learning with α=0.1, ε=0.1, 10 000 episodes is stochastic.
+  // Convergence theory (Watkins & Dayan 1992) guarantees Q→Q* in the limit, but for
+  // finite episodes the standard deviation of Q estimates is O(1/√episodes) scaled by
+  // the Q-value range (~10); with 10 000 episodes the 3σ bound is roughly ±0.3.
+  // ±0.5 = 8.5% of 5.9049; covers 3σ for this episode count and learning rate.
   assert.ok(Math.abs(V2 - 5.9049) < 0.5, `V*(2)=${V2}`);
 });
 

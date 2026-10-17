@@ -19,6 +19,9 @@ function permsOf(n) {
 function countBordaLoserWins(perms, m) {
   const P = perms.length;
   const n = perms[0].length;
+  // Strict majority: more than half = > m/2.  Works for any integer m:
+  //   odd m (e.g. 3): half=1.5, jBeats>1.5 ↔ jBeats≥2 ✓ (ceil(m/2)+0 = 2)
+  //   even m (e.g. 4): half=2, jBeats>2 ↔ jBeats≥3 ✓ (strict majority of 4 = 3)
   const half = m / 2;
   let count = 0;
   const indices = new Array(m).fill(0);

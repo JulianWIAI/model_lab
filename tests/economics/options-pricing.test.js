@@ -31,9 +31,11 @@ test('call > 0 for any params', () => {
   assert.ok(m.callPrice() > 0, `call=${m.callPrice()}`);
 });
 
-test('σ→∞: call → S (limit)', () => {
+test('σ→∞: call → S (limit) ±1e-10 abs', () => {
+  // At σ=1000: d₁ ≈ 500, Φ(d₁) = 1 exactly; d₂ ≈ -500, Φ(d₂) = 0 exactly in IEEE 754.
+  // call = S·1 − K·e^{−rT}·0 = S.  Error is 0 to machine precision.
   const m2 = new OptionsPricingModel({ S, K, r, sigma: 1000, T });
-  assert.ok(Math.abs(m2.callPrice() - S) < 1, `call=${m2.callPrice()}, S=${S}`);
+  assert.ok(Math.abs(m2.callPrice() - S) < 1e-10, `call=${m2.callPrice()}, S=${S}`);
 });
 
 test('σ→0: call ≈ max(S−Ke^{-rT}, 0) ±1e-4', () => {

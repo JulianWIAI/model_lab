@@ -144,7 +144,9 @@ test('P(bit error) N=1000, M=301: Φ(−√(1000/300)) ≈ 0.0339446 ±1e-5', ()
   // and M-1 other patterns contribute noise variance (M-1)/N per weight.
   // P(bit error) = Φ(−√(N/(M−1))) ≈ Φ(−√(1000/300)) for M=301, N=1000.
   function erf(x) {
-    if (Math.abs(x) > 6) return x > 0 ? 1 : -1;
+    // Taylor series; cutoff matches OptionsPricingModel.js (x ≤ 4).
+    // Argument here is −√(1000/300) ≈ −1.826, well within Taylor range.
+    if (Math.abs(x) > 4) return x > 0 ? 1 : -1;
     let sum = 0, term = x, n = 0;
     while (Math.abs(term) > 1e-17 && n < 200) {
       sum += term;

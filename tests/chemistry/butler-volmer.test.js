@@ -69,9 +69,11 @@ test('log10(i/i0) at η=b = 0.9956351945975499 ±1e-10 abs', () => {
     `log10(i/i0 at η=b)=${logI}, expected≈${expected}`);
 });
 
-test('2·sinh(ln10) = 9.9 exactly', () => {
-  // Verifies the exact sinh formula at η=b: i/i0 = 2·sinh(ln10) = 9.900...
-  // and confirms the mathematical identity 2·sinh(ln10) = 9.9 to 1e-13
+test('2·sinh(ln10) = 9.9 to 1e-13 abs (identity exact; IEEE 754 representation differs)', () => {
+  // Mathematical identity: 2·sinh(ln10) = e^(ln10) − e^(-ln10) = 10 − 0.1 = 9.9 exactly.
+  // In IEEE 754 double precision, Math.sinh(Math.log(10)) ≠ 9.9/2 exactly;
+  // the identity is verified to < 1e-13 abs (floating-point, not a tolerance on the math).
+  // O(x⁴) correction in the test below is separate from this identity.
   assert.ok(Math.abs(2 * Math.sinh(Math.log(10)) - 9.9) < 1e-13,
     `2·sinh(ln10)=${2 * Math.sinh(Math.log(10))}`);
 });
@@ -99,15 +101,18 @@ test('current() throws RangeError when |η|/V_T > 700', () => {
   assert.throws(() => m.current(-50), RangeError);
 });
 
-test('linear approx error < 1% when x²/24 < 0.01 (x=η/V_T, α=0.5)', () => {
-  // For α=0.5: i/i₀ = 2sinh(x/2); i_lin = x.
-  // Ratio = sinh(x/2)/(x/2) = 1 + x²/24 + O(x⁴).
-  // At x=√0.24≈0.4899 (η≈12.6 mV): x²/24 = 0.24/24 = 0.01.
+test('linear approx error ≈ 0.01003 at x=√0.24 (x²/24 + O(x⁴) derivation)', () => {
+  // For α=0.5: i/i₀ = 2sinh(x/2); i_lin = x; ratio = sinh(x/2)/(x/2).
+  // Taylor: sinh(x/2)/(x/2) = 1 + x²/24 + x⁴/1920 + ...
+  // At x=√0.24: leading term x²/24 = 0.24/24 = 0.01.
+  //             O(x⁴) residual = (0.24)²/1920 ≈ 3×10⁻⁵.
+  //             Exact relErr = sinh(√0.24/2)/(√0.24/2) − 1 ≈ 0.010030.
+  // The window [0.009, 0.011] covers the exact value 0.010030, which includes
+  // both the leading term (0.01) and the higher-order correction (+0.000030).
   const m = new ButlerVolmerModel({ alpha: 0.5, T_K: 298.15, i0: 1 });
-  const x = Math.sqrt(0.24);            // x = η/V_T where x²/24 = 0.01
+  const x = Math.sqrt(0.24);            // x = η/V_T where leading term x²/24 = 0.01
   const eta = x * m.thermalVoltage();
   const relErr = Math.abs(m.current(eta) / m.linearApprox(eta) - 1);
-  // Exact error is sinh(x/2)/(x/2)−1; x²/24 gives the leading term
-  assert.ok(relErr < 0.011, `relErr=${relErr} at x=√0.24 (should be ≈0.01)`);
-  assert.ok(relErr > 0.009, `relErr=${relErr} unexpectedly small at x²/24=0.01`);
+  assert.ok(relErr < 0.011, `relErr=${relErr} at x=√0.24 (should be ≈0.01003)`);
+  assert.ok(relErr > 0.009, `relErr=${relErr} unexpectedly small; expected ≈0.01003`);
 });
