@@ -8,7 +8,7 @@
 |---|---|---|---|
 | phase-10c | 0b68143 | 982 | Phase 11 true baseline |
 | phase-11 | 191d793 | 1061 | Phase 11 complete (+79 tests, 8 benches) |
-| phase-11b | (see tag) | 1071 | Phase 11b fix pass (+10 tests) |
+| phase-11b | 74423d3 | 1071 | Phase 11b fix pass (+10 tests) |
 
 Push status: pending user approval
 
