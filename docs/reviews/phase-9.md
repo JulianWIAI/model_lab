@@ -9,7 +9,7 @@
 | phase-8c | b96d63a | 756 | Phase 9 baseline |
 | phase-9 | 68b4db1 | 871 | Phase 9 complete (+115 tests, +7 benches, +9 core) |
 | phase-9b | dff029c | 872 | Phase 9b close-out (anchor precision, FD derivation, agent review) |
-| phase-9c | 1d8b696 | 875 | Phase 9c close-out (audit script, FD rewrite, STDP sources, smoke crops, agent review, MED/HIGH fixes) |
+| phase-9c | bcc132c | 875 | Phase 9c close-out (audit script, FD rewrite, STDP sources, smoke crops, agent review, MED/HIGH fixes) |
 
 <!-- Note on similar hashes: 0e7db3c is a phase-8 doc commit ("docs(phase-8): record final
      phase-8c commit hash in tag table") that was incorrectly referenced as the phase-8c tag
