@@ -757,6 +757,25 @@ export const catalog = [
           },
         ],
       },
+      {
+        id: 'networks',
+        name: 'Networks & coding',
+        benches: [
+          {
+            id: 'hopfield',
+            navLabel: 'Hopfield',
+            level: 'graduate',
+            keywords: [
+              'Hopfield network', 'associative memory', 'Hebbian learning', 'energy',
+              'attractor', 'neuroscience', 'neural network', 'spin glass',
+            ],
+            load: () =>
+              import('./benches/neuroscience/networks/hopfield/HopfieldBench.js').then(
+                (m) => m.HopfieldBench,
+              ),
+          },
+        ],
+      },
     ],
   },
   {
