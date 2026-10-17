@@ -140,6 +140,39 @@ export class Graph {
     return c;
   }
 
+  /**
+   * Compute the girth (length of shortest cycle) by BFS from each node.
+   * Returns Infinity if the graph is acyclic (tree or forest).
+   * O(V·(V+E)) time. Assumes undirected graph (directed graphs need DFS).
+   */
+  girth() {
+    let g = Infinity;
+    for (const start of this._nodes.keys()) {
+      // BFS from start; if we find a back-edge to an already-visited node at distance d,
+      // cycle length = dist[start→neighbor] + dist[start→current] + 1
+      const dist = new Map([[start, 0]]);
+      const parent = new Map([[start, null]]);
+      const queue = [start];
+      outer: while (queue.length > 0) {
+        const u = queue.shift();
+        const du = dist.get(u);
+        for (const { to: v } of (this._adj.get(u) || [])) {
+          if (!dist.has(v)) {
+            dist.set(v, du + 1);
+            parent.set(v, u);
+            queue.push(v);
+          } else if (parent.get(u) !== v) {
+            // back edge: cycle length = du + dist.get(v) + 1
+            const cycleLen = du + dist.get(v) + 1;
+            if (cycleLen < g) g = cycleLen;
+            if (g === 3) break outer; // can't get smaller
+          }
+        }
+      }
+    }
+    return g;
+  }
+
   faces(rotationSystem) {
     const dartsSeen = new Set();
     let F = 0;

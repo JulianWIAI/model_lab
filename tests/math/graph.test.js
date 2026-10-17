@@ -155,3 +155,88 @@ test('Oracle: Dijkstra and Bellman-Ford agree on positive-weight graph', () => {
     assert.strictEqual(dij.get(v), bf.get(v), `Mismatch at ${v}: dij=${dij.get(v)}, bf=${bf.get(v)}`);
   }
 });
+
+test('girth K4 = 3', () => {
+  // K4: complete graph on 4 nodes, every triple forms a triangle
+  const g = new Graph();
+  for (const n of ['A','B','C','D']) g.addNode(n);
+  for (const [a,b] of [['A','B'],['A','C'],['A','D'],['B','C'],['B','D'],['C','D']]) g.addEdge(a,b,1);
+  assert.strictEqual(g.girth(), 3);
+});
+
+test('girth K3,3 = 4', () => {
+  // K3,3 bipartite: shortest cycle has length 4 (no triangles)
+  const g = new Graph();
+  for (const n of ['A','B','C','D','E','F']) g.addNode(n);
+  for (const a of ['A','B','C']) for (const b of ['D','E','F']) g.addEdge(a,b,1);
+  assert.strictEqual(g.girth(), 4);
+});
+
+test('girth Petersen = 5', () => {
+  // Petersen graph: 10 nodes, girth=5
+  // Outer pentagon: 0-1-2-3-4-0; spokes: 0-5,1-6,2-7,3-8,4-9; inner pentagram: 5-7-9-6-8-5
+  const g = new Graph();
+  for (let i = 0; i < 10; i++) g.addNode(String(i));
+  const edges = [[0,1],[1,2],[2,3],[3,4],[4,0],[0,5],[1,6],[2,7],[3,8],[4,9],[5,7],[7,9],[9,6],[6,8],[8,5]];
+  for (const [a,b] of edges) g.addEdge(String(a),String(b),1);
+  assert.strictEqual(g.girth(), 5);
+});
+
+test('girth Q3 = 4', () => {
+  // Q3: 3-cube graph, girth=4
+  const g = new Graph();
+  const nodes = ['000','001','010','011','100','101','110','111'];
+  for (const n of nodes) g.addNode(n);
+  for (let i = 0; i < 8; i++) {
+    for (let bit = 0; bit < 3; bit++) {
+      const j = i ^ (1 << bit);
+      if (j > i) g.addEdge(nodes[i], nodes[j], 1);
+    }
+  }
+  assert.strictEqual(g.girth(), 4);
+});
+
+test('girth path P5 = Infinity (acyclic)', () => {
+  const g = new Graph();
+  for (const n of ['A','B','C','D','E']) g.addNode(n);
+  for (const [a,b] of [['A','B'],['B','C'],['C','D'],['D','E']]) g.addEdge(a,b,1);
+  assert.strictEqual(g.girth(), Infinity);
+});
+
+test('K3,3 non-planar: E=9 > 2V-4=8 (girth>=4 bound)', () => {
+  // For bipartite graphs with girth>=4: E <= 2V-4. K3,3: E=9, V=6, 2V-4=8. 9>8 => non-planar.
+  const g = new Graph();
+  for (const n of ['A','B','C','D','E','F']) g.addNode(n);
+  for (const a of ['A','B','C']) for (const b of ['D','E','F']) g.addEdge(a,b,1);
+  assert.ok(g.edgeCount > 2*g.nodeCount - 4,
+    `K3,3: E=${g.edgeCount} should exceed 2V-4=${2*g.nodeCount-4}`);
+});
+
+test('Petersen non-planar: E=15 > 5(V-2)/3=13.33 (girth>=5 bound)', () => {
+  // For graphs with girth>=5: E <= 5(V-2)/3. Petersen: E=15, V=10, bound=13.33. 15>13.33 => non-planar.
+  const g = new Graph();
+  for (let i = 0; i < 10; i++) g.addNode(String(i));
+  const edges = [[0,1],[1,2],[2,3],[3,4],[4,0],[0,5],[1,6],[2,7],[3,8],[4,9],[5,7],[7,9],[9,6],[6,8],[8,5]];
+  for (const [a,b] of edges) g.addEdge(String(a),String(b),1);
+  const E = g.edgeCount, V = g.nodeCount;
+  assert.ok(E > 5*(V-2)/3, `Petersen: E=${E} should exceed 5(V-2)/3=${(5*(V-2)/3).toFixed(2)}`);
+});
+
+test('Q3 planar boundary: E=12 <= 2V-4=12 (girth>=4, boundary case)', () => {
+  const g = new Graph();
+  const nodes = ['000','001','010','011','100','101','110','111'];
+  for (const n of nodes) g.addNode(n);
+  for (let i = 0; i < 8; i++) for (let bit = 0; bit < 3; bit++) { const j = i^(1<<bit); if(j>i) g.addEdge(nodes[i],nodes[j],1); }
+  const E = g.edgeCount, V = g.nodeCount;
+  assert.ok(E <= 2*V-4, `Q3: E=${E} should be <= 2V-4=${2*V-4} (boundary case)`);
+});
+
+test('bellmanFord: undirected negative edge -> null (negative cycle)', () => {
+  // An undirected edge A-B:-1 creates the cycle A->B->A with total weight -2.
+  // Bellman-Ford must detect this and return null.
+  const g = new Graph();
+  g.addNode('A'); g.addNode('B');
+  g.addEdge('A', 'B', -1);  // adds both A->B and B->A in adjacency
+  const result = g.bellmanFord('A');
+  assert.strictEqual(result, null, 'undirected negative edge should trigger null (negative cycle)');
+});
