@@ -92,7 +92,7 @@ SOURCES notes:
 |---|---|---|---|---|
 | lc-oscillator | R | R_crit (critical) | model-call | transition through 3 regimes |
 | butler-volmer | η | 1.0 V (slider max) | slider-max | no clamping; model throws RangeError for |η|≫1 V |
-| options-pricing | σ | 0.001 | model-call | C→intrinsic value; no NaN |
+| options-pricing | σ | 0.001 | model-call | C→max(S−Ke^{−rT},0)=4.877; no NaN |
 | options-pricing | σ | 5 | model-call | C→S; no NaN |
 | hopfield | patterns | M=8 (near capacity) | model-call | spurious states appear |
 | reinforcement-learning | γ | 0.01 | model-call | agent prefers +1 (nearby) |
