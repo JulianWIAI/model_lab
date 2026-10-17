@@ -339,8 +339,23 @@ async function testBench(page, baseUrl, subjectId, benchId, navLabel, vpList) {
         await page.screenshot({ path: screenshotPath });
       }
 
+      // Bench-element crop: only when --sheet requested.
+      // Scrolls the active bench element into view and takes an element screenshot
+      // (crops to the element's bounding box, no browser chrome).
+      let cropPath = null;
+      if (makeSheet) {
+        cropPath = path.join(OUT_DIR, `${benchId}-${theme}-${width}-crop.png`);
+        try {
+          const benchLocator = page.locator('.bench:not([hidden])');
+          await benchLocator.scrollIntoViewIfNeeded({ timeout: 2000 });
+          await benchLocator.screenshot({ path: cropPath, timeout: 3000 });
+        } catch (_) {
+          cropPath = null; // element not found or timed out — fall back to no crop
+        }
+      }
+
       result.screenshots.push({
-        theme, width, screenshotPath,
+        theme, width, screenshotPath, cropPath,
         pixelInfo, hasDashes,
         consoleErrorsAtCapture: [...consoleErrors],
         surfaceRgb, dominantRgb: pixelInfo.dominantRgb,
@@ -373,12 +388,17 @@ async function testBench(page, baseUrl, subjectId, benchId, navLabel, vpList) {
 }
 
 // ── Contact sheets (--sheet only) ────────────────────────────────────────────
+// Layout per tile:
+//   LABEL row (bench id + pass/fail)
+//   Full-page shots: 2 cols × 2 rows  (light/1280, dark/400, light/400, dark/1280)
+//   Crop strip:      2 cols × 1 row   (bench-element crops: light/1280, dark/400)
 const TILE_W  = 400;  const LABEL_H = 38;
 const SHOT_GAP = 3;   const TILE_GAP = 6;
 const COLS     = 4;
 const SHOT_W   = Math.floor((TILE_W - SHOT_GAP) / 2);   // 198 px
 const SHOT_H   = 116;
-const TILE_H   = LABEL_H + SHOT_H * 2 + SHOT_GAP * 3;   // 279 px
+const CROP_H   = 90;  // bench-element crop strip (shorter than full-page)
+const TILE_H   = LABEL_H + SHOT_H * 2 + CROP_H + SHOT_GAP * 4;   // 38+232+90+12 = 372 px
 
 async function makeContactSheets(results, outDir, browser) {
   const order     = [...new Set(results.map(r => r.subjectId))];
@@ -393,6 +413,7 @@ async function makeContactSheets(results, outDir, browser) {
     const sheetW  = numCols * TILE_W + (numCols + 1) * TILE_GAP;
     const sheetH  = numRows * TILE_H + (numRows + 1) * TILE_GAP;
 
+    // shots = full-page (up to 4); crops = bench-element (up to 4, shown as 2 in strip)
     const payload = benches.map(r => ({
       benchId: r.benchId,
       pass:    r.pass,
@@ -403,6 +424,12 @@ async function makeContactSheets(results, outDir, browser) {
           ? 'data:image/png;base64,' + fs.readFileSync(s.screenshotPath).toString('base64')
           : null,
       })),
+      crops:   r.screenshots.slice(0, 2).map(s => ({
+        label:   `crop ${s.theme} / ${s.width}`,
+        dataUrl: s.cropPath && fs.existsSync(s.cropPath)
+          ? 'data:image/png;base64,' + fs.readFileSync(s.cropPath).toString('base64')
+          : null,
+      })),
     }));
 
     const page = await browser.newPage();
@@ -410,7 +437,7 @@ async function makeContactSheets(results, outDir, browser) {
     await page.setContent('<html><body style="margin:0;background:#111"><canvas id="cs"></canvas></body></html>');
 
     await page.evaluate(
-      async ({ payload, TILE_W, TILE_H, LABEL_H, SHOT_W, SHOT_H, SHOT_GAP, TILE_GAP, COLS, sheetW, sheetH }) => {
+      async ({ payload, TILE_W, TILE_H, LABEL_H, SHOT_W, SHOT_H, CROP_H, SHOT_GAP, TILE_GAP, COLS, sheetW, sheetH }) => {
         const canvas = document.getElementById('cs');
         canvas.width = sheetW; canvas.height = sheetH;
         const ctx = canvas.getContext('2d');
@@ -432,6 +459,7 @@ async function makeContactSheets(results, outDir, browser) {
           ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
           ctx.fillStyle = bench.pass ? '#c8d8ff' : '#ff9999';
           ctx.fillText(bench.benchId, tx + 8, ty + LABEL_H / 2);
+          // Full-page shots (2×2 grid)
           const positions = [[0,0],[1,0],[0,1],[1,1]];
           for (let si = 0; si < bench.shots.length; si++) {
             const s = bench.shots[si];
@@ -456,9 +484,28 @@ async function makeContactSheets(results, outDir, browser) {
               ctx.strokeRect(sx + 1.5, sy + 1.5, SHOT_W - 3, SHOT_H - 3);
             }
           }
+          // Bench-element crop strip (1 row, up to 2 crops: light/1280 + dark/400)
+          const cropY = ty + LABEL_H + SHOT_H * 2 + SHOT_GAP * 3;
+          for (let ci = 0; ci < bench.crops.length; ci++) {
+            const c = bench.crops[ci];
+            const cx = tx + ci * (SHOT_W + SHOT_GAP) + SHOT_GAP;
+            const img = await loadImg(c.dataUrl);
+            if (img) {
+              const scale = Math.min(SHOT_W / img.naturalWidth, CROP_H / img.naturalHeight);
+              const dw = Math.round(img.naturalWidth * scale);
+              const dh = Math.round(img.naturalHeight * scale);
+              ctx.fillStyle = '#1a1a2e'; ctx.fillRect(cx, cropY, SHOT_W, CROP_H);
+              ctx.drawImage(img, cx + Math.round((SHOT_W-dw)/2), cropY + Math.round((CROP_H-dh)/2), dw, dh);
+            } else {
+              ctx.fillStyle = '#1a1a1a'; ctx.fillRect(cx, cropY, SHOT_W, CROP_H);
+            }
+            ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(cx, cropY, SHOT_W, 14);
+            ctx.font = '9px monospace'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+            ctx.fillStyle = '#adf'; ctx.fillText(c.label, cx + 3, cropY + 7);
+          }
         }
       },
-      { payload, TILE_W, TILE_H, LABEL_H, SHOT_W, SHOT_H, SHOT_GAP, TILE_GAP, COLS, sheetW, sheetH },
+      { payload, TILE_W, TILE_H, LABEL_H, SHOT_W, SHOT_H, CROP_H, SHOT_GAP, TILE_GAP, COLS, sheetW, sheetH },
     );
 
     const pngData = await page.evaluate(() =>
