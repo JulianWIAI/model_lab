@@ -101,6 +101,24 @@ test('exact ΔE = −(|h_3|−s_old·h_3) for single flip in [1,1,−1,1] ±1e-1
   );
 });
 
+test('E = (1−N·m²)/2 holds for single stored pattern — two states ±1e-14', () => {
+  // For a single stored pattern: E = (1 − N·m²)/2  (exact algebraic identity).
+  // Stored pattern s=ξ: m=1 → E=(1−4)/2=−1.5; verified against energy().
+  // Orthogonal s=[1,−1,1,−1]: m=0 → E=(1−0)/2=0.5; verified against energy().
+  for (const [s, mExp] of [
+    [xi,          1],      // m = overlapWith(ξ, 0) = 1
+    [[1, -1, 1, -1], 0],  // m = overlapWith(ortho, 0) = 0
+  ]) {
+    const mOv = m.overlapWith(s, 0);
+    const eFormula = (1 - N * mOv * mOv) / 2;
+    const eDirect  = m.energy(s);
+    assert.ok(
+      Math.abs(eFormula - eDirect) < 1e-14,
+      `s=${JSON.stringify(s)}: E_formula=${eFormula}, E_direct=${eDirect}`,
+    );
+  }
+});
+
 // ── Overlap ───────────────────────────────────────────────────────────────────
 
 test('overlapWith stored pattern = 1 ±1e-14', () => {
