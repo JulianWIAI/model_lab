@@ -53,8 +53,29 @@ test('Yang formula: (63/64)^(1/8) at T=Tc/2', () => {
 });
 
 test('MC L=4 vs exact <|m|> at T=2.5: |mean - exact| < 4*SE', () => {
-  // Exact <|m|> at T=2.5, L=4 = 0.76471239322120 (from partition function enumeration)
-  const exact = 0.76471239322120;
+  // exact canonical average <|m|>_{L=4, T=2.5} computed by summing all 2^16 configurations
+  const L4 = 4, N4 = 16, T4 = 2.5;
+  const bonds4 = [];
+  for (let r = 0; r < L4; r++)
+    for (let c = 0; c < L4; c++) {
+      bonds4.push([r*L4+c, r*L4+(c+1)%L4]);
+      bonds4.push([r*L4+c, ((r+1)%L4)*L4+c]);
+    }
+  let Z4 = 0, num4 = 0;
+  for (let cfg = 0; cfg < (1 << N4); cfg++) {
+    let E = 0;
+    for (const [a, b] of bonds4) {
+      const sa = ((cfg >> a) & 1) ? 1 : -1;
+      const sb = ((cfg >> b) & 1) ? 1 : -1;
+      E -= sa * sb; // E = -J * Σ s_i s_j, J=1
+    }
+    let M = 0;
+    for (let i = 0; i < N4; i++) M += ((cfg >> i) & 1) ? 1 : -1;
+    const w = Math.exp(-E / T4);
+    Z4 += w;
+    num4 += Math.abs(M / N4) * w;
+  }
+  const exact = num4 / Z4;
   const nSeeds = 20;
   const samples = [];
   for (let s = 0; s < nSeeds; s++) {
