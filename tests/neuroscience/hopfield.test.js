@@ -82,6 +82,25 @@ test('asyncUpdate decreases E (or stays same)', () => {
   assert.ok(after <= before + 1e-14, `before=${before}, after=${after}`);
 });
 
+test('exact ΔE = −(|h_3|−s_old·h_3) for single flip in [1,1,−1,1] ±1e-14', () => {
+  // State [1,1,−1,1]: only neuron 3 is misaligned (ξ[3]=−1 but s_3=1).
+  // asyncUpdate flips only s_3 → [1,1,−1,−1]=ξ.
+  // h_3 = W[3][0]×1 + W[3][1]×1 + W[3][2]×(−1) = −1/4−1/4−1/4 = −3/4
+  // ΔE_formula = −(|h_3| − s_old·h_3) = −(3/4 − 1×(−3/4)) = −3/2
+  // E_before([1,1,−1,1]) = 0 (energy formula); E_after = −3/2
+  const s0 = [1, 1, -1, 1];
+  const h3 = m.localField(s0, 3);
+  const deltaE_formula = -(Math.abs(h3) - s0[3] * h3);
+  const E_before = m.energy(s0);
+  const E_after  = m.energy(m.asyncUpdate(s0));
+  assert.ok(Math.abs(h3 + 3 / 4) < 1e-14,         `h_3=${h3}, expected=−3/4`);
+  assert.ok(Math.abs(deltaE_formula + 3 / 2) < 1e-14, `ΔE_formula=${deltaE_formula}`);
+  assert.ok(
+    Math.abs((E_after - E_before) - deltaE_formula) < 1e-14,
+    `ΔE_actual=${E_after - E_before}, ΔE_formula=${deltaE_formula}`,
+  );
+});
+
 // ── Overlap ───────────────────────────────────────────────────────────────────
 
 test('overlapWith stored pattern = 1 ±1e-14', () => {
