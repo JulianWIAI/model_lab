@@ -79,8 +79,38 @@ test('popvec SD/CRB ~ 1.04 +/-4*SE', () => {
   // SE of ratio estimate ~ ratio / sqrt(2*nTrials)
   const se = ratio / Math.sqrt(2 * nTrials);
   assert.ok(
-    Math.abs(ratio - 1.04) < 4 * se + 0.15,
-    `SD/CRB = ${ratio.toFixed(4)}, expected ~1.04, SE=${se.toFixed(4)}`,
+    Math.abs(ratio - 1.04) < 4 * se,
+    `SD/CRB = ${ratio.toFixed(4)}, expected ~1.04, 4*SE=${(4*se).toFixed(4)}`,
+  );
+});
+
+test('MLE mean ≈ 0 and SD/CRB ~ 1.0 +/-4*SE', () => {
+  const nTrials = 1000;
+  const m = new PopulationCodingModel({ N: 16, sigma: 0.5, T: 0.1, seed: 99 });
+  const theta0 = 0;
+  const crb = m.sigmaCRB(theta0);
+  const errs = [];
+  for (let t = 0; t < nTrials; t++) {
+    const spikes = m.drawSpikes(theta0);
+    const est = m.mlEstimate(spikes);
+    let err = est - theta0;
+    while (err > Math.PI) err -= 2 * Math.PI;
+    while (err < -Math.PI) err += 2 * Math.PI;
+    errs.push(err);
+  }
+  const mean = errs.reduce((a, b) => a + b, 0) / nTrials;
+  const sd = Math.sqrt(errs.reduce((a, b) => a + b*b, 0) / nTrials);
+  const ratio = sd / crb;
+  // SE of mean ≈ sd/sqrt(nTrials); SE of ratio ≈ ratio/sqrt(2*nTrials)
+  const seMean = sd / Math.sqrt(nTrials);
+  const seRatio = ratio / Math.sqrt(2 * nTrials);
+  assert.ok(
+    Math.abs(mean) < 4 * seMean,
+    `MLE mean=${mean.toFixed(4)}, 4*seMean=${(4*seMean).toFixed(4)}`,
+  );
+  assert.ok(
+    Math.abs(ratio - 1.0) < 4 * seRatio,
+    `MLE SD/CRB = ${ratio.toFixed(4)}, expected ~1.0, 4*SE=${(4*seRatio).toFixed(4)}`,
   );
 });
 
