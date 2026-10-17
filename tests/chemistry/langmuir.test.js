@@ -114,3 +114,24 @@ test('RangeError K<=0', () => {
   assert.throws(() => new LangmuirModel({ K: 0 }), RangeError);
   assert.throws(() => new LangmuirModel({ K: -1 }), RangeError);
 });
+
+test('langmuirPlot: returns p/theta data for linearized form', () => {
+  const m = new LangmuirModel({ K: 2.5, pMin: 0, pMax: 4 });
+  const pts = m.langmuirPlot(5);
+  // p/theta = 1/K + p; check first non-zero point
+  assert.ok(pts.length >= 1, 'langmuirPlot should return points');
+  for (const { p, pOverTheta } of pts) {
+    const expected = 1/m.K + p;
+    assert.ok(Math.abs(pOverTheta - expected) < 1e-12, `p=${p}: pOverTheta=${pOverTheta}, expected=${expected}`);
+  }
+});
+
+test('isothermCurve: nPoints=5 returns coverage at each p', () => {
+  const m = new LangmuirModel({ K: 2.5, pMin: 0, pMax: 4 });
+  const pts = m.isothermCurve(5);
+  assert.strictEqual(pts.length, 5);
+  for (const { p, theta } of pts) {
+    const expected = p >= 0 ? m.coverage(p) : 0;
+    assert.ok(Math.abs(theta - expected) < 1e-14, `p=${p}: theta=${theta}`);
+  }
+});

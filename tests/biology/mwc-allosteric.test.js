@@ -80,6 +80,16 @@ test('saturation at large alpha: Y > 0.9999 and rStateFraction > 0.9999', () => 
   assert.ok(m.rStateFraction(1e6) > 0.9999, `R(1e6) = ${m.rStateFraction(1e6)}`);
 });
 
+test('curve: returns nPoints alpha-Y-Rbar triples', () => {
+  const m = new MWCModel({ n: 4, L: 100, c: 0.01 });
+  const c = m.curve(10, 5);
+  assert.strictEqual(c.length, 5);
+  for (const { alpha, Y, Rbar } of c) {
+    assert.ok(Math.abs(Y - m.saturation(alpha)) < 1e-14, `Y mismatch at alpha=${alpha}`);
+    assert.ok(Math.abs(Rbar - m.rStateFraction(alpha)) < 1e-14, `Rbar mismatch at alpha=${alpha}`);
+  }
+});
+
 test('RangeError for bad params', () => {
   assert.throws(() => new MWCModel({ n: 0 }), RangeError);
   assert.throws(() => new MWCModel({ n: 1.5 }), RangeError);

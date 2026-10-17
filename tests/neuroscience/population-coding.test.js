@@ -115,6 +115,19 @@ test('MLE mean ≈ 0 and SD/CRB ~ 1.0 +/-4*SE', () => {
   );
 });
 
+test('tuningCurves: returns nPoints rows with N tuning values', () => {
+  const m = new PopulationCodingModel({ N: 8, sigma: 0.5 });
+  const curves = m.tuningCurves(10);
+  assert.strictEqual(curves.length, 10);
+  for (const { theta, fi } of curves) {
+    assert.strictEqual(fi.length, 8);
+    // Each fi value should equal tuning(i, theta)
+    for (let i = 0; i < 8; i++) {
+      assert.ok(Math.abs(fi[i] - m.tuning(i, theta)) < 1e-14);
+    }
+  }
+});
+
 test('RangeError when rMax*T > 100', () => {
   assert.throws(
     () => new PopulationCodingModel({ rMax: 200, T: 1 }),

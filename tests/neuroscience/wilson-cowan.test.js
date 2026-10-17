@@ -165,6 +165,37 @@ test('Limit cycle (wEE=8.5): tr>0, peak-to-peak > 0.1', () => {
   assert.ok(eMax - eMin < 0.4, `Peak-to-peak E = ${eMax - eMin}, expected < 0.4`);
 });
 
+test('nullclineI with wII=0: direct sigmoid computation', () => {
+  // When wII=0, inhibitory nullcline is I = S(wIE*E + PI) directly (no bisection needed)
+  const m = new WilsonCowanModel({
+    wEE: 8.5, wEI: 4, wIE: 12, wII: 0,
+    tauE: 1, tauI: 1, PE: 2, PI: -2,
+    rE: 0, rI: 0, kappa: 1, thetaS: 4,
+  });
+  const ncI = m.nullclineI(10);
+  assert.ok(ncI.length > 0, 'nullclineI should return points');
+  // Verify: at each E, dIdt(E, I) ≈ 0
+  for (const { E, I } of ncI) {
+    if (E > 0.01 && E < 0.99) {
+      assert.ok(Math.abs(m.dIdt(E, I)) < 1e-5, `I-nullcline residual at E=${E.toFixed(3)}: ${m.dIdt(E, I)}`);
+    }
+  }
+});
+
+test('stability: hopf-point type when tr ≈ 0 and det > 0', () => {
+  // Use Hopf preset exactly at tr=0 to trigger hopf-point branch
+  const m = new WilsonCowanModel({
+    wEE: 8, wEI: 4, wIE: 12, wII: 0,
+    tauE: 1, tauI: 1, PE: 2, PI: -2,
+    rE: 0, rI: 0, kappa: 1, thetaS: 4,
+  });
+  const fps = m.fixedPoints();
+  const fp = fps.find(p => Math.abs(p.E - 0.5) < 0.01 && Math.abs(p.I - 0.5) < 0.01);
+  assert.ok(fp, 'No FP near (0.5, 0.5) for Hopf preset');
+  const s = m.stability(fp.E, fp.I);
+  assert.strictEqual(s.type, 'hopf-point', `Expected hopf-point, got ${s.type}`);
+});
+
 test('Nullclines: 10 points verified +/-1e-6', () => {
   const m = new WilsonCowanModel();
   const ncE = m.nullclineE(200);

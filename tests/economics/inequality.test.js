@@ -107,6 +107,19 @@ test('topShare identity: topShare(q) === 1 - lorenz(q) for all distributions', (
   }
 });
 
+test('lorenzCurve: returns nPoints+1 points with p in [0,1] and L=lorenz(p)', () => {
+  const m = new InequalityModel({ dist: 'pareto', alpha: 2 });
+  const curve = m.lorenzCurve(10);
+  assert.strictEqual(curve.length, 11);
+  assert.strictEqual(curve[0].p, 0);
+  assert.strictEqual(curve[0].L, 0);
+  assert.strictEqual(curve[10].p, 1);
+  assert.strictEqual(curve[10].L, 1);
+  for (const { p, L } of curve) {
+    assert.ok(Math.abs(L - m.lorenz(p)) < 1e-14, `p=${p}: curve L=${L}, lorenz=${m.lorenz(p)}`);
+  }
+});
+
 test('topShare exponential: numerical integration agrees +/-1e-5', () => {
   // For exponential(lambda=1): Q(u) = -ln(1-u), mu = 1
   // L(q) = integral_0^q Q(u) du = integral_0^q -ln(1-u) du
