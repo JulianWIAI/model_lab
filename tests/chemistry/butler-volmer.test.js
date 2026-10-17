@@ -90,3 +90,11 @@ test('alpha outside (0,1) throws RangeError', () => {
   assert.throws(() => new ButlerVolmerModel({ alpha: -0.1 }), RangeError);
   assert.throws(() => new ButlerVolmerModel({ alpha: 1.1 }), RangeError);
 });
+
+test('current() throws RangeError for |η| > overflow threshold (~18 V at 298 K, α=0.5)', () => {
+  // Overflow when α·η/V_T > 700, i.e. η > 700·V_T/α ≈ 700·0.02569/0.5 ≈ 36 V.
+  // A value of 50 V is safely above this threshold.
+  const m = new ButlerVolmerModel({ alpha: 0.5, T_K: 298.15, i0: 1 });
+  assert.throws(() => m.current(50), RangeError);
+  assert.throws(() => m.current(-50), RangeError);
+});

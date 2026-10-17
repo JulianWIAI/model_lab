@@ -49,7 +49,8 @@ export class ButlerVolmerModel {
 
   /**
    * Butler-Volmer current at overpotential η (V).
-   * Clamps exponent arguments to ±700 to avoid overflow.
+   * Throws RangeError if |η| is large enough to overflow Math.exp (|x| > 700).
+   * The UI slider limits η_max to 1 V, so overflow cannot occur in normal use.
    * @param {number} eta  overpotential (V)
    * @returns {number} current (same units as i0)
    */
@@ -57,8 +58,11 @@ export class ButlerVolmerModel {
     const vt = this.thermalVoltage();
     const x1 = this.alpha * eta / vt;
     const x2 = -(1 - this.alpha) * eta / vt;
-    const clamp = (x) => x > 700 ? 700 : x < -700 ? -700 : x;
-    return this.i0 * (Math.exp(clamp(x1)) - Math.exp(clamp(x2)));
+    if (Math.abs(x1) > 700 || Math.abs(x2) > 700)
+      throw new RangeError(
+        `ButlerVolmerModel.current: |η| too large — exponent overflow (|η| max ≈ ${(700 * vt).toFixed(1)} V)`,
+      );
+    return this.i0 * (Math.exp(x1) - Math.exp(x2));
   }
 
   /**

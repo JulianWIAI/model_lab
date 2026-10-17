@@ -91,7 +91,7 @@ SOURCES notes:
 | Bench | Slider | Extreme value | Source | Observed behaviour |
 |---|---|---|---|---|
 | lc-oscillator | R | R_crit (critical) | model-call | transition through 3 regimes |
-| butler-volmer | η | ±700 mV | model-call | clamped; no overflow |
+| butler-volmer | η | 1.0 V (slider max) | slider-max | no clamping; model throws RangeError for |η|≫1 V |
 | options-pricing | σ | 0.001 | model-call | C→intrinsic value; no NaN |
 | options-pricing | σ | 5 | model-call | C→S; no NaN |
 | hopfield | patterns | M=8 (near capacity) | model-call | spurious states appear |
