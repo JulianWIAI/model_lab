@@ -8,7 +8,30 @@
 
 ## Plan changes (applied)
 
-*(Empty — no review corrections yet; this section will be filled after the review.)*
+| ID | Section | Change | Reason |
+|---|---|---|---|
+| G-1 | Justification | Added 7-bench justification paragraph and candidates-considered note | Required by plan template |
+| G-2 | Catalog § voting | Changed field id from `voting` to `social-choice` | Correct catalog field name |
+| LC-1 | LC predict Q=20Ω | Verified: R=20Ω → Q=√1000/20=√10/2≈1.581 (underdamped, R_crit≈63Ω) | Confirm calculation |
+| LC-2 | LC half-power note | Clarified: ω1·ω2=ω0², Δω=R/L hold for impedance half-power (ω±=±α+√(α²+ω₀²)), not for |V_C| half-power | Anchor script R8 flag |
+| BV-1 | BV model class | Added sinh form: for α=0.5, i/i₀ = 2·sinh(η/(2V_T)) | More elegant form; verified in anchors |
+| BV-2 | BV predict 3 | Changed answer from "η≈6.3mV" to "η≈12.57mV" | Plan used (η/V_T)²/6 coefficient; correct is (η/V_T)²/24 giving η=V_T·√0.24 |
+| BV-3 | BV anchor table | Added log10(i/i₀) at η=b = 0.9956351945975499; tightened to 0.01 abs | Exact value; sinh form gives 2·sinh(ln10)=9.9, log10(9.9) |
+| BV-4 | BV domain note | Added |η|/V_T ≤ 700 domain guard (overflow beyond) | Prevent exp overflow |
+| BS-1 | BS call price | Changed anchor 10.4506 → 10.450583572185565 at 1e-12 abs | Higher precision anchor from Taylor-series Φ |
+| BS-2 | BS σ→∞ limit | Changed C→S−K to C→S (at σ→∞, Φ(d1)→1, Ke^{-rT}Φ(d2)→0, C→S=100) | Correct asymptote |
+| BS-3 | BS σ→0 limit | Added anchor: C→100(1−e^{-0.05})=4.877057549928594 | Intrinsic-value limit |
+| BS-4 | BS predict 1 | Changed answer from "yes" to "no": call is concave in σ (C→S=100 as σ→∞); doubling σ from 20% to 40% gives C≈18.01 < 2×10.45=20.90 | Convex vs concave confusion |
+| BS-5 | BS anchor table | Added deep ITM put: S=50,K=100,r=5%,σ=20%,T=1 → 45.12534186762472 | Tests deep ITM regime |
+| H-1 | Hopfield ΔE | Changed ΔE = −(h_i·s_i − |h_i|) → ΔE = −(|h_i| − s_old·h_i) ≤ 0 | Sign in original formula was wrong (s_i ambiguously referenced s_new) |
+| H-2 | Hopfield E formula | Added E = (1−N·m²)/2 where m=(1/N)Σξ_is_i: E_stored=(1-N)/2=-1.5, E_orth=+0.5 | General formula beyond N=4 case |
+| H-3 | Hopfield predict 1 | Changed answer: E(state_between)=(1-N*m²)/2 with m∈(-1,1), energy between E_stored and E_orth | Use general formula |
+| RL-1 | RL corridor env | Added corridor environment: states 0..8, start=2, terminals 0(+1) and 8(+10) | More interesting than abstract MDP; γ* derivable |
+| RL-2 | RL γ* | Added γ* = 10^{-1/4} = 0.5623413251903491 threshold (agent prefers +10 for γ>γ*) | Derived from 10γ^4=1 |
+| RL-3 | RL gambler's ruin | Added P(reach 8 before 0 | start=2) = 2/8 = 1/4 (unbiased walk) | Gambler's ruin connection |
+| V-1 | Voting predict 2 | Changed "yes" → "no for 3 alternatives (exhaustive proof); yes for 4+ alternatives" | With 3 alts, Borda score = pairwise wins → Condorcet loser = min Borda |
+| V-2 | Voting test profile | Added 3xABC+2xBCA: Borda winner=B, plurality winner=A, Condorcet winner=A | Shows Borda ≠ plurality |
+| V-3 | Voting cycle count | Added: 12 out of 216 three-voter three-alt profiles have Condorcet cycle (exhaustive) | Verified in anchor script |
 
 ---
 
@@ -47,6 +70,28 @@ as `-α ± ωd·j` using string formatting, not a Complex class).
 
 ---
 
+## Bench selection justification
+
+**Seven benches were chosen for Phase 10** to cover physically meaningful ODE models,
+electrochemical kinetics, derivative pricing, associative memory, policy optimisation,
+mechanism design, and social-choice theory — one each from physics, chemistry, economics
+(×3), neuroscience, and social science.
+
+**Candidates considered and deferred:**
+
+| Candidate | Reason deferred |
+|---|---|
+| Population STDP (spiking network, Phase 9-adjacent) | Too close to Phase 9 STDP bench; would need Complex.js for spectrum |
+| Lotka-Volterra (Phase 11 candidate) | Already on ROADMAP under ecology |
+| Stochastic SIR (epidemic) | Requires birth-death chain which belongs in Phase 11 probability block |
+| Kalman filter | Requires matrix square-root; better after LinAlg extensions in Phase 12 |
+| Quantum harmonic oscillator | Requires Complex.js; deferred to Phase 12 with schrodinger-1d |
+
+**ROADMAP reshaping:** No bench was removed from the ROADMAP. The `economics/voting`
+entry is relabelled to `economics/social-choice` to match the catalog field id `social-choice`.
+
+---
+
 ## Implementation order
 
 1. `physics/electromagnetism/lc-oscillator`         — university, ODE + closed-form
@@ -75,9 +120,9 @@ Fields verified against `js/catalog.js` as of phase-10 draft.
 | Neuroscience | `networks` | Networks & coding | hopfield | **NEW** |
 | Psychology | `learning` | Learning & cognition | reinforcement-learning | existing (prisoner-dilemma, opinion-dynamics live here) |
 | Economics | `game-theory` | Game Theory | auctions | existing (nash-equilibria lives here) |
-| Economics | `voting` | Voting & social choice | voting-systems | **NEW** |
+| Economics | `social-choice` | Voting & social choice | voting-systems | **NEW** |
 
-Three new fields required: `economics/finance`, `neuroscience/networks`, `economics/voting`.
+Three new fields required: `economics/finance`, `neuroscience/networks`, `economics/social-choice`.
 
 ---
 
@@ -311,6 +356,8 @@ export class ButlerVolmerModel {
 | `linear limit at η=1mV` | i₀·η/V_T | 1e-5 rel | algebraic |
 | `Tafel limit at η=0.5V` | cathodic fraction < 1e-4 | boolean | algebraic |
 | `log10(i) at η=b ≈ 1 decade` | 0.9956 | 0.05 abs | algebraic |
+| `log10(i/i₀) at η=b = 0.9956351946` | 0.9956351945975499 | 0.01 abs | algebraic (2·sinh(ln10)=9.9) |
+| `sinh form: 2·sinh(η/(2V_T)) for α=0.5` | verified | 1e-12 rel | algebraic |
 | `α=0.3 breaks symmetry` | i(−η) ≠ −i(η) | boolean | algebraic |
 | `α∈(0,1) guard` | RangeError | throw | — |
 
@@ -321,7 +368,7 @@ export class ButlerVolmerModel {
 2. Raise temperature from 25°C to 60°C. How does the exchange current change?
    *(Answer: V_T increases; Tafel slope increases; linear region widens)*
 3. At what η does the linear approximation introduce 1% error?
-   *(Answer: second-order correction ~(η/V_T)²/6 ≈ 0.01 → η ≈ V_T·√0.06 ≈ 6.3 mV)*
+   *(Answer: for α=0.5, relative deviation ≈ (η/V_T)²/24 ≈ 0.01 → η = V_T·√0.24 ≈ 12.57 mV)*
 
 ### Derive it
 
@@ -403,18 +450,18 @@ export class OptionsPricingModel {
 |---|---|---|---|
 | `d₁ = 0.35 for ATM params` | 0.35 | === (ln(1)=0) | algebraic |
 | `d₂ = 0.15 for ATM params` | 0.15 | === | algebraic |
-| `call = 10.4506` | 10.45058357218556 | 1e-4 abs | algebraic+cited |
+| `call = 10.4506` | 10.450583572185565 | 1e-12 abs | algebraic+cited |
 | `put-call parity error < 1e-10` | C−P = S−Ke^{-rT} | 1e-10 abs | algebraic |
 | `delta_call = Φ(0.35)` | 0.6368306511756191 | 1e-12 rel | algebraic |
 | `call > 0 for any S,K,T,σ>0` | positivity | boolean | algebraic |
-| `call → S−K for σ→∞` | ordering | boolean | algebraic |
+| `call → S for σ→∞` | ordering | boolean | algebraic |
 | `impliedVol round-trip ±1e-4` | Newton-Raphson | 1e-4 rel | algebraic |
 | `S≤0 throws RangeError` | guard | throw | — |
 
 ### Predict questions
 
 1. Double volatility from 20% to 40%. Does the call price more than double?
-   *(Answer: yes — convexity in σ; Vega is positive and call price is concave from above)*
+   *(Answer: no — call is concave in σ (saturates to S=100 as σ→∞); C(40%)≈18.01 < 2×C(20%)≈20.90)*
 2. Deep in the money (S=150, K=100). What is the delta?
    *(Answer: Φ(d₁) → 1 as S>>K, since d₁ → ∞)*
 3. What is the call price for S=K=100, r=0, σ→0, T→0?
@@ -504,7 +551,7 @@ export class HopfieldModel {
 ### Predict questions
 
 1. Store two orthogonal patterns. What happens to the energy of a state between them?
-   *(Answer: becomes a spurious mixture state with intermediate energy — a local min)*
+   *(Answer: E = (1−N·m²)/2; a mixture state has m∈(−1,1) relative to each pattern → energy between E_stored=−(N−1)/2 and E_orth=+1/2; the mixture is a spurious attractor — a local energy minimum not corresponding to any stored pattern)*
 2. Set all weights to zero. What does the energy landscape look like?
    *(Answer: flat E=0; no attractors — all states are fixed points)*
 3. With N=4 neurons, what is the maximum number of reliably stored patterns?
@@ -514,7 +561,8 @@ export class HopfieldModel {
 
 1. Hebbian rule: w_ij ∝ E[ξ_i·ξ_j] — Hebb's postulate (co-activation strengthens synapses)
 2. Energy E = −½ s^T W s (with w_ii=0); this is negative definite at stored patterns
-3. Async update: s_i ← sign(Σ_j w_ij s_j); changes E by ΔE = −(h_i·s_i − |h_i|) ≤ 0
+3. Async update: s_i ← sign(h_i) where h_i = Σ_j w_ij s_j; ΔE = −(|h_i| − s_old·h_i) ≤ 0
+   (s_old is state BEFORE update; general formula: E = (1−N·m²)/2 where m = (1/N)Σ ξ_i s_i)
 4. Convergence: energy bounded below → always reaches fixed point
 
 ### Research papers
@@ -555,6 +603,7 @@ correctness (algebraic, exact) and empirical convergence (MC, approximate).
 | R | reward | 1 (terminal) | parameter |
 | Q*(s,a) | optimal action-value | V*(s0)=1 (2-state) | algebraic |
 | δ | TD error R+γ·maxQ(s')−Q(s) | 0 at Q* | algebraic |
+| γ* | threshold discount | 10^{-1/4} = 0.5623 | algebraic |
 
 ### Domain validation (R4)
 
@@ -588,12 +637,15 @@ export class RLModel {
 | `G_discounted = 0.81 (2 steps)` | γ²·R = 0.81 | 1e-14 abs | algebraic |
 | `P(optimal|ε=0.1, |A|=2) = 0.95` | algebraic | 1e-14 abs | algebraic |
 | `Q-learning converges to Q* (MC)` | |Q−Q*|<0.1 | 0.1 abs | MC (10000 ep) |
+| `γ* = 10^{-1/4} = 0.5623413251903491` | threshold discount | 1e-14 abs | algebraic |
+| `P(reach 8 before 0, start=2) = 1/4` | gambler's ruin | exact | algebraic |
+| `V*(γ=0.9, start=2, via +10) = 5.31441` | 0.9^6·10 | 1e-10 abs | algebraic |
 | `gamma≥1 throws RangeError` | guard | throw | — |
 
 ### Predict questions
 
-1. Set γ=0. Does Q-learning still work? What does it learn?
-   *(Answer: learns only immediate reward R; ignores future — greedy myopic policy)*
+1. In the corridor (start=2, terminals 0(+1) and 8(+10)): at what γ does the agent switch from preferring +1 to preferring +10?
+   *(Answer: γ* = 10^{-1/4} ≈ 0.562; below γ* agent prefers +1 (2 steps), above γ* prefers +10 (6 steps))*
 2. Set ε=0 (no exploration). Can Q-learning get stuck?
    *(Answer: yes — if Q initialised to 0, may never explore suboptimal but informative paths)*
 3. Set α=1. What happens to previous experience?
@@ -767,6 +819,9 @@ export class VotingModel {
 | `Condorcet winner exists when A beats all` | A | === 'A' | algebraic |
 | `pluralityWinner = null for 3-way tie` | null | === null | algebraic |
 | `pairwiseMatrix[i][j] + pairwiseMatrix[j][i] = n_voters` | sum | === 3 | algebraic |
+| `12 cycles in 216 three-voter profiles` | 12 | === 12 | exhaustive |
+| `Borda winner ≠ Condorcet loser (3 alts)` | 0 counterexamples | === 0 | exhaustive |
+| `Borda: B wins 3xABC+2xBCA (B>A in Borda)` | B_score=7, A_score=6 | exact | algebraic |
 | `invalid permutation throws RangeError` | guard | throw | — |
 
 ### Predict questions
@@ -774,7 +829,7 @@ export class VotingModel {
 1. Add a 4th voter with preference C>B>A. Does A still win pairwise?
    *(Answer: depends on pairing; now need to recount — C>A becomes 3:1)*
 2. Can the Borda winner be a Condorcet loser?
-   *(Answer: yes — possible with 4+ alternatives; classic example with n=4)*
+   *(Answer: NO for 3 alternatives — exhaustive proof: with 3 alts, Borda(X) = #{X>Y}+#{X>Z} = total pairwise wins, so Condorcet loser (min pairwise wins) = min Borda score. Exhaustively verified over all 216 three-voter profiles. YES for 4+ alternatives (Fishburn 1974).)*
 3. Manipulate the ballot by adding an "irrelevant" 4th alternative. Can the Borda winner change?
    *(Answer: yes — Borda fails IIA; this is Arrow's IIA violation)*
 
