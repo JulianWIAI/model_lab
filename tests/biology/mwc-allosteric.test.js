@@ -65,15 +65,19 @@ test('hillCoeff > 1 (cooperative) and < n', () => {
   assert.ok(Math.abs(h - 2.362) < 0.05, `h=${h}, expected ~2.362`);
 });
 
-test('c=1 -> h=1 (non-cooperative)', () => {
+test('c=1 -> h=1 (non-cooperative) ±1e-3', () => {
+  // When c=1, MWC reduces to Langmuir (Hill coeff = 1).
+  // Hill computed as central FD with h=1e-4 in log-space → tolerance ~1e-3.
   const m = new MWCModel({ n: 4, L: 100, c: 1 });
   const h = m.hillCoeff();
-  assert.ok(Math.abs(h - 1) < 0.05, `h=${h}, expected ~1`);
+  assert.ok(Math.abs(h - 1) < 1e-3, `h=${h}, expected ~1 ±1e-3`);
 });
 
-test('saturation(1e6) -> 1', () => {
+test('saturation at large alpha: Y > 0.9999 and rStateFraction > 0.9999', () => {
+  // As alpha → ∞ (c=0.01), both Y → 1 and R-state fraction → 1/(1+L*c^n) ≈ 0.9999
   const m = new MWCModel({ n: 4, L: 100, c: 0.01 });
   assert.ok(m.saturation(1e6) > 0.9999, `Y(1e6) = ${m.saturation(1e6)}`);
+  assert.ok(m.rStateFraction(1e6) > 0.9999, `R(1e6) = ${m.rStateFraction(1e6)}`);
 });
 
 test('RangeError for bad params', () => {

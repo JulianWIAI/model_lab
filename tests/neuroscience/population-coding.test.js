@@ -28,13 +28,14 @@ test('Single neuron at preferred direction: Fisher contribution = 0', () => {
   assert.ok(Math.abs(fp) < 1e-10, `f'(preferred) = ${fp}, expected ~0`);
 });
 
-test('sigma-scaling: I(0.5)/I(1) ~ 2.034 +/-0.1', () => {
+test('sigma-scaling: I(0.5)/I(1) = 2.043982952864164 +/-1e-9', () => {
   const m1 = new PopulationCodingModel({ N: 16, sigma: 0.5 });
   const m2 = new PopulationCodingModel({ N: 16, sigma: 1.0 });
   const ratio = m1.fisherInfo(0) / m2.fisherInfo(0);
+  // Deterministic ratio: no stochasticity, tighten to ±1e-9
   assert.ok(
-    Math.abs(ratio - 2.034) < 0.1,
-    `Ratio I(0.5)/I(1) = ${ratio}, expected ~2.034`,
+    Math.abs(ratio - 2.043982952864164) < 1e-9,
+    `Ratio I(0.5)/I(1) = ${ratio}, expected 2.043982952864164`,
   );
 });
 

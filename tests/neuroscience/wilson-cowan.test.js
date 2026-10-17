@@ -19,7 +19,7 @@ test('S\'(x) = kappa*S(x)*(1-S(x))', () => {
   }
 });
 
-test('Default: 3 fixed points with correct stability types', () => {
+test('Default: 3 fixed points with correct stability types AND positions', () => {
   const m = new WilsonCowanModel();
   const fps = m.fixedPoints();
   assert.ok(fps.length >= 3, `Expected >=3 FPs, got ${fps.length}`);
@@ -33,6 +33,17 @@ test('Default: 3 fixed points with correct stability types', () => {
   const types = fps.map(fp => m.stability(fp.E, fp.I).type);
   assert.ok(types.includes('stable-node') || types.includes('stable-spiral'));
   assert.ok(types.includes('saddle'));
+  // Check positions ±1e-4 (exact values from Newton iteration on default params)
+  const tol = 1e-4;
+  // FP0: stable-node near (0.00254, 0.000568)
+  assert.ok(Math.abs(fps[0].E - 0.00254328616) < tol, `FP0.E=${fps[0].E}`);
+  assert.ok(Math.abs(fps[0].I - 0.00056779451) < tol, `FP0.I=${fps[0].I}`);
+  // FP1: saddle near (0.57793, 0.15521)
+  assert.ok(Math.abs(fps[1].E - 0.57792622164) < tol, `FP1.E=${fps[1].E}`);
+  assert.ok(Math.abs(fps[1].I - 0.15521214309) < tol, `FP1.I=${fps[1].I}`);
+  // FP2: stable-node near (0.97846, 0.48134)
+  assert.ok(Math.abs(fps[2].E - 0.97846294245) < tol, `FP2.E=${fps[2].E}`);
+  assert.ok(Math.abs(fps[2].I - 0.48133686338) < tol, `FP2.I=${fps[2].I}`);
 });
 
 test('RK4 convergence to stable FP: |err|<1e-8 at t=50', () => {
@@ -61,6 +72,33 @@ test('Saddle test: perturbation grows > 0.1', () => {
   const last = traj[traj.length - 1];
   const dist = Math.hypot(last.E - saddleFP.E, last.I - saddleFP.I);
   assert.ok(dist > 0.1, `Distance from saddle = ${dist}, expected > 0.1`);
+});
+
+test('Saddle instability: perturbation along unstable eigenvector grows exponentially', () => {
+  // For default params, saddle at ~(0.578, 0.155), lambda+ ≈ 1.506
+  // Perturb ε along unstable eigenvector v+; at t=0.1, dist ≈ ε·e^{λ+·t}
+  const m = new WilsonCowanModel();
+  const fps = m.fixedPoints().sort((a,b) => a.E - b.E);
+  const fp = fps.find(fp => m.stability(fp.E, fp.I).type === 'saddle');
+  assert.ok(fp, 'No saddle found');
+  const J = m.jacobian(fp.E, fp.I);
+  const tr = J[0][0]+J[1][1], det = J[0][0]*J[1][1]-J[0][1]*J[1][0];
+  const disc = tr*tr - 4*det;
+  const lam_plus = (tr + Math.sqrt(disc)) / 2;
+  // Unstable eigenvector: (J - λ+·I)v = 0 → vx = J[0][1], vy = -(J[0][0]-λ+)
+  const vx0 = J[0][1], vy0 = -(J[0][0] - lam_plus);
+  const norm = Math.hypot(vx0, vy0);
+  const vx = vx0 / norm, vy = vy0 / norm;
+  const eps = 0.001, t_test = 0.1;
+  const traj = m.run(fp.E + eps * vx, fp.I + eps * vy, t_test, 0.001);
+  const last = traj[traj.length - 1];
+  const dist = Math.hypot(last.E - fp.E, last.I - fp.I);
+  const expected = eps * Math.exp(lam_plus * t_test);
+  // Allow ±50% tolerance for non-linear corrections
+  assert.ok(dist > expected * 0.5,
+    `dist=${dist.toExponential(4)}, expected>${(expected*0.5).toExponential(4)}`);
+  assert.ok(dist < expected * 2.0,
+    `dist=${dist.toExponential(4)}, expected<${(expected*2.0).toExponential(4)}`);
 });
 
 test('FD Jacobian vs analytic +/-1e-8', () => {
@@ -122,7 +160,9 @@ test('Limit cycle (wEE=8.5): tr>0, peak-to-peak > 0.1', () => {
   const eVals = lastHalf.map(p => p.E);
   const eMin = Math.min(...eVals);
   const eMax = Math.max(...eVals);
-  assert.ok(eMax - eMin > 0.1, `Peak-to-peak E = ${eMax - eMin}, expected > 0.1`);
+  // Measured limit-cycle amplitude ~0.289; assert in [0.2, 0.4]
+  assert.ok(eMax - eMin > 0.2, `Peak-to-peak E = ${eMax - eMin}, expected > 0.2`);
+  assert.ok(eMax - eMin < 0.4, `Peak-to-peak E = ${eMax - eMin}, expected < 0.4`);
 });
 
 test('Nullclines: 10 points verified +/-1e-6', () => {
