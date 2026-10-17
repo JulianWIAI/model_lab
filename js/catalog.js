@@ -415,6 +415,14 @@ export const catalog = [
             keywords: ['Nernst equation', 'electrochemistry', 'cell potential', 'EMF', 'Daniell cell', 'reduction potential', 'equilibrium'],
             load: () => import('./benches/chemistry/electrochemistry/nernst-cell/NernstCellBench.js').then((m) => m.NernstCellBench),
           },
+          {
+            id: 'butler-volmer',
+            navLabel: 'Butler-Volmer',
+            level: 'graduate',
+            keywords: ['Butler-Volmer', 'electrode kinetics', 'overpotential', 'Tafel slope',
+                       'exchange current', 'electrochemistry', 'transfer coefficient'],
+            load: () => import('./benches/chemistry/electrochemistry/butler-volmer/ButlerVolmerBench.js').then((m) => m.ButlerVolmerBench),
+          },
         ],
       },
       {
