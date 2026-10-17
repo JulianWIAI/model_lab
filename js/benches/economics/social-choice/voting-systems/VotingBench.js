@@ -35,7 +35,7 @@ export class VotingBench extends Bench {
     ],
     predict: [
       'In the Condorcet paradox preset, which alternative wins under plurality? Under Borda?',
-      'Can a Condorcet winner ever lose under Borda count?',
+      'Can a Condorcet loser ever win under Borda count? (Hint: compare the loser\'s Borda score to the average n(m−1)/2.)',
       'What happens to the pairwise matrix when all voters agree on the ranking?',
     ],
     derive: [
@@ -79,6 +79,16 @@ export class VotingBench extends Bench {
       label: 'Borda vs Condorcet',
       alternatives: ['A', 'B', 'C'],
       preferences: [[0,1,2], [0,1,2], [0,1,2], [1,2,0], [1,2,0]],
+    },
+    {
+      label: '3×ABC + 2×BCA',
+      alternatives: ['A', 'B', 'C'],
+      preferences: [[0,1,2], [0,1,2], [0,1,2], [1,2,0], [1,2,0]],
+    },
+    {
+      label: '3×ABC + 2×BCA + 2×CBA',
+      alternatives: ['A', 'B', 'C'],
+      preferences: [[0,1,2], [0,1,2], [0,1,2], [1,2,0], [1,2,0], [2,1,0], [2,1,0]],
     },
   ];
 
