@@ -117,46 +117,68 @@ test('finite R_in killed < R_in semi-infinite', () => {
 });
 
 // ── Finite-difference residual test ──────────────────────────────────────────
-// Derivation (V(x) = V₀·e^{-x/λ}):
-//   λ²·(V(x+h)−2V(x)+V(x−h))/h² − V(x) = h²·V(x)/(12λ²) + O(h⁴)  [truncation]
-//   (round-off floor ~4·ε·V·(λ/h)²)
-// At dx = λ/10000:  truncation ≈ V·(1e-4)²/12 ≈ 8.3e-10·V  (dominates)
-//   round-off ≈ 4·2.2e-16·V·1e8 ≈ 8.8e-8·V (naive bound; actual ~6.8e-10·V)
-// Derived tolerance: 2e-7·V(0.5λ) = 2e-7·e^{-0.5} ≈ 1.2e-7 >> actual ~6.8e-10
+// Central-difference truncation error for the ODE λ²·V″ − V = 0:
+//   λ²·(V(x+h)−2V(x)+V(x−h))/h² − V(x) = (h/λ)²/12 · V(x) + O(h⁴)
+//
+// At h/λ = 0.01: truncation = (0.01)²/12 · V(x) = 8.333e-6 · V(x)
+//   V(0.5λ) = e^{−0.5} = 0.60653...; truncation ≈ 5.054e-6
+//   round-off bound = 4·ε/(h/λ)² · V(x) = 4·2.22e-16/(1e-4) · V(x) ≈ 8.88e-12 · V(x) [negligible]
+//
+// At h/λ = 0.005: truncation = (0.005)²/12 · V(x) = 2.083e-6 · V(x)
+//   truncation ≈ 1.264e-6; round-off ≈ 3.55e-11 [negligible]
+//
+// Both step sizes are well in the truncation-dominated regime.
 
-test('FD residual |λ²·V″−V| < 2e-7 at x=0.5λ (derived from h²/12 truncation)', () => {
+test('FD residual at h/λ=0.01: within 1% of theoretical truncation', () => {
   const lam = d1um.spaceConstant();
   const V0  = 1;
-  const dx  = lam / 10000;
+  const hOverLam = 0.01;
+  const dx  = hOverLam * lam;
   const x   = 0.5 * lam;
   const Vm  = d1um.steadyState(x - dx, V0);
   const V0v = d1um.steadyState(x,      V0);
   const Vp  = d1um.steadyState(x + dx, V0);
   const Vpp = (Vm - 2 * V0v + Vp) / (dx * dx);
   const residual = Math.abs(lam * lam * Vpp - V0v);
-  // Derived: truncation = h²·V/(12λ²) ≈ 8.3e-10·e^{-0.5} ≈ 5e-10
-  //          round-off bound = 4·eps·V·(λ/h)² ≈ 5.4e-8
-  //          tolerance = 2e-7 (3.7× the naive bound)
-  assert.ok(residual < 2e-7, `FD residual=${residual}`);
+  const truncation = hOverLam * hOverLam / 12 * V0v;
+  // residual should be very close to theoretical truncation
+  assert.ok(Math.abs(residual - truncation) / truncation < 0.01,
+    `|residual − truncation| / truncation = ${Math.abs(residual - truncation) / truncation}, expected < 0.01`);
 });
 
-test('FD residual halving ratio ≈ 4 (truncation regime, dx=λ/50 vs λ/100)', () => {
-  // At h/λ = 1/50 and 1/100, truncation h²V/(12λ²) dominates round-off:
-  //   trunc(1/50) ≈ 3.3e-5·V,  trunc(1/100) ≈ 8.3e-6·V  → ratio ≈ 4
+test('FD residual at h/λ=0.005: within 1% of theoretical truncation', () => {
+  const lam = d1um.spaceConstant();
+  const V0  = 1;
+  const hOverLam = 0.005;
+  const dx  = hOverLam * lam;
+  const x   = 0.5 * lam;
+  const Vm  = d1um.steadyState(x - dx, V0);
+  const V0v = d1um.steadyState(x,      V0);
+  const Vp  = d1um.steadyState(x + dx, V0);
+  const Vpp = (Vm - 2 * V0v + Vp) / (dx * dx);
+  const residual = Math.abs(lam * lam * Vpp - V0v);
+  const truncation = hOverLam * hOverLam / 12 * V0v;
+  assert.ok(Math.abs(residual - truncation) / truncation < 0.01,
+    `|residual − truncation| / truncation = ${Math.abs(residual - truncation) / truncation}, expected < 0.01`);
+});
+
+test('FD halving ratio ≈ 4 (central differences, h/λ=0.01 vs 0.005)', () => {
+  // Central-difference truncation ∝ h² → ratio of residuals for h-halving = 4 exactly.
   const lam = d1um.spaceConstant();
   const V0  = 1;
   const x   = 0.5 * lam;
-  function fdResidual(dx) {
+  function fdResidual(hOverLam) {
+    const dx  = hOverLam * lam;
     const Vm  = d1um.steadyState(x - dx, V0);
     const V0v = d1um.steadyState(x,      V0);
     const Vp  = d1um.steadyState(x + dx, V0);
     const Vpp = (Vm - 2 * V0v + Vp) / (dx * dx);
     return Math.abs(lam * lam * Vpp - V0v);
   }
-  const r50  = fdResidual(lam / 50);
-  const r100 = fdResidual(lam / 100);
-  const ratio = r50 / r100;
-  assert.ok(ratio >= 3 && ratio <= 5, `halving ratio=${ratio}, expected ≈4`);
+  const r1 = fdResidual(0.01);
+  const r2 = fdResidual(0.005);
+  const ratio = r1 / r2;
+  assert.ok(ratio >= 3.98 && ratio <= 4.02, `halving ratio=${ratio}, expected ∈ [3.98, 4.02]`);
 });
 
 // ── Domain validation ─────────────────────────────────────────────────────────
